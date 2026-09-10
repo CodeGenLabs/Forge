@@ -7,8 +7,8 @@
         "lines": 468
       },
       "markdown": {
-        "files": 10,
-        "lines": 5450
+        "files": 19,
+        "lines": 8921
       },
       "other": {
         "files": 2,
@@ -16,7 +16,7 @@
       },
       "python": {
         "files": 20,
-        "lines": 5399
+        "lines": 5457
       },
       "toml": {
         "files": 1,
@@ -30,8 +30,8 @@
     "entry_points": [
       "src/forge/cli.py"
     ],
-    "files_considered": 40,
-    "files_tracked": 44,
+    "files_considered": 49,
+    "files_tracked": 49,
     "stack": {
       "python": {
         "lockfile": null,
@@ -61,7 +61,7 @@
       "tests/test_trace.py"
     ]
   },
-  "generated_from_commit": "6d75c8334235d73916b055ba98b4fc8d26455418",
+  "generated_from_commit": "8f07a54dd02f3bd0d5839b1458b78adc69002033",
   "generator": "forge sync derived",
   "tool": "forge"
 }

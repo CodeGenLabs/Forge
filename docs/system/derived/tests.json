@@ -261,15 +261,25 @@
           {
             "covers": [],
             "line": 211,
-            "name": "test_status_reports_commits_behind"
+            "name": "test_status_reports_the_derived_tier_stale_when_content_moved"
           },
           {
             "covers": [],
             "line": 224,
+            "name": "test_a_body_only_edit_does_not_make_the_derived_tier_stale"
+          },
+          {
+            "covers": [],
+            "line": 238,
+            "name": "test_status_stays_current_after_the_derived_tier_is_committed"
+          },
+          {
+            "covers": [],
+            "line": 253,
             "name": "test_output_is_ascii_only"
           }
         ],
-        "untagged": 17
+        "untagged": 19
       },
       "tests/test_derive.py": {
         "language": "python",
@@ -773,9 +783,9 @@
       }
     },
     "tagged_tests": 0,
-    "total_tests": 144
+    "total_tests": 146
   },
-  "generated_from_commit": "6d75c8334235d73916b055ba98b4fc8d26455418",
+  "generated_from_commit": "8f07a54dd02f3bd0d5839b1458b78adc69002033",
   "generator": "forge sync derived",
   "tool": "forge"
 }
