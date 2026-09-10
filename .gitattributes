@@ -1,0 +1,26 @@
+# Normalise line endings: LF in the repository and in the working tree, on every
+# platform. Keeps diffs clean when the same repo is used from Windows, macOS,
+# Linux and CI.
+* text=auto eol=lf
+
+# Windows-native scripts must keep CRLF in the working tree or the shell that
+# runs them may choke on the line endings.
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+*.ps1  text eol=crlf
+
+# Never touch these.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.webp binary
+*.pdf  binary
+*.ico  binary
+*.woff  binary
+*.woff2 binary
+
+# Lockfiles and generated snapshots: collapse in review, still diffable on demand.
+*.lock          linguist-generated=true
+pnpm-lock.yaml  linguist-generated=true
+uv.lock         linguist-generated=true
