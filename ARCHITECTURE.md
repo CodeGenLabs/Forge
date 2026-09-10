@@ -246,6 +246,7 @@ thresholds:
   structural_drift: 3
   review_debt_commits: 50
   derived_stale_commits: 20
+  orphan_change_window: 20      # how many recent changes S17 looks back over
   contract_severity: breaking   # oasdiff severity that fails the gate
 
 autonomy:                       # WORKFLOW.md §4

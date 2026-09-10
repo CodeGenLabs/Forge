@@ -38,6 +38,39 @@ writing M2–M5. That is the whole reason M1 comes second rather than last.
 
 ### M0 — Kernel skeleton and the claim store (~2 days)
 
+> **Status: done, 2026-09-11.** Acceptance met: a hand-written store of ten claims across the five
+> kinds passes `forge check` clean
+> (`tests/test_validate.py::test_a_hand_written_store_passes_every_check`), and each of S1–S18 has a
+> fixture that fails it with the right code and a working `fix`.
+>
+> Four deviations, each with its reason:
+>
+> 1. **All eighteen store checks are built, not the thirteen listed below.** S12–S15 and S17 were
+>    scheduled later because they need HEAD and the derived tier; both existed by the time M0 was
+>    written, so deferring them would have been sequencing for its own sake.
+> 2. **The ID grammar accepts all ten prefixes, not the MVP five.** `store.py` already parsed ten so
+>    that an ID from a later milestone is not silently skipped, and rejecting `API-` here would make a
+>    store written for M4 fail today. What the MVP restricts is *generation*: `forge claim new` offers
+>    five kinds. The kind-specific rules (S5, S7) are the validation surface the five-kind decision
+>    was actually about, and those are unchanged.
+> 3. **`forge claim new` prints by default and only writes with `--append`.** A generator that edits
+>    the store on every invocation is one you hesitate to run.
+> 4. **Retirement grounds are two claim fields, `retired-ground` and `retired-evidence`.** §10.2 said
+>    `forge retire` "records the ground in the claim" without saying where; S18 needs a field to read.
+>
+> Three problems found by building it, all now tested:
+>
+> - **S1 cannot check parsed claims.** The heading pattern only matches well-formed IDs, so a typo
+>   makes a claim *invisible* rather than invalid — it silently stops being part of the store.
+>   Checking only what parsed would give a clean bill of health to the exact file S1 exists for, so
+>   S1 scans raw headings with a laxer pattern and reports what the strict one rejects.
+> - **Presence and emptiness are different questions.** `anchors: []` is legal for a concept and a
+>   missing `anchors` key never is, and after normalisation the two are indistinguishable — so the
+>   parser now records which keys the fence declared.
+> - **PyYAML raises `ValueError`, not `YAMLError`, on `2026-02-30`.** It resolves the scalar to a
+>   timestamp and lets `datetime.date` fail. Uncaught, one typo in a review date takes down every
+>   command that reads the store, including the one whose job is to report it.
+
 **Build.**
 
 - `forge` entry point: subcommand dispatch, `--json` on every command, non-zero exit on failure, one
@@ -45,7 +78,8 @@ writing M2–M5. That is the whole reason M1 comes second rather than last.
 - Claim parser: heading `### <ID> — <title>` followed by a fenced ```` ```claim ```` block, then prose.
   Parse the fence as YAML; parse nothing else in the document. Code fences blanked before any regex scan
   so examples never false-positive, with line numbers preserved (BMAD's `lint_spine.py` technique).
-- `forge check --scope store`: checks S1–S11 and S16, S18 below.
+- `forge check --scope store`: checks S1–S11 and S16, S18 below. *Revised by implementation: all
+  eighteen are built, see the status note above.*
 - `forge claim new <kind>`, `forge claim show <ID>`.
 - `forge init`: scaffold `.forge/` and the `docs/system/` skeleton.
 - Templates for each claim kind and for ADRs.
@@ -149,8 +183,12 @@ branch of the table.
 >   that they *enforce* one.
 > - **The derived tier made itself permanently stale.** A file cannot carry the id of the commit that
 >   contains it, so committing a freshly derived artifact stamps it with its parent — and regenerating
->   to "fix" that produces another such commit. Staleness now ignores commits that touched only the
->   derived tier, and the tier excludes itself from its own inventory.
+>   to "fix" that produces another such commit. *First fix, and it was not enough: ignore commits that
+>   touched only the derived tier, and exclude the tier from its own inventory. Committing four new
+>   JSON files still moved `files_tracked`, and the age comparison was the wrong question anyway.
+>   Corrected 2026-09-11: freshness is decided by **content** — regenerating changes the data or it
+>   does not — and `commits_behind` is reported beside the verdict as provenance. SYSTEM_KNOWLEDGE.md
+>   §2.3 records the full reasoning.*
 
 **Build.**
 
@@ -294,8 +332,8 @@ Every one is a script. Codes are stable; each carries a `fix`.
 | R7 | `trace.requirement_discharged` | Every `REQ-*` has ≥1 passing test carrying its `@covers` tag | ERROR |
 | R8 | `graph.requires_satisfied` | DAG `requires` satisfied for every present artifact | ERROR |
 | R9 | `graph.track_artifacts` | Required artifacts present for the declared track | ERROR |
-| R10 | `derived.clean` | Regeneration is a no-op; `generated_from_commit == HEAD` at verify | ERROR |
-| R11 | `derived.freshness` | `commits_behind ≤ thresholds.derived_stale_commits` | WARNING (ERROR at `implement:pre`) |
+| R10 | `derived.clean` | Regeneration is a no-op — *revised: the original also required `generated_from_commit == HEAD`, which no committed file can satisfy (SYSTEM_KNOWLEDGE.md §2.3)* | ERROR |
+| R11 | `derived.freshness` | `commits_behind ≤ thresholds.derived_stale_commits` — *provenance, reported beside R10's verdict rather than as one* | WARNING (ERROR at `implement:pre`) |
 | R12 | `spec.grammar` | Requirement/scenario headings; ≥1 scenario each; SHALL/MUST; MODIFIED full content; REMOVED has Reason+Migration | ERROR |
 | R13 | `spec.nonempty_or_skip` | Zero-delta rejected unless `skip_spec: true` with a reason | ERROR |
 | R14 | `task.format` | Exact files, `[REQ-*]` tag, verify command, `Consumes`/`Produces` signatures, no placeholders | ERROR |

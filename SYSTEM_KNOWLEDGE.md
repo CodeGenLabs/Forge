@@ -96,6 +96,8 @@ and that is checked by review, not by script.
 | `supersedes` | no | claim ID | Replaces a retired claim |
 | `reviewed` | yes | `YYYY-MM-DD` | Date a human last ratified the prose. Not a staleness signal; a review-debt signal |
 | `confidence` | candidates only | `high` \| `medium` \| `low` | Bootstrap output only; forbidden in ratified claims |
+| `retired-ground` | if `status: retired` | `1`–`4` | Which of the four deletion grounds applies (§10.2) |
+| `retired-evidence` | if `status: retired` | free text | What makes that ground true. A ground without evidence is an assertion |
 
 ¹ `anchors` may be the literal `[]` **only** for `kind: constraint` (constraints that originate outside
 the repository) and `kind: concept` (vocabulary with no single home). Empty anchors on any other kind is
@@ -213,8 +215,24 @@ Rules:
   *the agent's reading* and for computing impact.
 - **Committed, not gitignored.** Committing them makes their diffs visible in review, which is how you
   notice that the API surface changed. This is a deliberate trade of repo noise for reviewability.
-- **Staleness is `generated_from_commit != HEAD`**, reported as `commits_behind` (GSD's mechanism), never
-  as a time threshold (GSD's `intel` used 24 hours; it was wrong and their own later work replaced it).
+- **Staleness is "regenerating changes the content"**, never a time threshold (GSD's `intel` used 24
+  hours; it was wrong and their own later work replaced it). `commits_behind` is still reported, as
+  provenance beside the verdict rather than as the verdict.
+
+  > *Revised by implementation, 2026-09-11: this rule originally read "staleness is
+  > `generated_from_commit != HEAD`", and that comparison can never come out clean for a file that is
+  > itself committed. Writing the artifact stamps HEAD; committing it moves HEAD past that stamp; the
+  > file is therefore reported stale the instant it became correct, and regenerating produces another
+  > such commit. The first attempt at a fix — ignore commits that touched only the derived tier — was
+  > not enough, because committing four new JSON files also changes the file census they contain.*
+  >
+  > *The honest split is that **content is the truth and the stamp is provenance**. A regeneration
+  > that produces the same data leaves the file alone, keeping the id of the commit it was genuinely
+  > derived from, which is more honest than restamping it with a commit whose contents it was never
+  > shown. Two consequences worth stating: the derived tier excludes itself from its own file counts
+  > (a census that counts its own output is not stable under its own commit), and a body-only edit
+  > does not make the tier stale — the tier is a census, and whether that edit invalidated a claim is
+  > `forge drift`'s question.*
 
 Contents, in order of value:
 
@@ -432,7 +450,7 @@ did. See [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) Q3.
 
 | Signal | Computation | Severity | Borrowed from |
 |---|---|---|---|
-| **Derived-tier staleness** | `generated_from_commit != HEAD`; report `commits_behind` | warn; block at `verify` | GSD `built_at_commit` |
+| **Derived-tier staleness** | regenerating changes the content; report `commits_behind` as provenance (§2.3, revised) | warn; block at `verify` | GSD `built_at_commit` |
 | **Premise staleness** | a change artifact's last-commit time predates the newest commit touching any claim it cites | warn at `plan`, block at `implement` | GSD context-drift gate |
 | **Review debt** | `reviewed` older than N commits touching the claim's anchors (default N=50), or older than 12 months | warn only, never blocking | BMAD provenance line |
 | **Referent deletion** | `git log --diff-filter=DR --name-only <sha>..HEAD` intersected with anchor paths | block (same as `missing`) | BMAD refresh procedure |
@@ -534,7 +552,9 @@ All of the following are deterministic scripts. None calls a model.
 14. Every `evidence: rule:` id appears in the named rule file.
 15. Every permanent spec requirement `REQ-*` is discharged by ≥1 test (§8.2).
 16. No ratified claim references anything in `candidates/`.
-17. `derived/` is clean (regeneration is a no-op) and `generated_from_commit == HEAD` at `verify` time.
+17. `derived/` is clean: regeneration is a no-op. *Revised by implementation, 2026-09-11: this
+    originally also required `generated_from_commit == HEAD` at `verify` time, which no committed
+    file can ever satisfy — see §2.3.*
 18. Always-loaded budget: `OVERVIEW.md` + the mandatory claim files ≤ the configured line budget
     (default 400). Over budget is an **error**, and the only fixes are cutting or relocating.
 
@@ -745,8 +765,9 @@ corpus. A claim may be **deleted or retired** only on one of four grounds:
 And explicitly **not** grounds: brevity; nothing has failed lately; "the agent could derive it"; and — the
 one that empties good files — "it is discoverable somewhere in the repository".
 
-`forge retire <ID> --ground <1-4> --evidence <text>` records the ground in the claim (`status: retired`)
-and in the commit. Grounds 1–3 the agent may carry itself; ground 4 requires the human. Retired claims
+`forge retire <ID> --ground <1-4> --evidence <text>` records the ground in the claim (`status: retired`,
+plus `retired-ground` and `retired-evidence` — *added by implementation, 2026-09-11: this said "records
+the ground in the claim" without saying where, and S18 needs a field to read*) and in the commit. Grounds 1–3 the agent may carry itself; ground 4 requires the human. Retired claims
 stay in the file, excluded from checks and budgets, so the history of what we used to believe is not
 lost.
 

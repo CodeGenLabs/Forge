@@ -4,19 +4,22 @@ A personal software-engineering harness that makes an AI coding agent behave lik
 engineer: investigate before modifying, specify before implementing, and — the part nobody has solved —
 keep accurate, verifiable knowledge of an existing system.
 
-**Status: design complete; implementation at milestone M2 of six.** What exists today is the anchor
-engine — the deterministic staleness detector the whole design rests on — the measurement that gates
-the rest of the build, and the derived tier plus traceability index. No change lifecycle, no gates, no
-skills yet.
+**Status: design complete; implementation through milestone M2 of six, plus M0.** What exists today is
+the anchor engine — the deterministic staleness detector the whole design rests on — the measurement
+that gates the rest of the build, the derived tier and traceability index, and the claim store with all
+eighteen of its checks. No change lifecycle, no gates, no skills yet.
 
 ```bash
 pip install -e ".[grammars,dev]"
 forge doctor
+forge init                      # scaffold .forge/ and docs/system/
+forge claim new invariant       # a template; --append writes it to the right file
 forge sync derived
 forge status
 forge drift "src/forge/anchor.py#classify" --baseline <sha>
 forge trace INV-7
-forge check
+forge claim show INV-7
+forge check                     # --scope store|derived|trace, --json
 ```
 
 `forge drift` and `forge check` exit 0 when clean, 1 when something needs a look, 2 on a usage error —
@@ -92,7 +95,7 @@ budgets, BMAD's admission criterion and deletion grounds.
 |---|---|---|
 | **M1 — anchors & drift** | **done** | `gitio`, `fingerprint`, `anchor`; the measurement in [docs/measurements/M1-anchor-stability.md](docs/measurements/M1-anchor-stability.md) — 0% false positives, 0% false negatives |
 | **M2 — derived tier & trace index** | **done** | `derive`, `store`, `trace`; `forge sync derived`, `forge trace`, `forge status`, `forge check` |
-| M0 — claim store & validation | partly | `store.py` parses claims (the index needed it). The 18 store checks are still to come |
+| **M0 — claim store & validation** | **done** | `validate`, `scaffold`; all 18 store checks, `forge init`, `forge claim new/show`, `forge check --scope` |
 | M3 — change DAG, gates, one workflow | not started | First thing that needs `deps.json`, deferred from M2 |
 | M4 — skills | not started | |
 | M5 — bootstrap | not started | |
@@ -102,8 +105,17 @@ claim schema in M0 would have had to change (coarser anchors, or component-level
 before fixing the format was the cheaper order, and it paid — see
 [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) Q2 for the risk it retired.
 
-Building M1 and M2 corrected four things in the design documents, each recorded where it was wrong:
-the drift statuses (`shifted` added, `coarse` demoted to a flag), the derived-tier envelope (a
-timestamp that made the dirty check impossible), the ID grammar (slugs, not only digits), and the
-staleness rule (a commit touching only the derived tier does not make it stale). Every correction says
-in the document why the original was wrong.
+Building M0–M2 corrected six things in the design documents, each recorded where it was wrong: the
+drift statuses (`shifted` added, `coarse` demoted to a flag), the derived-tier envelope (a timestamp
+that made the dirty check impossible), the ID grammar (slugs, not only digits), the staleness rule
+(twice — see below), the retirement fields (the policy said "records the ground in the claim" without
+saying where), and the store-check scope. Every correction says in the document why the original was
+wrong.
+
+The staleness rule is worth singling out, because the first correction was itself wrong. A derived
+file cannot carry the id of the commit that contains it, so comparing that stamp against HEAD reports
+the file stale the instant it becomes correct — and regenerating produces another such commit.
+Excluding derived-only commits from the count was not enough: committing four new JSON files also
+moves the file census inside them. Freshness is now a **content** question — regenerating changes the
+data or it does not — and the commit id is reported beside the verdict as provenance, not as the
+verdict.
