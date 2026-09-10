@@ -204,13 +204,21 @@ def parse_claims(text: str, path: str) -> list[Claim]:
         end = headings[index + 1].start() if index + 1 < len(headings) else len(text)
         section = text[start:end]
 
+        # `end` is where the *next* heading begins, so the section's last line
+        # is the last one carrying content. Counting to `end` instead would put
+        # the following claim's heading inside this claim's range, which shows
+        # up as `forge claim show` printing one claim and a bit of the next.
+        last = end
+        while last > start and text[last - 1] == "\n":
+            last -= 1
+
         claim = Claim(
             id=identifier,
             kind=KIND_PREFIXES.get(identifier.split("-", 1)[0], "unknown"),
             file=path,
             line=text.count("\n", 0, heading.start()) + 1,
             title=(heading.group("title") or "").strip(),
-            end_line=text.count("\n", 0, end) + 1,
+            end_line=text.count("\n", 0, last) + 1,
         )
 
         fence = _FENCE_RE.search(section)

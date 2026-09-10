@@ -17,7 +17,7 @@ import json
 import sys
 from pathlib import Path
 
-from . import derive, gitio, trace, validate
+from . import derive, gitio, scaffold, store, trace, validate
 from .anchor import AnchorError, Status, classify, parse_anchor
 from .fingerprint import available_languages, fingerprint_source
 from .validate import Issue
@@ -156,7 +156,6 @@ def _cmd_status(args: argparse.Namespace) -> int:
         return _EXIT_USAGE
 
     head = gitio.rev_parse(repo, "HEAD")
-    print(f"repository       {repo.name} @ {head[:10]}")
 
     # Content decides freshness; the commit stamp is provenance shown alongside
     # it. Comparing content is exact, and it is the only comparison that can
@@ -164,17 +163,32 @@ def _cmd_status(args: argparse.Namespace) -> int:
     staleness = derive.stale_artifacts(repo)
     missing = [n for n, v in staleness.items() if v is None]
     outdated = [n for n, changed in derive.derive_all(repo, dry_run=True).items() if changed]
+    behind = max((v for v in staleness.values() if v is not None), default=0)
     if missing:
         state = f"{len(missing)} not built; run `forge sync derived`"
     elif outdated:
         state = f"{len(outdated)} stale; run `forge sync derived`"
     else:
-        behind = max((v for v in staleness.values() if v is not None), default=0)
         age = f", derived {behind} commit{'s' if behind != 1 else ''} back" if behind else ""
         state = f"current{age}"
-    print(f"derived tier     {state}")
 
     index = (derive.read_json(repo / derive.DERIVED_DIR / trace.TRACE_FILE) or {}).get("data")
+
+    if args.json:
+        print(json.dumps({
+            "repository": repo.name,
+            "head": head,
+            "derived": {
+                "not_built": sorted(missing),
+                "stale": sorted(outdated),
+                "commits_behind": behind,
+            },
+            "summary": (index or {}).get("summary"),
+        }, indent=2, sort_keys=True))
+        return _EXIT_OK
+
+    print(f"repository       {repo.name} @ {head[:10]}")
+    print(f"derived tier     {state}")
     if not index:
         print("claim store      no index; run `forge sync derived`")
         return _EXIT_OK
@@ -203,7 +217,21 @@ def _cmd_status(args: argparse.Namespace) -> int:
 SCOPES = ("store", "derived", "trace")
 
 
+def _tier_is_built(repo: Path) -> bool:
+    directory = repo / derive.DERIVED_DIR
+    return any((directory / artifact.name).exists() for artifact in derive.ARTIFACTS)
+
+
 def _check_derived(repo: Path) -> list[Issue]:
+    if not _tier_is_built(repo):
+        # One line, not one per artifact. A freshly initialised repository is
+        # the common case here, and four identical errors carrying the same fix
+        # reads as breakage rather than as a next step.
+        return [Issue(
+            "ERROR", "derived.not_built", derive.DERIVED_DIR,
+            "the derived tier has never been built, so nothing that reads it can be checked",
+            "forge sync derived",
+        )]
     issues = []
     for name, changed in derive.derive_all(repo, dry_run=True).items():
         if changed:
@@ -253,7 +281,9 @@ def _cmd_check(args: argparse.Namespace) -> int:
     issues: list[Issue] = []
     if "derived" in scopes:
         issues.extend(_check_derived(repo))
-    if "trace" in scopes:
+    if "trace" in scopes and not ("derived" in scopes and not _tier_is_built(repo)):
+        # An unbuilt tier is already reported by the derived scope; saying it
+        # again from here would be the same fix printed twice.
         issues.extend(_check_trace(repo))
     if "store" in scopes:
         issues.extend(validate.check_store(repo))
@@ -294,6 +324,90 @@ def _cmd_check(args: argparse.Namespace) -> int:
         print(f"ok - no issues. Checked: {checked}.")
         print(f"Not yet checked: {pending}.")
     return _EXIT_CHANGED if errors else _EXIT_OK
+
+
+def _cmd_init(args: argparse.Namespace) -> int:
+    repo = args.repo.resolve()
+    if not gitio.is_repo(repo):
+        print(f"forge: {repo} is not a git repository", file=sys.stderr)
+        return _EXIT_USAGE
+
+    created, skipped = scaffold.scaffold(repo)
+    for relative in created:
+        print(f"created    {relative}")
+    for relative in skipped:
+        print(f"kept       {relative}")
+    if not created:
+        print("\nNothing to create; the scaffold is already here.")
+        return _EXIT_OK
+    print(
+        "\nThe scaffold holds no claims on purpose. Writing plausible ones for a\n"
+        "codebase nobody has read is the failure the candidates tier exists to\n"
+        "prevent, so claims arrive one at a time:\n"
+        "  forge claim new invariant --append\n"
+        "  forge sync derived\n"
+        "  forge check"
+    )
+    return _EXIT_OK
+
+
+def _cmd_claim_new(args: argparse.Namespace) -> int:
+    repo = args.repo.resolve()
+    try:
+        text = scaffold.claim_template(args.kind, args.id, args.title)
+    except ValueError as exc:
+        print(f"forge: {exc}", file=sys.stderr)
+        return _EXIT_USAGE
+
+    if not args.append:
+        # Printed, not written, unless asked. A generator that edits the store
+        # on every invocation makes `forge claim new` something you hesitate to
+        # run, and the point of a template is to be cheap to look at.
+        print(text, end="")
+        return _EXIT_OK
+
+    target = repo / store.STORE_DIR / scaffold.KIND_FILE[args.kind]
+    if not target.exists():
+        print(f"forge: {target.relative_to(repo).as_posix()} does not exist; "
+              f"run `forge init` first", file=sys.stderr)
+        return _EXIT_USAGE
+    existing = target.read_text(encoding="utf-8")
+    separator = "" if existing.endswith("\n\n") else ("\n" if existing.endswith("\n") else "\n\n")
+    target.write_text(existing + separator + text, encoding="utf-8", newline="\n")
+    relative = target.relative_to(repo).as_posix()
+    print(f"appended to {relative}")
+    # Said plainly, because the next thing that happens is a failing check and
+    # it should not look like a bug.
+    print("\nIt will fail `forge check` until the {placeholders} are filled in.\n"
+          "That is the checklist, not a defect.")
+    return _EXIT_OK
+
+
+def _cmd_claim_show(args: argparse.Namespace) -> int:
+    repo = args.repo.resolve()
+    claims = [c for c in store.load_store(repo) if c.id == args.id]
+    if not claims:
+        print(f"forge: no claim defines {args.id}", file=sys.stderr)
+        return _EXIT_CHANGED
+
+    if args.json:
+        print(json.dumps([c.to_dict() for c in claims], indent=2, sort_keys=True))
+        return _EXIT_CHANGED if len(claims) > 1 else _EXIT_OK
+
+    for claim in claims:
+        print(f"{claim.file}:{claim.line}")
+        text = (repo / claim.file).read_text(encoding="utf-8", errors="replace")
+        lines = text.split("\n")[claim.line - 1:claim.end_line]
+        while lines and not lines[-1].strip():
+            lines.pop()
+        print("\n".join(lines))
+    if len(claims) > 1:
+        # Not an error the command can fix, but the reader has to know which of
+        # the two they are looking at before they act on either.
+        print(f"\n{args.id} is defined {len(claims)} times; `forge check` says so as "
+              f"store.id_unique", file=sys.stderr)
+        return _EXIT_CHANGED
+    return _EXIT_OK
 
 
 def _cmd_doctor(args: argparse.Namespace) -> int:
@@ -349,6 +463,7 @@ def main(argv: list[str] | None = None) -> int:
 
     status = sub.add_parser("status", help="one screen: freshness, store size, open items")
     status.add_argument("--repo", type=Path, default=Path.cwd())
+    status.add_argument("--json", action="store_true")
     status.set_defaults(func=_cmd_status)
 
     check = sub.add_parser(
@@ -364,6 +479,38 @@ def main(argv: list[str] | None = None) -> int:
                        help="limit to one scope; repeatable. Default: all of them")
     check.add_argument("--json", action="store_true")
     check.set_defaults(func=_cmd_check)
+
+    init = sub.add_parser(
+        "init",
+        help="scaffold .forge/ and the docs/system/ skeleton",
+        description="Writes empty, titled store files and the adoption ADR. Never "
+                    "overwrites, so running it again after a version bump is safe.",
+    )
+    init.add_argument("--repo", type=Path, default=Path.cwd())
+    init.set_defaults(func=_cmd_init)
+
+    claim = sub.add_parser("claim", help="create or read one claim")
+    claim_sub = claim.add_subparsers(dest="claim_command", required=True)
+
+    claim_new = claim_sub.add_parser(
+        "new",
+        help="print a claim template for one kind",
+        description="The template carries {placeholders} and therefore fails "
+                    "`forge check` until they are filled in. That is the checklist.",
+    )
+    claim_new.add_argument("kind", choices=sorted(scaffold.KIND_FILE))
+    claim_new.add_argument("--id", help="the claim ID, e.g. INV-refund-cap")
+    claim_new.add_argument("--title", help="the heading, stating the claim itself")
+    claim_new.add_argument("--append", action="store_true",
+                           help="append to the store file this kind belongs in")
+    claim_new.add_argument("--repo", type=Path, default=Path.cwd())
+    claim_new.set_defaults(func=_cmd_claim_new)
+
+    claim_show = claim_sub.add_parser("show", help="print one claim as it is written")
+    claim_show.add_argument("id")
+    claim_show.add_argument("--repo", type=Path, default=Path.cwd())
+    claim_show.add_argument("--json", action="store_true")
+    claim_show.set_defaults(func=_cmd_claim_show)
 
     doctor = sub.add_parser("doctor", help="report the toolchain the kernel found")
     doctor.set_defaults(func=_cmd_doctor)
