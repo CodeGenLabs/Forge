@@ -45,9 +45,11 @@ maintain — the wrong shape for this question).
 > Recommendation **A + D** was implemented — path+symbol anchors with git rename following, plus the
 > `shifted`/`stale` split — and the perturbation results retire the risk for the mechanical cases
 > (formatting, comment edits, quote style, pure file moves). Option **C** (component-level anchors) was
-> not needed and is not implemented. Option **B** (content-addressed relocation) is *not* implemented:
-> it was only ever needed as the `forge reanchor` guard, and `reanchor` has to rewrite an `@sha` inside a
-> claim file, so it waits for the claim store in M0.
+> not needed and is not implemented. Option **B** (content-addressed relocation) *is* implemented, but
+> not for the reason it was proposed: it turned out to be needed as a fallback when git's rename
+> detection gives up on a low-similarity move, which the measurement found and it then closed
+> (0.61% → 0.00%). Its other intended use, the `forge reanchor` guard, still waits for the claim store
+> in M0.
 >
 > Three residual pieces keep this from being fully closed:
 > 1. Semantically neutral refactors (extract variable, reorder independent statements) have no

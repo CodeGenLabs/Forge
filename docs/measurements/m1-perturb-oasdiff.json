@@ -2,7 +2,7 @@
   "repo": "C:\\Users\\TUAN\\AppData\\Local\\Temp\\claude\\D--git-2609-forge-harness\\f075e14c-2627-4b4b-ab71-8ffe1898e95c\\scratchpad\\hist\\oasdiff",
   "head": "445da908641f73d2c9d8b83cd2425d418b91168b",
   "seed": 20260910,
-  "elapsed_seconds": 153.7,
+  "elapsed_seconds": 161.7,
   "samples": 25,
   "samples_by_language": {
     "go": 25
@@ -33,8 +33,7 @@
       "fresh": 25
     },
     "neutral:rename_plus_comments": {
-      "fresh": 14,
-      "missing": 3
+      "fresh": 17
     },
     "neutral:rewrite_comments": {
       "fresh": 17
@@ -54,8 +53,8 @@
   "false_positive_examples": {},
   "totals": {
     "neutral_cases": 159,
-    "neutral_false_positives": 3,
-    "neutral_false_positive_rate": 0.0189,
+    "neutral_false_positives": 0,
+    "neutral_false_positive_rate": 0.0,
     "substantive_cases": 50,
     "substantive_false_negatives": 0,
     "substantive_false_negative_rate": 0.0

@@ -235,3 +235,129 @@ def test_unmoved_anchor_is_not_reported_as_moved(repo, base):
     r = _classify(repo, base, "src/payments/refund.ts#computeRefundable")
     assert r.moved is False
     assert r.baseline_path == r.head_path == "src/payments/refund.ts"
+
+
+# --------------------------------------------------------------------------
+# Content-addressed relocation: when git's rename detection is not enough
+# --------------------------------------------------------------------------
+
+GO_COMMENT_HEAVY = """\
+package pkg
+
+// Render turns a name into a greeting.
+// It carries several lines of doc comment, as Go style encourages, so the
+// comments dominate the byte count of this file. Rewriting them while moving
+// the file drops git's similarity score below its rename threshold.
+// Another line, to push the ratio further.
+// And another, because complete sentences are the convention here.
+func Render(name string) string {
+\treturn "hi " + name
+}
+"""
+
+GO_COMMENTS_REWRITTEN = """\
+package pkg
+
+// rewritten
+func Render(name string) string {
+\treturn "hi " + name
+}
+"""
+
+
+@pytest.fixture
+def go_base(repo):
+    repo.write("pkg/a.go", GO_COMMENT_HEAVY)
+    return repo.commit("initial")
+
+
+def test_move_below_gits_rename_threshold_is_still_followed(repo, go_base):
+    """The M1 residual defect, closed.
+
+    Rewriting the doc comments while moving the file leaves git measuring ~13%
+    similarity, so it reports add + delete and the anchor cannot follow the
+    move. Content-addressed relocation finds it anyway, because the *symbol*
+    fingerprint is unchanged.
+    """
+    repo.move("pkg/a.go", "moved/pkg/a.go")
+    repo.write("moved/pkg/a.go", GO_COMMENTS_REWRITTEN)
+    repo.commit("move and rewrite comments")
+
+    # Confirm the premise: git really does not see this as a rename.
+    from forge import gitio
+    forward, _ = gitio.rename_map(repo.root, go_base, "HEAD")
+    assert forward == {}, "premise broken: git detected the rename after all"
+
+    r = _classify(repo, go_base, "pkg/a.go#Render")
+    assert r.status is Status.FRESH, r.detail
+    assert r.relocated is True
+    assert r.head_path == "moved/pkg/a.go"
+
+
+def test_file_anchor_relocates_by_whole_file_fingerprint(repo, go_base):
+    repo.move("pkg/a.go", "moved/pkg/a.go")
+    repo.write("moved/pkg/a.go", GO_COMMENTS_REWRITTEN)
+    repo.commit("move and rewrite comments")
+    r = _classify(repo, go_base, "pkg/a.go")
+    assert r.status is Status.FRESH and r.relocated is True
+
+
+def test_relocation_refuses_when_ambiguous(repo, go_base):
+    """Two equally good candidates is not a move; it is a question.
+
+    Guessing one would be worse than reporting missing, because a wrong
+    relocation silently re-anchors a claim to the wrong code.
+
+    The copies carry rewritten comments so git's similarity stays under its
+    threshold and declines to call either one a rename - otherwise git picks a
+    winner itself and this code never runs.
+    """
+    repo.remove("pkg/a.go")
+    repo.write("one/a.go", GO_COMMENTS_REWRITTEN)
+    repo.write("two/a.go", GO_COMMENTS_REWRITTEN)
+    repo.commit("delete and duplicate with rewritten comments")
+
+    from forge import gitio
+    forward, _ = gitio.rename_map(repo.root, go_base, "HEAD")
+    assert forward == {}, "premise broken: git resolved it to a single rename"
+
+    r = _classify(repo, go_base, "pkg/a.go#Render")
+    assert r.status is Status.MISSING
+    assert "ambiguous" in r.detail
+
+
+def test_git_resolves_an_unambiguous_identical_copy_itself(repo, go_base):
+    """The complementary case: identical content, so git detects the rename at
+    100% and relocation never needs to run."""
+    repo.move("pkg/a.go", "one/a.go")
+    repo.commit("plain move")
+    r = _classify(repo, go_base, "pkg/a.go#Render")
+    assert r.status is Status.FRESH
+    assert r.relocated is False
+    assert r.head_path == "one/a.go"
+
+
+def test_relocation_does_not_fire_on_a_genuine_deletion(repo, go_base):
+    repo.remove("pkg/a.go")
+    repo.commit("delete it")
+    r = _classify(repo, go_base, "pkg/a.go#Render")
+    assert r.status is Status.MISSING
+    assert r.relocated is False
+    assert "ambiguous" not in r.detail
+
+
+def test_relocation_does_not_accept_a_different_implementation(repo, go_base):
+    """A same-named symbol elsewhere is not the same code.
+
+    Only an identical fingerprint, or an identical signature when no exact
+    match exists, is accepted - never mere name equality.
+    """
+    repo.remove("pkg/a.go")
+    repo.write(
+        "other/a.go",
+        "package pkg\n\nfunc Render(name string, loud bool) string {\n"
+        "\treturn name + \"!\"\n}\n",
+    )
+    repo.commit("delete, and add an unrelated Render")
+    r = _classify(repo, go_base, "pkg/a.go#Render")
+    assert r.status is Status.MISSING, r.detail

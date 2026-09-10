@@ -118,6 +118,40 @@ branch of the table.
 
 ### M2 — Derived tier and trace index (~2 days)
 
+> **Status: done, 2026-09-10.** Acceptance met: `forge trace INV-7` returns claims, tests, changes and
+> back-references on a fixture store (`tests/test_trace.py::test_the_acceptance_case`), regeneration is
+> a no-op, and every artifact is byte-identical LF with sorted keys. The M1 debt — content-addressed
+> relocation — was paid first and re-measured: 0.61% → **0.00%** false positives
+> ([M1 report §3.2](docs/measurements/M1-anchor-stability.md)).
+>
+> Five deviations, each with its reason:
+>
+> 1. **No `generated_at` in the envelope.** A timestamp makes every regeneration differ, so
+>    "regeneration is a no-op" and "a dirty derived file is an error" could not both hold. The commit id
+>    is the provenance that matters. SYSTEM_KNOWLEDGE.md §2.3 corrected.
+> 2. **The ID grammar accepts slugs, not only digits.** §7.1 said `PREFIX-\d+` while every example in
+>    the same document used `CMP-payments`, `CON-capture`, `API-post-refunds`. Slugs win — `grep -r
+>    CMP-payments` explains itself. What is enforced is stability, not numerality.
+> 3. **`deps.json` is not built.** MVP.md specifies "shelling out to the project's configured dep tool",
+>    which fails on any repo without one; writing our own import resolver is a second parser and the
+>    kernel budget is better spent elsewhere. It is not in the acceptance criteria and M3's `forge
+>    impact` is the first thing that actually needs it.
+> 4. **`backrefs.json` was added.** The `forge:<ID>` scan needed somewhere to live, and putting it in
+>    the index would have made the index non-regenerable independently.
+> 5. **A minimal claim parser (`store.py`) landed early.** The index cannot exist without knowing what a
+>    claim is. It parses and does not validate — M0 still owns the 18 store checks.
+>
+> Two problems found by building it, both now tested:
+>
+> - **Documentation examples polluted the index.** `forge:ARC-3` inside an illustrative code block, and
+>   a literal `grep -r "forge:REQ-refunds-3"`, created entries for claims that never existed. Prose is
+>   now excluded from the back-reference scan: citing an ID is normal, only code and rule files declare
+>   that they *enforce* one.
+> - **The derived tier made itself permanently stale.** A file cannot carry the id of the commit that
+>   contains it, so committing a freshly derived artifact stamps it with its parent — and regenerating
+>   to "fix" that produces another such commit. Staleness now ignores commits that touched only the
+>   derived tier, and the tier excludes itself from its own inventory.
+
 **Build.**
 
 - `forge sync derived [--paths]` producing, with provenance frontmatter
@@ -228,7 +262,7 @@ Every one is a script. Codes are stable; each carries a `fix`.
 
 | # | Code | Check | Level |
 |---|---|---|---|
-| S1 | `store.id_format` | ID matches `^(ARC|CMP|CON|INV|PIT)-\d+$` | ERROR |
+| S1 | `store.id_format` | ID matches `^(ARC\|CMP\|CON\|INV\|PIT)-(\d+\|[a-z0-9][a-z0-9-]*)$` — number or kebab slug | ERROR |
 | S2 | `store.id_unique` | IDs unique store-wide; ascending within a file; never reused | ERROR |
 | S3 | `store.claim_fence` | Well-formed `claim` fence; parses as YAML | ERROR |
 | S4 | `store.required_fields` | `kind`, `status`, `truth-source`, `anchors`, `reviewed` present and in range | ERROR |

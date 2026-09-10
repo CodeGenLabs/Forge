@@ -1,0 +1,454 @@
+{
+  "$schema": "forge/derived/v1",
+  "data": {
+    "covers_index": {},
+    "files": {
+      "tests/test_anchor_classify.py": {
+        "language": "python",
+        "tests": [
+          {
+            "covers": [],
+            "line": 68,
+            "name": "test_unchanged_is_fresh"
+          },
+          {
+            "covers": [],
+            "line": 76,
+            "name": "test_reformatting_only_is_fresh"
+          },
+          {
+            "covers": [],
+            "line": 84,
+            "name": "test_body_change_is_shifted"
+          },
+          {
+            "covers": [],
+            "line": 91,
+            "name": "test_signature_change_is_stale"
+          },
+          {
+            "covers": [],
+            "line": 98,
+            "name": "test_deleted_symbol_is_missing"
+          },
+          {
+            "covers": [],
+            "line": 106,
+            "name": "test_deleted_file_is_missing"
+          },
+          {
+            "covers": [],
+            "line": 113,
+            "name": "test_pure_rename_is_fresh"
+          },
+          {
+            "covers": [],
+            "line": 128,
+            "name": "test_rename_plus_body_change_is_shifted"
+          },
+          {
+            "covers": [],
+            "line": 136,
+            "name": "test_anchor_pointing_at_a_future_file_is_missing"
+          },
+          {
+            "covers": [],
+            "line": 145,
+            "name": "test_const_declarator_resolves"
+          },
+          {
+            "covers": [],
+            "line": 152,
+            "name": "test_directory_anchor_tracks_anything_beneath_it"
+          },
+          {
+            "covers": [],
+            "line": 162,
+            "name": "test_unknown_language_falls_back_to_coarse"
+          },
+          {
+            "covers": [],
+            "line": 178,
+            "name": "test_coarse_mode_sees_a_real_change"
+          },
+          {
+            "covers": [],
+            "line": 187,
+            "name": "test_unresolvable_symbol_degrades_instead_of_blocking"
+          },
+          {
+            "covers": [],
+            "line": 205,
+            "name": "test_missing_baseline_is_an_error"
+          },
+          {
+            "covers": [],
+            "line": 210,
+            "name": "test_recorded_sha_is_used_when_no_baseline_is_passed"
+          },
+          {
+            "covers": [],
+            "line": 218,
+            "name": "test_move_reports_both_paths_in_the_right_order"
+          },
+          {
+            "covers": [],
+            "line": 230,
+            "name": "test_unmoved_anchor_is_not_reported_as_moved"
+          }
+        ],
+        "untagged": 18
+      },
+      "tests/test_anchor_parse.py": {
+        "language": "python",
+        "tests": [
+          {
+            "covers": [],
+            "line": 4,
+            "name": "test_path_only"
+          },
+          {
+            "covers": [],
+            "line": 9,
+            "name": "test_path_symbol_sha"
+          },
+          {
+            "covers": [],
+            "line": 17,
+            "name": "test_dotted_symbol"
+          },
+          {
+            "covers": [],
+            "line": 21,
+            "name": "test_directory_anchor"
+          },
+          {
+            "covers": [],
+            "line": 26,
+            "name": "test_scoped_package_path_is_not_mistaken_for_a_revision"
+          },
+          {
+            "covers": [],
+            "line": 34,
+            "name": "test_windows_separators_are_normalised"
+          },
+          {
+            "covers": [],
+            "line": 38,
+            "name": "test_sha_is_lowercased"
+          },
+          {
+            "covers": [],
+            "line": 58,
+            "name": "test_rejected"
+          },
+          {
+            "covers": [],
+            "line": 61,
+            "name": "test_nul_byte_rejected"
+          }
+        ],
+        "untagged": 9
+      },
+      "tests/test_cli.py": {
+        "language": "python",
+        "tests": [
+          {
+            "covers": [],
+            "line": 26,
+            "name": "test_fresh_exits_zero"
+          },
+          {
+            "covers": [],
+            "line": 35,
+            "name": "test_changed_exits_one"
+          },
+          {
+            "covers": [],
+            "line": 49,
+            "name": "test_bad_anchor_exits_two"
+          },
+          {
+            "covers": [],
+            "line": 56,
+            "name": "test_rejected_revision_exits_two_without_reaching_git"
+          },
+          {
+            "covers": [],
+            "line": 69,
+            "name": "test_non_repo_exits_two"
+          },
+          {
+            "covers": [],
+            "line": 77,
+            "name": "test_json_output_is_parseable"
+          },
+          {
+            "covers": [],
+            "line": 96,
+            "name": "test_fingerprint_is_stable_across_runs"
+          },
+          {
+            "covers": [],
+            "line": 105,
+            "name": "test_doctor_reports_the_toolchain"
+          }
+        ],
+        "untagged": 8
+      },
+      "tests/test_fingerprint.py": {
+        "language": "python",
+        "tests": [
+          {
+            "covers": [],
+            "line": 37,
+            "name": "test_reflow_trailing_comma_and_semicolons_are_absorbed"
+          },
+          {
+            "covers": [],
+            "line": 49,
+            "name": "test_comment_edits_are_absorbed"
+          },
+          {
+            "covers": [],
+            "line": 64,
+            "name": "test_quote_style_is_absorbed"
+          },
+          {
+            "covers": [],
+            "line": 81,
+            "name": "test_string_prefixes_survive_quote_normalisation"
+          },
+          {
+            "covers": [],
+            "line": 100,
+            "name": "test_operators_are_not_dropped"
+          },
+          {
+            "covers": [],
+            "line": 114,
+            "name": "test_keywords_and_literals_are_not_dropped"
+          },
+          {
+            "covers": [],
+            "line": 118,
+            "name": "test_parameter_type_change_is_visible_in_the_signature"
+          },
+          {
+            "covers": [],
+            "line": 124,
+            "name": "test_return_type_change_is_visible_in_the_signature"
+          },
+          {
+            "covers": [],
+            "line": 130,
+            "name": "test_go_widened_integer_type_is_visible"
+          },
+          {
+            "covers": [],
+            "line": 141,
+            "name": "test_body_change_keeps_the_signature_stable"
+          },
+          {
+            "covers": [],
+            "line": 148,
+            "name": "test_symbol_without_a_body_reports_signature_equal_to_full"
+          },
+          {
+            "covers": [],
+            "line": 174,
+            "name": "test_declaration_forms_resolve"
+          },
+          {
+            "covers": [],
+            "line": 176,
+            "name": "test_shallower_declaration_wins"
+          },
+          {
+            "covers": [],
+            "line": 191,
+            "name": "test_unknown_symbol_is_none_not_an_exception"
+          },
+          {
+            "covers": [],
+            "line": 195,
+            "name": "test_symbol_appears_textually_separates_gone_from_unresolvable"
+          },
+          {
+            "covers": [],
+            "line": 213,
+            "name": "test_symbol_presence_is_matched_on_word_boundaries"
+          },
+          {
+            "covers": [],
+            "line": 226,
+            "name": "test_unknown_extension_is_coarse"
+          },
+          {
+            "covers": [],
+            "line": 230,
+            "name": "test_known_extension_is_not_coarse"
+          },
+          {
+            "covers": [],
+            "line": 235,
+            "name": "test_coarse_absorbs_trailing_whitespace_and_blank_lines"
+          },
+          {
+            "covers": [],
+            "line": 239,
+            "name": "test_coarse_absorbs_line_ending_style"
+          },
+          {
+            "covers": [],
+            "line": 243,
+            "name": "test_coarse_sees_a_real_change"
+          },
+          {
+            "covers": [],
+            "line": 247,
+            "name": "test_coarse_does_not_absorb_a_reflow"
+          },
+          {
+            "covers": [],
+            "line": 266,
+            "name": "test_language_detection"
+          },
+          {
+            "covers": [],
+            "line": 273,
+            "name": "test_everything_degrades_to_coarse_without_grammars"
+          },
+          {
+            "covers": [],
+            "line": 285,
+            "name": "test_coarse_classification_still_works_without_grammars"
+          }
+        ],
+        "untagged": 25
+      },
+      "tests/test_gitio.py": {
+        "language": "python",
+        "tests": [
+          {
+            "covers": [],
+            "line": 16,
+            "name": "test_accepted_revisions"
+          },
+          {
+            "covers": [],
+            "line": 34,
+            "name": "test_rejected_revisions"
+          },
+          {
+            "covers": [],
+            "line": 37,
+            "name": "test_rejected_revision_is_not_a_dashed_option"
+          },
+          {
+            "covers": [],
+            "line": 55,
+            "name": "test_path_normalisation"
+          },
+          {
+            "covers": [],
+            "line": 63,
+            "name": "test_rejected_paths"
+          },
+          {
+            "covers": [],
+            "line": 66,
+            "name": "test_blob_and_existence"
+          },
+          {
+            "covers": [],
+            "line": 79,
+            "name": "test_rename_map_both_directions"
+          },
+          {
+            "covers": [],
+            "line": 90,
+            "name": "test_resolve_path_forwards_through_a_rename"
+          },
+          {
+            "covers": [],
+            "line": 104,
+            "name": "test_resolve_path_backwards_through_a_rename"
+          },
+          {
+            "covers": [],
+            "line": 117,
+            "name": "test_resolve_path_returns_none_when_genuinely_absent"
+          },
+          {
+            "covers": [],
+            "line": 128,
+            "name": "test_whitespace_only_diff_is_recognised"
+          },
+          {
+            "covers": [],
+            "line": 136,
+            "name": "test_substantive_diff_is_not_whitespace_only"
+          },
+          {
+            "covers": [],
+            "line": 144,
+            "name": "test_unchanged_file_is_not_reported_as_whitespace_only"
+          },
+          {
+            "covers": [],
+            "line": 154,
+            "name": "test_rev_list_is_oldest_first"
+          },
+          {
+            "covers": [],
+            "line": 161,
+            "name": "test_tree_hash_changes_when_anything_beneath_changes"
+          }
+        ],
+        "untagged": 15
+      },
+      "tests/test_perturbations.py": {
+        "language": "python",
+        "tests": [
+          {
+            "covers": [],
+            "line": 81,
+            "name": "test_neutral_perturbations_are_actually_neutral"
+          },
+          {
+            "covers": [],
+            "line": 105,
+            "name": "test_whitespace_inside_a_multiline_literal_is_left_alone"
+          },
+          {
+            "covers": [],
+            "line": 116,
+            "name": "test_perturbation_that_reaches_inside_a_literal_would_be_detected"
+          },
+          {
+            "covers": [],
+            "line": 133,
+            "name": "test_triple_quoted_strings_are_not_requoted"
+          },
+          {
+            "covers": [],
+            "line": 144,
+            "name": "test_double_indent_skips_files_with_multiline_literals"
+          },
+          {
+            "covers": [],
+            "line": 154,
+            "name": "test_still_parses_catches_what_tree_sitter_tolerates"
+          }
+        ],
+        "untagged": 6
+      }
+    },
+    "tagged_tests": 0,
+    "total_tests": 81
+  },
+  "generated_from_commit": "ad8b5f5ee409e7ddf625c527a228b1c1c5bda180",
+  "generator": "forge sync derived",
+  "tool": "forge"
+}

@@ -4,18 +4,23 @@ A personal software-engineering harness that makes an AI coding agent behave lik
 engineer: investigate before modifying, specify before implementing, and — the part nobody has solved —
 keep accurate, verifiable knowledge of an existing system.
 
-**Status: design complete; implementation at milestone M1 of six.** What exists today is the anchor
-engine — the deterministic staleness detector the whole design rests on — plus the measurement that
-gates the rest of the build. No claim store, no lifecycle, no skills yet.
+**Status: design complete; implementation at milestone M2 of six.** What exists today is the anchor
+engine — the deterministic staleness detector the whole design rests on — the measurement that gates
+the rest of the build, and the derived tier plus traceability index. No change lifecycle, no gates, no
+skills yet.
 
 ```bash
 pip install -e ".[grammars,dev]"
 forge doctor
+forge sync derived
+forge status
 forge drift "src/forge/anchor.py#classify" --baseline <sha>
+forge trace INV-7
+forge check
 ```
 
-`forge drift` exits 0 when every anchor is fresh, 1 when any needs a look, 2 on a usage error — so it
-composes as a gate.
+`forge drift` and `forge check` exit 0 when clean, 1 when something needs a look, 2 on a usage error —
+so both compose as gates.
 
 ## Read in this order
 
@@ -85,14 +90,20 @@ budgets, BMAD's admission criterion and deletion grounds.
 
 | Milestone | State | What it is |
 |---|---|---|
-| **M1 — anchors & drift** | **done** | `src/forge/{gitio,fingerprint,anchor,cli}.py`, 141 tests, and the measurement in [docs/measurements/M1-anchor-stability.md](docs/measurements/M1-anchor-stability.md) |
-| M0 — claim store & validation | not started | Deliberately after M1: the measurement could have forced the claim schema to change |
-| M2 — derived tier & trace index | not started | |
-| M3 — change DAG, gates, one workflow | not started | |
+| **M1 — anchors & drift** | **done** | `gitio`, `fingerprint`, `anchor`; the measurement in [docs/measurements/M1-anchor-stability.md](docs/measurements/M1-anchor-stability.md) — 0% false positives, 0% false negatives |
+| **M2 — derived tier & trace index** | **done** | `derive`, `store`, `trace`; `forge sync derived`, `forge trace`, `forge status`, `forge check` |
+| M0 — claim store & validation | partly | `store.py` parses claims (the index needed it). The 18 store checks are still to come |
+| M3 — change DAG, gates, one workflow | not started | First thing that needs `deps.json`, deferred from M2 |
 | M4 — skills | not started | |
 | M5 — bootstrap | not started | |
 
 M1 came first because it carried the stop condition: if anchors were too noisy on real history, the
 claim schema in M0 would have had to change (coarser anchors, or component-level only). Measuring
-before fixing the format was the cheaper order. See [MVP.md](MVP.md) for the milestone plan and
-[OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) Q2 for the risk this retired.
+before fixing the format was the cheaper order, and it paid — see
+[OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) Q2 for the risk it retired.
+
+Building M1 and M2 corrected four things in the design documents, each recorded where it was wrong:
+the drift statuses (`shifted` added, `coarse` demoted to a flag), the derived-tier envelope (a
+timestamp that made the dirty check impossible), the ID grammar (slugs, not only digits), and the
+staleness rule (a commit touching only the derived tier does not make it stale). Every correction says
+in the document why the original was wrong.

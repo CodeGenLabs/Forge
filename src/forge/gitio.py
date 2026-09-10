@@ -257,6 +257,37 @@ def _is_ancestor(repo: Path, maybe_ancestor: str, rev: str) -> bool:
     return completed.returncode == 0
 
 
+def list_files_at(repo: Path, rev: str) -> list[str]:
+    """Every tracked path at *rev*, POSIX-separated."""
+    out = git(repo, "ls-tree", "-r", "--name-only", validate_rev(rev))
+    return [line.strip() for line in out.splitlines() if line.strip()]
+
+
+def grep_files_at(repo: Path, rev: str, needle: str) -> list[str]:
+    """Paths at *rev* containing *needle* as a whole word.
+
+    Used to narrow the search when a file has moved and git's rename detection
+    missed it. ``-e`` and ``--`` keep a needle that begins with a dash from
+    being read as an option, and the caller has already validated it as an
+    identifier - two layers, because this is the one place a stored value picks
+    the files we then parse.
+    """
+    if not needle:
+        return []
+    out = git(
+        repo, "grep", "--files-with-matches", "--fixed-strings", "--word-regexp",
+        "-e", needle, validate_rev(rev), "--",
+        check=False,
+    )
+    paths = []
+    for line in out.splitlines():
+        # `git grep <rev>` prefixes each path with "<rev>:".
+        _, _, path = line.partition(":")
+        if path.strip():
+            paths.append(path.strip())
+    return paths
+
+
 def diff_is_whitespace_only(repo: Path, base: str, head: str, path: str) -> bool:
     """True if *path* differs between the revisions only by whitespace.
 

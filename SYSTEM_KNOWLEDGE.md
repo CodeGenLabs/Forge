@@ -193,13 +193,17 @@ degenerate into a directory listing, and its validation should be hostile to tha
 ```json
 {
   "$schema": "forge/derived/v1",
-  "generated_at": "2026-09-10T11:04:22Z",
   "generated_from_commit": "a1b2c3d4e5f6",
-  "generator": "forge sync deps",
+  "generator": "forge sync derived",
   "tool": "dependency-cruiser@16.3.3",
   "data": { }
 }
 ```
+
+> **Revised by implementation, 2026-09-10.** This envelope originally carried a `generated_at`
+> timestamp. It cannot: a timestamp makes every regeneration produce different bytes, so "regeneration
+> is a no-op" and "a hand-edited derived file is an error" — both stated below — could never hold at
+> once. The commit id is the provenance that matters, and it is what the staleness signal compares.
 
 Rules:
 
@@ -500,9 +504,15 @@ All of the following are deterministic scripts. None calls a model.
 
 ### 7.1 Structural (per file, per claim)
 
-1. Claim ID matches `^(ARC|CMP|CON|INV|API|DAT|FLW|CST|STR|PIT)-\d+$`.
-2. IDs unique across the whole store; ascending within a file; never reused (checked against
-   `git log -S` for the ID in retired claims).
+1. Claim ID matches `^(ARC|CMP|CON|INV|API|DAT|FLW|CST|STR|PIT)-(\d+|[a-z0-9][a-z0-9-]*)$` —
+    a number or a kebab slug. *Revised by implementation, 2026-09-10: this rule originally said
+    digits only, while every example in this document used slugs (`CMP-payments`, `CON-capture`,
+    `API-post-refunds`). Slugs win because `grep -r CMP-payments` explains itself. What is
+    enforced is **stability**, not numerality — the token is permanent, so a component renamed
+    from payments to billing keeps `CMP-payments` and changes only its title.*
+2. IDs unique across the whole store; never reused (checked against `git log -S` for the ID in
+   retired claims). Numeric IDs additionally ascend within a file; slugs have no ordering, so
+   the ascending check applies only to the numeric form.
 3. Every claim has a well-formed `claim` fence, and every required field is present and in the allowed
    value set.
 4. `anchors` non-empty unless `kind` ∈ {`constraint`, `concept`}.

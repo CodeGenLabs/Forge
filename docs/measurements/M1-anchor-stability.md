@@ -1,6 +1,7 @@
 # M1 — Anchor stability measurement
 
-**Date:** 2026-09-10 · **Verdict:** **PASS** — 0.61% false positives, 0% false negatives; proceed to M2 (§5) · **Gate:** [MVP.md](../../MVP.md) M1
+**Date:** 2026-09-10 · **Verdict:** **PASS** — 0.61% false positives, 0% false negatives; proceed to M2 (§5)
+· **Gate:** [MVP.md](../../MVP.md) M1 · **Follow-up:** the residual 0.61% was closed at the start of M2 (§3.2)
 
 [MVP.md](../../MVP.md) makes M1 a stop condition: before building M2–M5, measure whether
 anchor-based staleness detection is quiet enough to be read. The bet the whole design rests on is that
@@ -245,13 +246,40 @@ but a global 10% threshold invites spurious rename matches between unrelated fil
 visible false positive for an invisible wrong answer. Tuning the knob until the number looks better is
 gaming the measurement.
 
-The right fix is the one this measurement has now produced evidence for:
+The right fix is the one this measurement produced evidence for:
 **content-addressed relocation** — when a path is gone at head, look for a declaration at head whose
-signature fingerprint matches the baseline's, and follow that. This is option **B** in
+fingerprint matches the baseline's, and follow that. This is option **B** in
 [OPEN_QUESTIONS.md](../../OPEN_QUESTIONS.md) Q2, which I had dismissed as unnecessary before measuring.
-It belongs in M2, and until then this case is a known 0.61% floor.
+It was implemented at the start of M2 and the case is closed — see §3.2.
 
-### 3.2 Three defects the perturbation harness found in its own labels
+### 3.2 Follow-up: the residual defect, closed in M2
+
+*Added 2026-09-10, after the M1 verdict. The numbers above are left exactly as measured — a measurement
+report that gets edited to look better is not a record of anything.*
+
+Content-addressed relocation was implemented at the start of M2 (`_relocate` in `src/forge/anchor.py`)
+and oasdiff was re-measured on the same samples and seed:
+
+| | Neutral cases | False positives |
+|---|---|---|
+| oasdiff, at the M1 verdict | 159 | 3 |
+| oasdiff, after relocation | 159 | **0** |
+| **All three repositories** | **494** | **0** (was 3) |
+
+False negatives stayed at 0/162.
+
+How it works, and what it deliberately refuses to do: when a path is absent at head, the anchored
+symbol's name is looked up with `git grep` at head, each candidate is parsed, and a match is accepted
+**only on identical fingerprint** — content identity, not git's similarity heuristic. A match is
+accepted only when it is unique; two equally good candidates report `missing` with the count, because
+silently re-anchoring a claim to the wrong code is worse than asking. A same-named symbol with a
+different body or signature is not a match.
+
+This keeps the earlier rejection intact: the fix is not "lower git's rename threshold and hope", which
+would trade a visible false positive for invisible wrong matches. It is a narrower, stricter search
+that runs only in the case git has already given up on.
+
+### 3.3 Three defects the perturbation harness found in its own labels
 
 Before the numbers above, two earlier runs reported 17/171, 14/182 and 3/159 false positives. **Every
 one of those was a bug in the harness's ground truth, not in the detector** — a "neutral" perturbation
@@ -350,8 +378,8 @@ Against both readings the result is inside the first band by a wide margin:
   That is not a concession to the second band — it is the design decision the data supports, since
   body-only edits are 79% of non-fresh verdicts and every one of them is a true positive that a
   reviewer usually does not need.
-- Content-addressed relocation (§3.1) is deferred to M2 as a named follow-up, with a known 0.61% floor
-  until then.
+- Content-addressed relocation (§3.1) was deferred to M2 as a named follow-up. It has since been
+  implemented and the floor is now 0.00% (§3.2).
 - The residual risk is unchanged and unmeasured: semantically neutral refactors (§1.3, §6). The true
   false-positive rate is higher than 0.61% by an unknown margin, and no experiment here bounds it.
 

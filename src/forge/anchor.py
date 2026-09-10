@@ -126,6 +126,9 @@ class AnchorResult:
     # the *baseline* path, and printed a self-contradicting message.
     baseline_path: str | None = None
     head_path: str | None = None
+    # True when the move was found by content identity because git's rename
+    # detection missed it - see _relocate.
+    relocated: bool = False
     baseline_digest: str | None = None
     head_digest: str | None = None
     detail: str = ""
@@ -155,6 +158,7 @@ class AnchorResult:
             "baseline_path": self.baseline_path,
             "head_path": self.head_path,
             "moved": self.moved,
+            "relocated": self.relocated,
             "detail": self.detail,
         }
 
@@ -205,19 +209,96 @@ def _classify_directory(repo: Path, anchor: Anchor, base_rev: str, head_rev: str
     )
 
 
+def _relocate(
+    repo: Path, anchor: Anchor, base_rev: str, head_rev: str
+) -> tuple[str | None, str]:
+    """Find where the anchored code went when git's rename detection missed it.
+
+    Git decides a rename by content similarity, default 50%. A move combined
+    with a large edit falls under that and is reported as add + delete, so the
+    anchor cannot follow it and reports ``missing`` - the blocking status. The
+    M1 measurement hit this on three Go files where rewriting the doc comments
+    cut the file from 510 bytes to 161 and git measured 13% similarity
+    (docs/measurements/M1-anchor-stability.md section 3.1).
+
+    Lowering the threshold globally was rejected: it trades a visible false
+    positive for invisible wrong matches between unrelated files. Instead this
+    searches by *content identity* rather than similarity - a candidate is only
+    accepted when its fingerprint matches the baseline exactly, and only when
+    the match is unique. An ambiguous or absent match stays ``missing``.
+
+    Returns ``(head_path, detail)``; head_path is None when nothing matched.
+    """
+    base_blob = gitio.blob_at(repo, base_rev, anchor.path)
+    if base_blob is None:
+        return None, ""
+
+    if anchor.symbol:
+        base_sym = find_symbol(base_blob, anchor.path, anchor.symbol)
+        if base_sym is None:
+            return None, ""
+        # git grep is a C implementation over the tree; this is far cheaper than
+        # parsing every file at head.
+        candidates = gitio.grep_files_at(repo, head_rev, anchor.symbol.split(".")[-1])
+        exact, loose = [], []
+        for candidate in candidates:
+            blob = gitio.blob_at(repo, head_rev, candidate)
+            if blob is None:
+                continue
+            found = find_symbol(blob, candidate, anchor.symbol)
+            if found is None:
+                continue
+            if found.full_digest == base_sym.full_digest:
+                exact.append(candidate)
+            elif found.signature_digest == base_sym.signature_digest:
+                loose.append(candidate)
+        matches, kind = (exact, "identical") if exact else (loose, "matching-signature")
+        if len(matches) == 1:
+            return matches[0], f"relocated by {kind} content to {matches[0]}"
+        if len(matches) > 1:
+            return None, f"relocation ambiguous: {len(matches)} candidates at head"
+        return None, ""
+
+    base_digest, _coarse = fingerprint_source(base_blob, anchor.path)
+    basename = anchor.path.rsplit("/", 1)[-1]
+    matches = []
+    for candidate in gitio.list_files_at(repo, head_rev):
+        if candidate.rsplit("/", 1)[-1] != basename:
+            continue
+        blob = gitio.blob_at(repo, head_rev, candidate)
+        if blob is None:
+            continue
+        if fingerprint_source(blob, candidate)[0] == base_digest:
+            matches.append(candidate)
+    if len(matches) == 1:
+        return matches[0], f"relocated by identical content to {matches[0]}"
+    if len(matches) > 1:
+        return None, f"relocation ambiguous: {len(matches)} candidates at head"
+    return None, ""
+
+
 def _classify_file(repo: Path, anchor: Anchor, base_rev: str, head_rev: str) -> AnchorResult:
+    relocated_detail = ""
     head_path, _ = gitio.resolve_path_at(
         repo, anchor.path, target_rev=head_rev, other_rev=base_rev
     )
     if head_path is None:
+        head_path, relocated_detail = _relocate(repo, anchor, base_rev, head_rev)
+    if head_path is None:
         return AnchorResult(
             anchor=anchor, status=Status.MISSING, baseline=base_rev, head=head_rev,
-            detail=f"{anchor.path} does not exist at head under any followed name",
+            detail=relocated_detail
+            or f"{anchor.path} does not exist at head under any followed name",
         )
 
-    base_path, _ = gitio.resolve_path_at(
-        repo, head_path, target_rev=base_rev, other_rev=head_rev
-    )
+    if relocated_detail:
+        # We found the file by content, not by git's rename detection, so git
+        # cannot map it back either. The baseline path is the anchor's own.
+        base_path = anchor.path
+    else:
+        base_path, _ = gitio.resolve_path_at(
+            repo, head_path, target_rev=base_rev, other_rev=head_rev
+        )
     if base_path is None:
         return AnchorResult(
             anchor=anchor, status=Status.MISSING, baseline=base_rev, head=head_rev,
@@ -236,6 +317,7 @@ def _classify_file(repo: Path, anchor: Anchor, base_rev: str, head_rev: str) -> 
     result = AnchorResult(
         anchor=anchor, status=Status.FRESH, baseline=base_rev, head=head_rev,
         baseline_path=base_path, head_path=head_path,
+        relocated=bool(relocated_detail),
     )
 
     if anchor.symbol:
