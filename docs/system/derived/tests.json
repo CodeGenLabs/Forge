@@ -695,6 +695,137 @@
         ],
         "untagged": 6
       },
+      "tests/test_scaffold.py": {
+        "language": "python",
+        "tests": [
+          {
+            "covers": [],
+            "line": 26,
+            "name": "test_init_then_sync_gives_a_clean_check"
+          },
+          {
+            "covers": [],
+            "line": 37,
+            "name": "test_init_writes_the_mandatory_files"
+          },
+          {
+            "covers": [],
+            "line": 47,
+            "name": "test_init_scaffolds_no_claims"
+          },
+          {
+            "covers": [],
+            "line": 55,
+            "name": "test_init_never_overwrites"
+          },
+          {
+            "covers": [],
+            "line": 66,
+            "name": "test_init_refuses_outside_a_git_repository"
+          },
+          {
+            "covers": [],
+            "line": 72,
+            "name": "test_the_scaffold_is_written_with_lf_endings"
+          },
+          {
+            "covers": [],
+            "line": 81,
+            "name": "test_the_adoption_adr_records_what_was_rejected"
+          },
+          {
+            "covers": [],
+            "line": 97,
+            "name": "test_every_mvp_kind_has_a_template"
+          },
+          {
+            "covers": [],
+            "line": 105,
+            "name": "test_a_template_parses_as_a_claim"
+          },
+          {
+            "covers": [],
+            "line": 120,
+            "name": "test_a_template_fails_the_placeholder_check_on_purpose"
+          },
+          {
+            "covers": [],
+            "line": 128,
+            "name": "test_a_template_with_an_id_and_title_keeps_them"
+          },
+          {
+            "covers": [],
+            "line": 134,
+            "name": "test_generated_text_is_ascii"
+          },
+          {
+            "covers": [],
+            "line": 145,
+            "name": "test_an_unknown_kind_is_a_usage_error"
+          },
+          {
+            "covers": [],
+            "line": 150,
+            "name": "test_the_postponed_kinds_are_not_offered"
+          },
+          {
+            "covers": [],
+            "line": 164,
+            "name": "test_claim_new_prints_rather_than_writing"
+          },
+          {
+            "covers": [],
+            "line": 172,
+            "name": "test_claim_new_append_puts_each_kind_in_its_own_file"
+          },
+          {
+            "covers": [],
+            "line": 181,
+            "name": "test_claim_new_append_says_the_check_will_fail"
+          },
+          {
+            "covers": [],
+            "line": 190,
+            "name": "test_claim_new_append_needs_the_scaffold"
+          },
+          {
+            "covers": [],
+            "line": 195,
+            "name": "test_claim_new_append_leaves_the_existing_claims_parseable"
+          },
+          {
+            "covers": [],
+            "line": 212,
+            "name": "test_claim_show_prints_the_claim_as_written"
+          },
+          {
+            "covers": [],
+            "line": 224,
+            "name": "test_claim_show_of_an_unknown_id_exits_one"
+          },
+          {
+            "covers": [],
+            "line": 232,
+            "name": "test_claim_show_reports_a_duplicated_id"
+          },
+          {
+            "covers": [],
+            "line": 247,
+            "name": "test_claim_show_json"
+          },
+          {
+            "covers": [],
+            "line": 264,
+            "name": "test_status_json"
+          },
+          {
+            "covers": [],
+            "line": 275,
+            "name": "test_an_unbuilt_tier_is_reported_once_not_five_times"
+          }
+        ],
+        "untagged": 25
+      },
       "tests/test_trace.py": {
         "language": "python",
         "tests": [
@@ -1109,9 +1240,9 @@
       }
     },
     "tagged_tests": 0,
-    "total_tests": 210
+    "total_tests": 235
   },
-  "generated_from_commit": "24ecdee5e42b7ae0884e1d4e2c3dd125978cac97",
+  "generated_from_commit": "5b03151ddab8fcc2c9f1be7964a552bdbe570c00",
   "generator": "forge sync derived",
   "tool": "forge"
 }
