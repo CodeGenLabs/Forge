@@ -1,10 +1,10 @@
-"""The kernel's command surface, as far as M1 needs it.
+"""The kernel's command surface, as far as the milestones so far need it.
 
 Scope note: [MVP.md](../../MVP.md) lists a larger `forge drift` that reads anchors out of the claim
-store. The store is M0 and was skipped, so this exposes the anchor engine
-directly — enough to check the milestone by hand and to script against, and no
-more. `drift resolve`, `drift waive` and `reanchor` need the store and the
-ledger, so they are not here yet.
+store. This exposes the anchor engine directly instead - enough to check the
+milestone by hand and to script against. `drift resolve`, `drift waive` and
+`reanchor` write to the drift ledger, which does not exist yet, so they are not
+here.
 
 The kernel never calls a language model. Every output is reproducible from the
 repository at a commit, which is what makes gates built on it trustworthy.
@@ -17,9 +17,10 @@ import json
 import sys
 from pathlib import Path
 
-from . import derive, gitio, trace
+from . import derive, gitio, trace, validate
 from .anchor import AnchorError, Status, classify, parse_anchor
 from .fingerprint import available_languages, fingerprint_source
+from .validate import Issue
 
 _EXIT_OK = 0
 _EXIT_CHANGED = 1      # a drift signal, not an error - scriptable as a gate
@@ -199,79 +200,100 @@ def _cmd_status(args: argparse.Namespace) -> int:
     return _EXIT_OK
 
 
+SCOPES = ("store", "derived", "trace")
+
+
+def _check_derived(repo: Path) -> list[Issue]:
+    issues = []
+    for name, changed in derive.derive_all(repo, dry_run=True).items():
+        if changed:
+            issues.append(Issue(
+                "ERROR", "derived.dirty", f"{derive.DERIVED_DIR}/{name}",
+                "regenerating produces different bytes; it was hand-edited or is stale",
+                "forge sync derived",
+            ))
+    return issues
+
+
+def _check_trace(repo: Path) -> list[Issue]:
+    index = (derive.read_json(repo / derive.DERIVED_DIR / trace.TRACE_FILE) or {}).get("data")
+    if index is None:
+        return [Issue(
+            "ERROR", "derived.missing", f"{derive.DERIVED_DIR}/{trace.TRACE_FILE}",
+            "the trace index has not been built", "forge sync derived",
+        )]
+    issues = []
+    ids = index.get("ids", {})
+    for identifier in index.get("summary", {}).get("dangling_references", []):
+        entry = ids.get(identifier, {})
+        where = (entry.get("back_references") or entry.get("tests")
+                 or entry.get("changes") or ["unknown"])
+        issues.append(Issue(
+            "ERROR", "trace.dangling_reference", where[0],
+            f"{identifier} is referenced but no claim or ADR defines it",
+            f"define {identifier} in the store, or remove the reference",
+            claim=identifier,
+        ))
+    return issues
+
+
 def _cmd_check(args: argparse.Namespace) -> int:
     """Deterministic checks, as far as the milestones so far allow.
 
-    Scope note: MVP.md lists 39 checks across the store, the change DAG and
-    verification. The claim store is M0 and the change DAG is M3, so this runs
-    the subset that has something to check today - and says which those are,
-    rather than reporting a clean bill of health for checks that do not exist.
+    Scope note: MVP.md lists 39 checks. The store's 18 and the derived tier's
+    are here; the change DAG's are M3. A clean report names what it declined to
+    check, because one that does not is a clean report nobody should trust.
     """
     repo = args.repo.resolve()
     if not gitio.is_repo(repo):
         print(f"forge: {repo} is not a git repository", file=sys.stderr)
         return _EXIT_USAGE
 
-    issues: list[dict] = []
+    scopes = tuple(args.scope) if args.scope else SCOPES
+    issues: list[Issue] = []
+    if "derived" in scopes:
+        issues.extend(_check_derived(repo))
+    if "trace" in scopes:
+        issues.extend(_check_trace(repo))
+    if "store" in scopes:
+        issues.extend(validate.check_store(repo))
 
-    dirty = [n for n, changed in derive.derive_all(repo, dry_run=True).items() if changed]
-    for name in dirty:
-        issues.append({
-            "level": "ERROR", "code": "derived.dirty",
-            "path": f"{derive.DERIVED_DIR}/{name}",
-            "message": "regenerating produces different bytes; it was hand-edited or is stale",
-            "fix": "forge sync derived",
-        })
-
-    index = (derive.read_json(repo / derive.DERIVED_DIR / trace.TRACE_FILE) or {}).get("data")
-    if index is None:
-        issues.append({
-            "level": "ERROR", "code": "derived.missing",
-            "path": f"{derive.DERIVED_DIR}/{trace.TRACE_FILE}",
-            "message": "the trace index has not been built",
-            "fix": "forge sync derived",
-        })
-    else:
-        ids = index.get("ids", {})
-        for identifier in index.get("summary", {}).get("dangling_references", []):
-            entry = ids.get(identifier, {})
-            where = (entry.get("back_references") or entry.get("tests")
-                     or entry.get("changes") or ["unknown"])
-            issues.append({
-                "level": "ERROR", "code": "trace.dangling_reference",
-                "path": where[0],
-                "message": f"{identifier} is referenced but no claim or ADR defines it",
-                "fix": f"define {identifier} in the store, or remove the reference",
-            })
-        for identifier, entry in sorted(ids.items()):
-            if entry.get("candidate"):
-                continue
-            for target in entry.get("governs") or []:
-                if ids.get(target, {}).get("candidate"):
-                    issues.append({
-                        "level": "ERROR", "code": "store.ratified_points_at_candidate",
-                        "path": entry.get("defined_in") or identifier,
-                        "message": f"{identifier} governs {target}, which is only a candidate",
-                        "fix": f"forge ratify {target}, or drop the reference",
-                    })
+    errors = [i for i in issues if i.level == "ERROR"]
+    warnings = [i for i in issues if i.level != "ERROR"]
 
     if args.json:
-        print(json.dumps({"ok": not issues, "issues": issues}, indent=2))
-    else:
-        for issue in issues:
-            print(f"{issue['level']}  {issue['code']}  {issue['path']}\n"
-                  f"       {issue['message']}\n       fix: {issue['fix']}")
-        checked = "derived-tier freshness, trace integrity"
-        pending = "claim schema (M0), change DAG and coverage (M3)"
-        if issues:
-            print(f"\n{len(issues)} issue(s). Checked: {checked}.", file=sys.stderr)
-        else:
-            # Both lines on stdout so they stay in order. A clean report that
-            # does not say what it declined to check is a clean report nobody
-            # should trust.
-            print(f"ok - no issues. Checked: {checked}.")
+        print(json.dumps({
+            "ok": not errors,
+            "command": "forge check",
+            "scopes": list(scopes),
+            "summary": {"errors": len(errors), "warnings": len(warnings)},
+            "issues": [i.to_dict() for i in issues],
+        }, indent=2))
+        return _EXIT_CHANGED if errors else _EXIT_OK
+
+    for issue in issues:
+        where = issue.path + (f":{issue.line}" if issue.line else "")
+        tag = f"  [{issue.claim}]" if issue.claim else ""
+        print(f"{issue.level:7} {issue.code:28} {where}{tag}\n"
+              f"        {issue.message}\n        fix: {issue.fix}")
+
+    checked = ", ".join({
+        "store": "claim store (S1-S18)",
+        "derived": "derived-tier freshness",
+        "trace": "trace integrity",
+    }[scope] for scope in SCOPES if scope in scopes)
+    pending = "change DAG, requirement coverage and verification (M3)"
+    if issues:
+        print(f"\n{len(errors)} error(s), {len(warnings)} warning(s). "
+              f"Checked: {checked}.", file=sys.stderr)
+        if not errors:
+            # Warnings alone must not fail a gate: S13-S17 are heuristics, and
+            # a heuristic that blocks a commit gets switched off within a week.
             print(f"Not yet checked: {pending}.")
-    return _EXIT_CHANGED if issues else _EXIT_OK
+    else:
+        print(f"ok - no issues. Checked: {checked}.")
+        print(f"Not yet checked: {pending}.")
+    return _EXIT_CHANGED if errors else _EXIT_OK
 
 
 def _cmd_doctor(args: argparse.Namespace) -> int:
@@ -329,8 +351,17 @@ def main(argv: list[str] | None = None) -> int:
     status.add_argument("--repo", type=Path, default=Path.cwd())
     status.set_defaults(func=_cmd_status)
 
-    check = sub.add_parser("check", help="run the deterministic checks that exist today")
+    check = sub.add_parser(
+        "check",
+        help="run the deterministic checks that exist today",
+        description="Exit 0 when no ERROR was found, 1 when one was, 2 on a usage "
+                    "error. Warnings never fail: S13-S17 are heuristics about "
+                    "writing quality, and a heuristic that blocks a commit gets "
+                    "switched off within a week.",
+    )
     check.add_argument("--repo", type=Path, default=Path.cwd())
+    check.add_argument("--scope", action="append", choices=SCOPES,
+                       help="limit to one scope; repeatable. Default: all of them")
     check.add_argument("--json", action="store_true")
     check.set_defaults(func=_cmd_check)
 

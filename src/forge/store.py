@@ -1,4 +1,4 @@
-"""Reading the claim store. Parsing only - validation is M0.
+"""Reading the claim store. Parsing only; the checks live in `validate.py`.
 
 A claim is a Markdown heading carrying a stable ID, followed by a fenced
 ``claim`` block, then prose::
@@ -25,9 +25,14 @@ the heading, take the next fenced ``claim`` block, hand it to a YAML parser, and
 leave everything else as prose.
 
 Scope: this module answers "what claims exist and what do they point at". It
-does **not** decide whether a claim is well-formed - the checks in
-SYSTEM_KNOWLEDGE.md section 7 belong to M0, and putting them here would make the
-trace index refuse to build on a store that merely has a mistake in it.
+does **not** decide whether a claim is well-formed - that is `validate.py`, and
+the split is load-bearing. Folded together, the trace index would refuse to
+build on a store that merely has a mistake in it, and `forge check` would then
+have no index to report the mistake from.
+
+So the parser is deliberately permissive: a claim that fails every check still
+parses, carrying its `parse_error` and the set of `fields` it declared, and the
+checks read those rather than re-parsing.
 """
 
 from __future__ import annotations
@@ -120,8 +125,18 @@ class Claim:
     supersedes: str | None = None
     reviewed: str | None = None
     confidence: str | None = None
+    retired_ground: str | None = None
+    retired_evidence: str | None = None
     prose: str = ""
     parse_error: str | None = None
+    #: Keys the claim fence actually declared, before any normalisation.
+    #: Validation needs to tell `anchors: []` (legal for a concept) from no
+    #: `anchors` key at all (never legal), and only the parser can see the
+    #: difference - by the time a field has a default, the two look the same.
+    fields: set[str] = field(default_factory=set)
+    #: Last line of the claim's section, so a scan over the raw file can say
+    #: which claim a hit belongs to.
+    end_line: int = 0
 
     @property
     def is_candidate(self) -> bool:
@@ -195,6 +210,7 @@ def parse_claims(text: str, path: str) -> list[Claim]:
             file=path,
             line=text.count("\n", 0, heading.start()) + 1,
             title=(heading.group("title") or "").strip(),
+            end_line=text.count("\n", 0, end) + 1,
         )
 
         fence = _FENCE_RE.search(section)
@@ -206,18 +222,26 @@ def parse_claims(text: str, path: str) -> list[Claim]:
 
         try:
             block = yaml.safe_load(fence.group("body")) or {}
-        except yaml.YAMLError as exc:
+        # ValueError alongside YAMLError: PyYAML resolves an unquoted
+        # `2026-02-30` to a timestamp and then lets `datetime.date` raise, so a
+        # typo in a review date would otherwise take down every command that
+        # reads the store - including the one whose job is to report it.
+        except (yaml.YAMLError, ValueError) as exc:
             claim.parse_error = f"claim block is not valid YAML: {exc}"
             block = {}
         if not isinstance(block, dict):
             claim.parse_error = "claim block is not a mapping"
             block = {}
 
+        # Underscores accepted alongside hyphens throughout, so a YAML habit is
+        # not a validation error; the canonical spelling is the hyphenated one.
+        block = {str(key).replace("_", "-"): value for key, value in block.items()}
+
         declared_kind = str(block.get("kind") or "").strip()
         if declared_kind:
             claim.kind = declared_kind
         claim.status = str(block.get("status") or "").strip()
-        claim.truth_source = str(block.get("truth-source") or block.get("truth_source") or "").strip()
+        claim.truth_source = str(block.get("truth-source") or "").strip()
         claim.anchors = _as_list(block.get("anchors"))
         claim.evidence = _evidence_entries(block.get("evidence"))
         claim.governs = _as_list(block.get("governs"))
@@ -225,6 +249,13 @@ def parse_claims(text: str, path: str) -> list[Claim]:
         claim.supersedes = (str(block["supersedes"]).strip() if block.get("supersedes") else None)
         claim.reviewed = (str(block["reviewed"]).strip() if block.get("reviewed") else None)
         claim.confidence = (str(block["confidence"]).strip() if block.get("confidence") else None)
+        claim.retired_ground = (
+            str(block["retired-ground"]).strip() if block.get("retired-ground") else None
+        )
+        claim.retired_evidence = (
+            str(block["retired-evidence"]).strip() if block.get("retired-evidence") else None
+        )
+        claim.fields = set(block)
         claim.prose = section[fence.end():].strip()
         claims.append(claim)
 

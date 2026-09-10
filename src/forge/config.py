@@ -34,6 +34,15 @@ class Config:
     #: harvesting skips them. Two keys rather than one because conflating them
     #: costs a repository its own test statistics to silence a few fixtures.
     exclude_id_scan: list[str] = field(default_factory=list)
+    #: Line budget for the always-loaded set (`budgets.always_loaded_lines`).
+    #: Configurable so a project can set it *lower*; CONSTITUTION.md says it is
+    #: never raised, and the check's `fix` string says so rather than the
+    #: loader refusing to read a larger number - a check that argues is more
+    #: useful than a loader that lies about what the file says.
+    always_loaded_lines: int = 400
+    #: How many recent changes the orphan check looks back over
+    #: (`thresholds.orphan_change_window`).
+    orphan_change_window: int = 20
     #: Where the file came from, or None when defaults are in use.
     source: str | None = None
     #: Populated when the file exists but could not be read.
@@ -58,12 +67,40 @@ def load_config(repo: Path) -> Config:
     if not isinstance(raw, dict):
         return Config(source=CONFIG_PATH, error=f"{CONFIG_PATH} is not a mapping")
 
-    derive_section = raw.get("derive") if isinstance(raw.get("derive"), dict) else {}
+    derive_section = _section(raw, "derive")
+    budgets = _section(raw, "budgets")
+    thresholds = _section(raw, "thresholds")
+    defaults = Config()
     return Config(
         exclude=_string_list(derive_section.get("exclude")),
         exclude_id_scan=_string_list(derive_section.get("exclude_id_scan")),
+        always_loaded_lines=_positive_int(
+            budgets.get("always_loaded_lines"), defaults.always_loaded_lines
+        ),
+        orphan_change_window=_positive_int(
+            thresholds.get("orphan_change_window"), defaults.orphan_change_window
+        ),
         source=CONFIG_PATH,
     )
+
+
+def _section(raw: dict, name: str) -> dict:
+    value = raw.get(name)
+    return value if isinstance(value, dict) else {}
+
+
+def _positive_int(value: object, default: int) -> int:
+    """A number, or the default. A garbage value never disables a check.
+
+    Silently falling back to the default is deliberate: the alternative is
+    `int(None)` blowing up, or a `0` budget that makes the check fire on every
+    store. A typo in an optional setting must not change what is enforced.
+    """
+    try:
+        number = int(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return default
+    return number if number > 0 else default
 
 
 def _string_list(value: object) -> list[str]:

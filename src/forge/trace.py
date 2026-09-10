@@ -36,7 +36,7 @@ from pathlib import Path
 
 from . import derive, gitio, store
 
-__all__ = ["build_trace", "lookup", "TRACE_FILE"]
+__all__ = ["build_trace", "lookup", "recent_change_citations", "TRACE_FILE"]
 
 TRACE_FILE = "trace.json"
 
@@ -82,6 +82,27 @@ def _scan_changes(repo: Path) -> dict[str, list[str]]:
         for identifier in set(_ID_RE.findall(blob.decode("utf-8", "replace"))):
             by_id.setdefault(identifier, []).append(change)
     return {k: sorted(set(v)) for k, v in by_id.items()}
+
+
+def recent_change_citations(repo: Path, window: int) -> set[str]:
+    """Every ID cited by the *window* most recent changes.
+
+    "Most recent" is by directory name descending, which is what the change
+    numbering gives for free (`changes/0007-add-refunds/`). Ordering by commit
+    date instead would need a git log per directory to answer a question the
+    name already answers, and an archived change keeps its number.
+
+    The orphan check (S17) is the only consumer: a claim that some change
+    argued about recently is not an orphan, whatever the graph says.
+    """
+    by_id = _scan_changes(repo)
+    if window <= 0:
+        return set()
+    newest = sorted({change for changes in by_id.values() for change in changes},
+                    reverse=True)[:window]
+    keep = set(newest)
+    return {identifier for identifier, changes in by_id.items()
+            if keep.intersection(changes)}
 
 
 def build_trace(repo: Path) -> dict:

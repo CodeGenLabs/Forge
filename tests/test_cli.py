@@ -128,7 +128,9 @@ evidence:
 reviewed: 2026-09-10
 ```
 
-Partial refunds accumulate.
+Partial refunds accumulate: what is bounded is the sum of settled refunds, not
+each refund on its own. An attempt over the remaining balance must be rejected
+at the domain boundary rather than clamped.
 """
 
 
