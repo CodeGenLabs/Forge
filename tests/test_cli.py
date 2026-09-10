@@ -216,7 +216,11 @@ def test_status_reports_commits_behind(stored, capsys):
     stored.commit("clamp")
     capsys.readouterr()
     main(["status", "--repo", str(stored.root)])
-    assert "1 commits behind" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "1 commit behind" in out
+    # A status line that reports a problem without naming the fix trains people
+    # to ignore it.
+    assert "forge sync derived" in out
 
 
 def test_output_is_ascii_only(stored, capsys):

@@ -1,0 +1,21 @@
+# forge project configuration.
+#
+# Everything here has a default; the kernel runs with no config at all. Only the
+# keys the current milestones read are listed.
+
+derive:
+  # Files whose ID-looking strings are *data*, not declarations. They still
+  # count in the inventory and the test totals; only `@covers` and `forge:<ID>`
+  # harvesting skips them.
+  #
+  # This repository is the pathological case for its own scanner: the test
+  # suite is built out of exactly the strings the scanner looks for, and the
+  # measurement tools embed example IDs in their documentation. Indexing those
+  # produced eight dangling references against an empty store.
+  #
+  # A normal project would NOT list its tests here - `@covers` belongs in tests
+  # and is the entire point of the tag. This entry is a property of building
+  # the tool, not advice about using it.
+  exclude_id_scan:
+    - "tests/*"
+    - "tools/*"

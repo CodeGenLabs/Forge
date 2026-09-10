@@ -268,3 +268,56 @@ def test_a_real_change_still_registers_as_stale(project):
     project.write("src/demo/pay.py", "def refundable(a, b):\n    return max(0, a - b)\n")
     project.commit("clamp")
     assert set(derive.stale_artifacts(project.root).values()) == {1}
+
+
+# --------------------------------------------------------------------------
+# Project configuration
+# --------------------------------------------------------------------------
+
+def test_exclude_id_scan_keeps_the_file_but_drops_its_ids(project):
+    """The two exclusion keys exist because conflating them costs a project its
+    own test statistics in order to silence a few fixtures."""
+    project.write(".forge/config.yaml", 'derive:\n  exclude_id_scan:\n    - "tests/*"\n')
+    project.commit("exclude fixture ids")
+
+    data = derive.build_tests(project.root)
+    assert data["total_tests"] == 2, "the tests must still be counted"
+    assert data["tagged_tests"] == 0, "their @covers tags must not be harvested"
+    assert data["covers_index"] == {}
+
+
+def test_exclude_drops_the_file_entirely(project):
+    project.write(".forge/config.yaml", 'derive:\n  exclude:\n    - "tests/*"\n')
+    project.commit("exclude tests outright")
+    assert derive.build_inventory(project.root)["test_files"] == []
+
+
+def test_a_directory_pattern_covers_its_subtree(project):
+    """`tests/*` is what a person writes for "the tests"; fnmatch alone would
+    not match a nested path, and a config that does not behave the way it reads
+    is a trap."""
+    project.write("tests/unit/test_deep.py", "# @covers INV-5\ndef test_deep():\n    assert True\n")
+    project.write(".forge/config.yaml", 'derive:\n  exclude_id_scan:\n    - "tests/*"\n')
+    project.commit("nested test plus exclusion")
+    assert derive.build_tests(project.root)["covers_index"] == {}
+
+
+def test_a_malformed_config_falls_back_to_defaults(project):
+    """A tool that refuses to start because its optional config has a typo is
+    worse than one that starts with defaults and says so."""
+    from forge.config import load_config
+
+    project.write(".forge/config.yaml", "derive: [this is not a mapping\n")
+    project.commit("break the config")
+    config = load_config(project.root)
+    assert config.error is not None
+    assert config.exclude == [] and config.exclude_id_scan == []
+    # And the tier still builds.
+    assert derive.build_inventory(project.root)["files_tracked"] > 0
+
+
+def test_no_config_is_not_an_error(project):
+    from forge.config import load_config
+
+    config = load_config(project.root)
+    assert config.source is None and config.error is None

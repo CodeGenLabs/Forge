@@ -27,6 +27,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from . import gitio
+from .config import Config, load_config
 from .fingerprint import language_for_path
 
 __all__ = [
@@ -108,16 +109,23 @@ def label_for_path(path: str) -> str:
     return "other"
 
 
-def is_ignored(path: str) -> bool:
+def is_ignored(path: str, config: Config | None = None) -> bool:
     """Paths the derived tier does not describe.
 
-    The tier excludes *itself*. Counting its own JSON among the repository's
-    files is circular, and it would make the inventory a description of the
-    describer rather than of the code.
+    Three reasons a path is skipped: it is vendored or built, it belongs to the
+    tier itself, or the project excluded it.
+
+    The tier excludes *itself* because counting its own JSON is circular - the
+    inventory would describe the describer. The project exclusions exist for
+    repositories whose files contain IDs that are data rather than declarations;
+    this repository is the extreme case, since its test fixtures are made of
+    exactly the strings the scanner looks for.
     """
     if path.startswith(f"{DERIVED_DIR}/"):
         return True
-    return any(segment in _IGNORED_SEGMENTS for segment in path.split("/"))
+    if any(segment in _IGNORED_SEGMENTS for segment in path.split("/")):
+        return True
+    return bool(config and config.excludes(path))
 
 
 def is_test_path(path: str) -> bool:
@@ -300,8 +308,9 @@ def _entry_points(repo: Path, tracked: list[str]) -> list[str]:
 
 def build_inventory(repo: Path) -> dict:
     """Languages, line counts, tests, entry points and declared stack."""
+    config = load_config(repo)
     tracked = [p for p in gitio.list_files_at(repo, "HEAD")]
-    interesting = [p for p in tracked if not is_ignored(p)]
+    interesting = [p for p in tracked if not is_ignored(p, config)]
 
     by_language: dict[str, dict] = {}
     tests: list[str] = []
@@ -344,12 +353,17 @@ def build_tests(repo: Path) -> dict:
     preceding or same-line tag - which is a convention, not a parse, and is
     reported per file so a miss is visible rather than silent.
     """
+    config = load_config(repo)
     files: dict[str, dict] = {}
     by_id: dict[str, list[str]] = {}
 
     for path in gitio.list_files_at(repo, "HEAD"):
-        if is_ignored(path) or not is_test_path(path):
+        if is_ignored(path, config) or not is_test_path(path):
             continue
+        # Excluded files are still counted and their tests still listed; only
+        # the `@covers` harvest is skipped. Dropping them entirely would cost a
+        # project its own test statistics in order to silence a few fixtures.
+        harvest_ids = not config.excludes_id_scan(path)
         language = language_for_path(path)
         if language is None:
             continue
@@ -362,10 +376,11 @@ def build_tests(repo: Path) -> dict:
         # Tag positions first, so each declaration can look backwards for the
         # nearest one that is not already claimed by a closer declaration.
         tags: dict[int, list[str]] = {}
-        for index, line in enumerate(lines):
-            covered = _covers_in(line)
-            if covered:
-                tags[index] = covered
+        if harvest_ids:
+            for index, line in enumerate(lines):
+                covered = _covers_in(line)
+                if covered:
+                    tags[index] = covered
 
         declarations: list[dict] = []
         for pattern in _TEST_DECL_RES.get(language, []):
@@ -410,10 +425,14 @@ def build_tests(repo: Path) -> dict:
 
 # Back-references bind an *enforcement artifact* to a claim, so prose is
 # excluded from the scan. Without this, a design document that demonstrates the
-# convention - `comment: 'forge:ARC-3'` in an example, or a literal
-# `grep -r "forge:REQ-refunds-3"` - creates index entries for claims that were
-# never meant to exist, and they surface as dangling references. Citing an ID in
-# prose is normal; only code and rule files declare that they enforce one.
+# convention - a tag written inside an example rule, or a literal grep command
+# showing how to find one - creates index entries for claims that were never
+# meant to exist, and they surface as dangling references. Citing an ID in prose
+# is normal; only code and rule files declare that they enforce one.
+#
+# The same trap catches this comment: naming a real-looking ID here would make
+# the module a back-reference to a claim it does not enforce. Hence the
+# placeholders.
 _PROSE_LABELS = frozenset({"markdown", "text", "other"})
 
 
@@ -425,9 +444,12 @@ def build_backrefs(repo: Path) -> dict:
     so a rule tagged for a claim that does not exist is an error rather than a
     stale comment nobody notices.
     """
+    config = load_config(repo)
     by_id: dict[str, list[str]] = {}
     for path in gitio.list_files_at(repo, "HEAD"):
-        if is_ignored(path) or label_for_path(path) in _PROSE_LABELS:
+        if is_ignored(path, config) or config.excludes_id_scan(path):
+            continue
+        if label_for_path(path) in _PROSE_LABELS:
             continue
         blob = gitio.blob_at(repo, "HEAD", path)
         if blob is None or b"forge:" not in blob:
