@@ -8,7 +8,7 @@
       },
       "markdown": {
         "files": 19,
-        "lines": 8921
+        "lines": 8993
       },
       "other": {
         "files": 2,
@@ -63,7 +63,7 @@
       "tests/test_validate.py"
     ]
   },
-  "generated_from_commit": "5b03151ddab8fcc2c9f1be7964a552bdbe570c00",
+  "generated_from_commit": "21a696512cf22190d2211b322a0d950a89be9045",
   "generator": "forge sync derived",
   "tool": "forge"
 }
