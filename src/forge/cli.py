@@ -157,16 +157,20 @@ def _cmd_status(args: argparse.Namespace) -> int:
     head = gitio.rev_parse(repo, "HEAD")
     print(f"repository       {repo.name} @ {head[:10]}")
 
+    # Content decides freshness; the commit stamp is provenance shown alongside
+    # it. Comparing content is exact, and it is the only comparison that can
+    # ever come out clean for a file that is itself committed.
     staleness = derive.stale_artifacts(repo)
     missing = [n for n, v in staleness.items() if v is None]
-    behind = {n: v for n, v in staleness.items() if v}
+    outdated = [n for n, changed in derive.derive_all(repo, dry_run=True).items() if changed]
     if missing:
-        state = f"{len(missing)} not built ({', '.join(sorted(missing))})"
-    elif behind:
-        count = max(behind.values())
-        state = f"{count} commit{'s' if count != 1 else ''} behind; run `forge sync derived`"
+        state = f"{len(missing)} not built; run `forge sync derived`"
+    elif outdated:
+        state = f"{len(outdated)} stale; run `forge sync derived`"
     else:
-        state = "current"
+        behind = max((v for v in staleness.values() if v is not None), default=0)
+        age = f", derived {behind} commit{'s' if behind != 1 else ''} back" if behind else ""
+        state = f"current{age}"
     print(f"derived tier     {state}")
 
     index = (derive.read_json(repo / derive.DERIVED_DIR / trace.TRACE_FILE) or {}).get("data")

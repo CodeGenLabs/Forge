@@ -210,17 +210,46 @@ def test_status_fits_on_one_screen(stored, capsys):
     assert any("1 ratified" in line for line in lines)
 
 
-def test_status_reports_commits_behind(stored, capsys):
+def test_status_reports_the_derived_tier_stale_when_content_moved(stored, capsys):
+    main(["sync", "derived", "--repo", str(stored.root)])
+    stored.write("src/ledger.py", "# forge:INV-7\ndef settle():\n    return None\n")
+    stored.commit("a file the inventory has never seen")
+    capsys.readouterr()
+    main(["status", "--repo", str(stored.root)])
+    out = capsys.readouterr().out
+    assert "stale" in out
+    # A status line that reports a problem without naming the fix trains people
+    # to ignore it.
+    assert "forge sync derived" in out
+
+
+def test_a_body_only_edit_does_not_make_the_derived_tier_stale(stored, capsys):
+    """The derived tier is a census, not a drift detector. Rewriting a function
+    body changes nothing it records - same file, same line count, same
+    back-reference - so calling it stale would be a false alarm, and a tier
+    that cries stale on every commit gets resynced without being read. Whether
+    that edit invalidated INV-7 is `forge drift`'s question."""
     main(["sync", "derived", "--repo", str(stored.root)])
     stored.write("src/pay.py", "def refundable(a, b):  # forge:INV-7\n    return max(0, a - b)\n")
     stored.commit("clamp")
     capsys.readouterr()
     main(["status", "--repo", str(stored.root)])
+    assert "stale" not in capsys.readouterr().out
+
+
+def test_status_stays_current_after_the_derived_tier_is_committed(stored, capsys):
+    """The treadmill case. Committing the derived tier moves HEAD past the
+    commit stamped inside it, so an age comparison would call the files stale
+    the instant they became correct - and no amount of regenerating could
+    settle it. Content is the truth; the stamp is provenance beside it."""
+    main(["sync", "derived", "--repo", str(stored.root)])
+    stored.commit("chore: sync derived tier")
+    capsys.readouterr()
+    main(["status", "--repo", str(stored.root)])
     out = capsys.readouterr().out
-    assert "1 commit behind" in out
-    # A status line that reports a problem without naming the fix trains people
-    # to ignore it.
-    assert "forge sync derived" in out
+    assert "current" in out
+    assert "stale" not in out
+    assert main(["check", "--repo", str(stored.root)]) == 0
 
 
 def test_output_is_ascii_only(stored, capsys):

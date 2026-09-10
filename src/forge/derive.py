@@ -163,15 +163,30 @@ def render_json(payload: dict) -> bytes:
 
 
 def write_json(path: Path, payload: dict, *, dry_run: bool = False) -> bool:
-    """Write *payload*. Returns True when the bytes differ from what is on disk.
+    """Write *payload* if its **data** differs from what is on disk.
 
     ``dry_run`` answers "would this change anything?" without touching the
     working tree, which is what `forge check` needs: a check that has to write
     in order to report the tree clean is not a check.
+
+    Only ``data`` is compared, never the envelope, and that is what breaks the
+    treadmill. The envelope stamps HEAD; committing the file moves HEAD; so a
+    whole-payload comparison would report the file dirty immediately after it
+    was written, forever, and no amount of regenerating could settle it. A file
+    cannot carry the id of the commit that contains it.
+
+    So the split is: **content is the truth, the stamp is provenance.** When the
+    content still describes the repository the file is left alone, keeping the
+    id of the commit it was genuinely derived from - which is more honest than
+    restamping it with a commit whose contents it was never shown.
     """
     encoded = render_json(payload)
-    if path.exists() and path.read_bytes() == encoded:
-        return False
+    if path.exists():
+        existing = read_json(path)
+        if existing is not None and existing.get("data") == payload.get("data"):
+            return False
+        if path.read_bytes() == encoded:
+            return False
     if dry_run:
         return True
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -307,9 +322,19 @@ def _entry_points(repo: Path, tracked: list[str]) -> list[str]:
 
 
 def build_inventory(repo: Path) -> dict:
-    """Languages, line counts, tests, entry points and declared stack."""
+    """Languages, line counts, tests, entry points and declared stack.
+
+    ``files_tracked`` counts what git tracks *minus the derived tier itself*,
+    for the same reason `is_ignored` skips that directory: a census that counts
+    its own output is not stable under its own commit. Committing four freshly
+    written JSON files would move the count, which would make the inventory
+    stale, which would rewrite it, which would be another commit. The pair to
+    read is "we can see N files and we describe M of them" - neither number is
+    about the describer.
+    """
     config = load_config(repo)
-    tracked = [p for p in gitio.list_files_at(repo, "HEAD")]
+    tracked = [p for p in gitio.list_files_at(repo, "HEAD")
+               if not p.startswith(f"{DERIVED_DIR}/")]
     interesting = [p for p in tracked if not is_ignored(p, config)]
 
     by_language: dict[str, dict] = {}
