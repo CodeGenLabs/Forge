@@ -89,6 +89,14 @@ def _cmd_sync(args: argparse.Namespace) -> int:
     changed = derive.derive_all(repo, only=args.only or None)
     for name, was_changed in changed.items():
         print(f"{'updated' if was_changed else 'unchanged'}  {derive.DERIVED_DIR}/{name}")
+    if any(changed.values()):
+        # The tier is derived from HEAD, so its content describes HEAD and it
+        # must land in a commit of its own. Folded into the code commit it would
+        # describe that commit's *parent* - stale the moment it is written, and
+        # `forge check` would say so. A derived-only commit is also excluded
+        # from the staleness count, so the steady state stays clean.
+        print("\nCommit these on their own, after the code commit they describe:")
+        print(f"  git add {derive.DERIVED_DIR} && git commit -m 'chore: sync derived tier'")
     return _EXIT_OK
 
 
@@ -155,7 +163,8 @@ def _cmd_status(args: argparse.Namespace) -> int:
     if missing:
         state = f"{len(missing)} not built ({', '.join(sorted(missing))})"
     elif behind:
-        state = f"{max(behind.values())} commits behind"
+        count = max(behind.values())
+        state = f"{count} commit{'s' if count != 1 else ''} behind; run `forge sync derived`"
     else:
         state = "current"
     print(f"derived tier     {state}")

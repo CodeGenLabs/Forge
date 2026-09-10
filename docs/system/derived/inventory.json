@@ -4,19 +4,19 @@
     "by_language": {
       "json": {
         "files": 6,
-        "lines": 469
+        "lines": 468
       },
       "markdown": {
         "files": 10,
-        "lines": 5365
+        "lines": 5450
       },
       "other": {
         "files": 2,
         "lines": 37
       },
       "python": {
-        "files": 14,
-        "lines": 3099
+        "files": 19,
+        "lines": 5220
       },
       "toml": {
         "files": 1,
@@ -26,8 +26,8 @@
     "entry_points": [
       "src/forge/cli.py"
     ],
-    "files_considered": 33,
-    "files_tracked": 33,
+    "files_considered": 38,
+    "files_tracked": 42,
     "stack": {
       "python": {
         "lockfile": null,
@@ -50,12 +50,14 @@
       "tests/test_anchor_classify.py",
       "tests/test_anchor_parse.py",
       "tests/test_cli.py",
+      "tests/test_derive.py",
       "tests/test_fingerprint.py",
       "tests/test_gitio.py",
-      "tests/test_perturbations.py"
+      "tests/test_perturbations.py",
+      "tests/test_trace.py"
     ]
   },
-  "generated_from_commit": "ad8b5f5ee409e7ddf625c527a228b1c1c5bda180",
+  "generated_from_commit": "2542e44d62bc98b73b68f777434f99ece308305e",
   "generator": "forge sync derived",
   "tool": "forge"
 }

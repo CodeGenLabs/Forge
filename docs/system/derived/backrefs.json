@@ -1,9 +1,30 @@
 {
   "$schema": "forge/derived/v1",
   "data": {
-    "by_id": {}
+    "by_id": {
+      "ARC-3": [
+        "src/forge/derive.py:413",
+        "tests/test_derive.py:186",
+        "tests/test_derive.py:195"
+      ],
+      "ARC-99": [
+        "tests/test_derive.py:200"
+      ],
+      "CMP-nowhere": [
+        "tests/test_cli.py:168"
+      ],
+      "INV-7": [
+        "tests/test_cli.py:137",
+        "tests/test_cli.py:215",
+        "tests/test_trace.py:81"
+      ],
+      "REQ-refunds-3": [
+        "src/forge/derive.py:414",
+        "tests/test_derive.py:196"
+      ]
+    }
   },
-  "generated_from_commit": "ad8b5f5ee409e7ddf625c527a228b1c1c5bda180",
+  "generated_from_commit": "2542e44d62bc98b73b68f777434f99ece308305e",
   "generator": "forge sync derived",
   "tool": "forge"
 }

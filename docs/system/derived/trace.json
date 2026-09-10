@@ -1,19 +1,222 @@
 {
   "$schema": "forge/derived/v1",
   "data": {
-    "ids": {},
+    "ids": {
+      "ARC-3": {
+        "anchor_paths": [],
+        "anchors": [],
+        "back_references": [
+          "src/forge/derive.py:413",
+          "tests/test_derive.py:186",
+          "tests/test_derive.py:195"
+        ],
+        "candidate": false,
+        "changes": [],
+        "defined_in": null,
+        "evidence": [],
+        "governed_by": [],
+        "governs": [],
+        "id": "ARC-3",
+        "justifies": [],
+        "kind": null,
+        "referenced_by_adr": [],
+        "references": [],
+        "since": null,
+        "status": null,
+        "supersedes": null,
+        "tests": [],
+        "title": null
+      },
+      "ARC-99": {
+        "anchor_paths": [],
+        "anchors": [],
+        "back_references": [
+          "tests/test_derive.py:200"
+        ],
+        "candidate": false,
+        "changes": [],
+        "defined_in": null,
+        "evidence": [],
+        "governed_by": [],
+        "governs": [],
+        "id": "ARC-99",
+        "justifies": [],
+        "kind": null,
+        "referenced_by_adr": [],
+        "references": [],
+        "since": null,
+        "status": null,
+        "supersedes": null,
+        "tests": [],
+        "title": null
+      },
+      "CMP-nowhere": {
+        "anchor_paths": [],
+        "anchors": [],
+        "back_references": [
+          "tests/test_cli.py:168"
+        ],
+        "candidate": false,
+        "changes": [],
+        "defined_in": null,
+        "evidence": [],
+        "governed_by": [],
+        "governs": [],
+        "id": "CMP-nowhere",
+        "justifies": [],
+        "kind": null,
+        "referenced_by_adr": [],
+        "references": [],
+        "since": null,
+        "status": null,
+        "supersedes": null,
+        "tests": [],
+        "title": null
+      },
+      "INV-1": {
+        "anchor_paths": [],
+        "anchors": [],
+        "back_references": [],
+        "candidate": false,
+        "changes": [],
+        "defined_in": null,
+        "evidence": [],
+        "governed_by": [],
+        "governs": [],
+        "id": "INV-1",
+        "justifies": [],
+        "kind": null,
+        "referenced_by_adr": [],
+        "references": [],
+        "since": null,
+        "status": null,
+        "supersedes": null,
+        "tests": [
+          "tests/test_derive.py::test_first"
+        ],
+        "title": null
+      },
+      "INV-2": {
+        "anchor_paths": [],
+        "anchors": [],
+        "back_references": [],
+        "candidate": false,
+        "changes": [],
+        "defined_in": null,
+        "evidence": [],
+        "governed_by": [],
+        "governs": [],
+        "id": "INV-2",
+        "justifies": [],
+        "kind": null,
+        "referenced_by_adr": [],
+        "references": [],
+        "since": null,
+        "status": null,
+        "supersedes": null,
+        "tests": [
+          "tests/test_derive.py::test_backrefs_are_found_in_code"
+        ],
+        "title": null
+      },
+      "INV-7": {
+        "anchor_paths": [],
+        "anchors": [],
+        "back_references": [
+          "tests/test_cli.py:137",
+          "tests/test_cli.py:215",
+          "tests/test_trace.py:81"
+        ],
+        "candidate": false,
+        "changes": [],
+        "defined_in": null,
+        "evidence": [],
+        "governed_by": [],
+        "governs": [],
+        "id": "INV-7",
+        "justifies": [],
+        "kind": null,
+        "referenced_by_adr": [],
+        "references": [],
+        "since": null,
+        "status": null,
+        "supersedes": null,
+        "tests": [
+          "tests/test_cli.py::test_sync_then_check_is_clean",
+          "tests/test_derive.py::test_refund_is_bounded",
+          "tests/test_trace.py::test_refund_is_bounded"
+        ],
+        "title": null
+      },
+      "REQ-refunds-1": {
+        "anchor_paths": [],
+        "anchors": [],
+        "back_references": [],
+        "candidate": false,
+        "changes": [],
+        "defined_in": null,
+        "evidence": [],
+        "governed_by": [],
+        "governs": [],
+        "id": "REQ-refunds-1",
+        "justifies": [],
+        "kind": null,
+        "referenced_by_adr": [],
+        "references": [],
+        "since": null,
+        "status": null,
+        "supersedes": null,
+        "tests": [
+          "tests/test_derive.py::test_refund_is_bounded"
+        ],
+        "title": null
+      },
+      "REQ-refunds-3": {
+        "anchor_paths": [],
+        "anchors": [],
+        "back_references": [
+          "src/forge/derive.py:414",
+          "tests/test_derive.py:196"
+        ],
+        "candidate": false,
+        "changes": [],
+        "defined_in": null,
+        "evidence": [],
+        "governed_by": [],
+        "governs": [],
+        "id": "REQ-refunds-3",
+        "justifies": [],
+        "kind": null,
+        "referenced_by_adr": [],
+        "references": [],
+        "since": null,
+        "status": null,
+        "supersedes": null,
+        "tests": [],
+        "title": null
+      }
+    },
     "summary": {
       "candidates": 0,
       "claims": 0,
-      "dangling_references": [],
+      "dangling_references": [
+        "ARC-3",
+        "ARC-99",
+        "CMP-nowhere",
+        "INV-1",
+        "INV-2",
+        "INV-7",
+        "REQ-refunds-1",
+        "REQ-refunds-3"
+      ],
       "decisions": 0,
-      "ids_indexed": 0,
+      "ids_indexed": 8,
       "invariants_without_tests": [],
-      "tests_tagged": 0,
-      "tests_total": 81
+      "tests_tagged": 5,
+      "tests_total": 139
     }
   },
-  "generated_from_commit": "ad8b5f5ee409e7ddf625c527a228b1c1c5bda180",
+  "generated_from_commit": "2542e44d62bc98b73b68f777434f99ece308305e",
   "generator": "forge sync derived",
   "tool": "forge"
 }

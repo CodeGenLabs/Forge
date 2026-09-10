@@ -1,7 +1,22 @@
 {
   "$schema": "forge/derived/v1",
   "data": {
-    "covers_index": {},
+    "covers_index": {
+      "INV-1": [
+        "tests/test_derive.py::test_first"
+      ],
+      "INV-2": [
+        "tests/test_derive.py::test_backrefs_are_found_in_code"
+      ],
+      "INV-7": [
+        "tests/test_cli.py::test_sync_then_check_is_clean",
+        "tests/test_derive.py::test_refund_is_bounded",
+        "tests/test_trace.py::test_refund_is_bounded"
+      ],
+      "REQ-refunds-1": [
+        "tests/test_derive.py::test_refund_is_bounded"
+      ]
+    },
     "files": {
       "tests/test_anchor_classify.py": {
         "language": "python",
@@ -95,9 +110,39 @@
             "covers": [],
             "line": 230,
             "name": "test_unmoved_anchor_is_not_reported_as_moved"
+          },
+          {
+            "covers": [],
+            "line": 272,
+            "name": "test_move_below_gits_rename_threshold_is_still_followed"
+          },
+          {
+            "covers": [],
+            "line": 295,
+            "name": "test_file_anchor_relocates_by_whole_file_fingerprint"
+          },
+          {
+            "covers": [],
+            "line": 303,
+            "name": "test_relocation_refuses_when_ambiguous"
+          },
+          {
+            "covers": [],
+            "line": 327,
+            "name": "test_git_resolves_an_unambiguous_identical_copy_itself"
+          },
+          {
+            "covers": [],
+            "line": 338,
+            "name": "test_relocation_does_not_fire_on_a_genuine_deletion"
+          },
+          {
+            "covers": [],
+            "line": 347,
+            "name": "test_relocation_does_not_accept_a_different_implementation"
           }
         ],
-        "untagged": 18
+        "untagged": 24
       },
       "tests/test_anchor_parse.py": {
         "language": "python",
@@ -192,9 +237,204 @@
             "covers": [],
             "line": 105,
             "name": "test_doctor_reports_the_toolchain"
+          },
+          {
+            "covers": [
+              "INV-7"
+            ],
+            "line": 142,
+            "name": "test_sync_then_check_is_clean"
+          },
+          {
+            "covers": [],
+            "line": 152,
+            "name": "test_check_reports_a_hand_edited_derived_file"
+          },
+          {
+            "covers": [],
+            "line": 165,
+            "name": "test_check_reports_a_dangling_reference"
+          },
+          {
+            "covers": [],
+            "line": 176,
+            "name": "test_trace_prints_both_directions"
+          },
+          {
+            "covers": [],
+            "line": 187,
+            "name": "test_trace_json_is_parseable"
+          },
+          {
+            "covers": [],
+            "line": 195,
+            "name": "test_trace_of_an_unknown_id_exits_one"
+          },
+          {
+            "covers": [],
+            "line": 202,
+            "name": "test_status_fits_on_one_screen"
+          },
+          {
+            "covers": [],
+            "line": 211,
+            "name": "test_status_reports_commits_behind"
+          },
+          {
+            "covers": [],
+            "line": 220,
+            "name": "test_output_is_ascii_only"
           }
         ],
-        "untagged": 8
+        "untagged": 16
+      },
+      "tests/test_derive.py": {
+        "language": "python",
+        "tests": [
+          {
+            "covers": [
+              "INV-7",
+              "REQ-refunds-1"
+            ],
+            "line": 37,
+            "name": "test_refund_is_bounded"
+          },
+          {
+            "covers": [],
+            "line": 39,
+            "name": "test_untagged"
+          },
+          {
+            "covers": [],
+            "line": 52,
+            "name": "test_envelope_carries_no_timestamp"
+          },
+          {
+            "covers": [],
+            "line": 64,
+            "name": "test_render_is_byte_identical_across_calls"
+          },
+          {
+            "covers": [],
+            "line": 69,
+            "name": "test_render_uses_lf_and_sorted_keys"
+          },
+          {
+            "covers": [],
+            "line": 78,
+            "name": "test_regeneration_is_a_no_op"
+          },
+          {
+            "covers": [],
+            "line": 84,
+            "name": "test_dry_run_reports_without_writing"
+          },
+          {
+            "covers": [],
+            "line": 97,
+            "name": "test_only_limits_what_is_rebuilt"
+          },
+          {
+            "covers": [],
+            "line": 108,
+            "name": "test_inventory_counts_and_labels"
+          },
+          {
+            "covers": [],
+            "line": 115,
+            "name": "test_inventory_resolves_a_console_script_to_a_file"
+          },
+          {
+            "covers": [],
+            "line": 120,
+            "name": "test_inventory_finds_test_files"
+          },
+          {
+            "covers": [],
+            "line": 124,
+            "name": "test_inventory_records_declared_dependencies"
+          },
+          {
+            "covers": [],
+            "line": 132,
+            "name": "test_inventory_ignores_vendored_directories"
+          },
+          {
+            "covers": [],
+            "line": 145,
+            "name": "test_covers_tags_are_extracted_and_indexed"
+          },
+          {
+            "covers": [],
+            "line": 154,
+            "name": "test_a_tag_does_not_leak_past_the_next_declaration"
+          },
+          {
+            "covers": [
+              "INV-1"
+            ],
+            "line": 160,
+            "name": "test_first"
+          },
+          {
+            "covers": [],
+            "line": 162,
+            "name": "test_second"
+          },
+          {
+            "covers": [],
+            "line": 172,
+            "name": "test_same_line_tag_is_picked_up"
+          },
+          {
+            "covers": [
+              "INV-2"
+            ],
+            "line": 184,
+            "name": "test_backrefs_are_found_in_code"
+          },
+          {
+            "covers": [],
+            "line": 190,
+            "name": "test_backrefs_ignore_prose"
+          },
+          {
+            "covers": [],
+            "line": 208,
+            "name": "test_staleness_is_counted_in_commits_not_seconds"
+          },
+          {
+            "covers": [],
+            "line": 220,
+            "name": "test_absent_artifact_reports_unknown_rather_than_zero"
+          },
+          {
+            "covers": [],
+            "line": 224,
+            "name": "test_unreadable_artifact_reports_unknown"
+          },
+          {
+            "covers": [],
+            "line": 230,
+            "name": "test_artifacts_are_valid_json_with_the_schema_marker"
+          },
+          {
+            "covers": [],
+            "line": 240,
+            "name": "test_the_derived_tier_does_not_describe_itself"
+          },
+          {
+            "covers": [],
+            "line": 250,
+            "name": "test_committing_the_derived_tier_does_not_make_it_stale"
+          },
+          {
+            "covers": [],
+            "line": 263,
+            "name": "test_a_real_change_still_registers_as_stale"
+          }
+        ],
+        "untagged": 24
       },
       "tests/test_fingerprint.py": {
         "language": "python",
@@ -443,12 +683,100 @@
           }
         ],
         "untagged": 6
+      },
+      "tests/test_trace.py": {
+        "language": "python",
+        "tests": [
+          {
+            "covers": [
+              "INV-7"
+            ],
+            "line": 84,
+            "name": "test_refund_is_bounded"
+          },
+          {
+            "covers": [],
+            "line": 100,
+            "name": "test_claims_parse_out_of_markdown"
+          },
+          {
+            "covers": [],
+            "line": 114,
+            "name": "test_a_claim_without_a_block_is_recorded_not_dropped"
+          },
+          {
+            "covers": [],
+            "line": 121,
+            "name": "test_invalid_yaml_is_recorded_not_raised"
+          },
+          {
+            "covers": [],
+            "line": 127,
+            "name": "test_evidence_accepts_both_yaml_shapes"
+          },
+          {
+            "covers": [],
+            "line": 135,
+            "name": "test_candidates_are_flagged_not_hidden"
+          },
+          {
+            "covers": [],
+            "line": 156,
+            "name": "test_adrs_are_read_with_their_supersession"
+          },
+          {
+            "covers": [],
+            "line": 167,
+            "name": "test_the_acceptance_case"
+          },
+          {
+            "covers": [],
+            "line": 182,
+            "name": "test_reverse_edges_are_computed"
+          },
+          {
+            "covers": [],
+            "line": 192,
+            "name": "test_a_referenced_but_undefined_id_is_reported"
+          },
+          {
+            "covers": [],
+            "line": 200,
+            "name": "test_an_invariant_with_no_test_is_reported"
+          },
+          {
+            "covers": [],
+            "line": 220,
+            "name": "test_summary_counts_separate_claims_from_candidates"
+          },
+          {
+            "covers": [],
+            "line": 227,
+            "name": "test_anchor_path_extraction_survives_a_malformed_anchor"
+          },
+          {
+            "covers": [],
+            "line": 236,
+            "name": "test_index_is_part_of_the_derived_tier_and_stays_deterministic"
+          },
+          {
+            "covers": [],
+            "line": 263,
+            "name": "test_id_grammar_accepts_numbers_and_slugs"
+          },
+          {
+            "covers": [],
+            "line": 272,
+            "name": "test_a_slug_id_indexes_like_any_other"
+          }
+        ],
+        "untagged": 15
       }
     },
-    "tagged_tests": 0,
-    "total_tests": 81
+    "tagged_tests": 5,
+    "total_tests": 139
   },
-  "generated_from_commit": "ad8b5f5ee409e7ddf625c527a228b1c1c5bda180",
+  "generated_from_commit": "2542e44d62bc98b73b68f777434f99ece308305e",
   "generator": "forge sync derived",
   "tool": "forge"
 }
