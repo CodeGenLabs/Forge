@@ -1,69 +1,19 @@
 {
   "$schema": "forge/derived/v1",
   "data": {
-    "ids": {
-      "ARC-3": {
-        "anchor_paths": [],
-        "anchors": [],
-        "back_references": [
-          "src/forge/derive.py:413"
-        ],
-        "candidate": false,
-        "changes": [],
-        "defined_in": null,
-        "evidence": [],
-        "governed_by": [],
-        "governs": [],
-        "id": "ARC-3",
-        "justifies": [],
-        "kind": null,
-        "referenced_by_adr": [],
-        "references": [],
-        "since": null,
-        "status": null,
-        "supersedes": null,
-        "tests": [],
-        "title": null
-      },
-      "REQ-refunds-3": {
-        "anchor_paths": [],
-        "anchors": [],
-        "back_references": [
-          "src/forge/derive.py:414"
-        ],
-        "candidate": false,
-        "changes": [],
-        "defined_in": null,
-        "evidence": [],
-        "governed_by": [],
-        "governs": [],
-        "id": "REQ-refunds-3",
-        "justifies": [],
-        "kind": null,
-        "referenced_by_adr": [],
-        "references": [],
-        "since": null,
-        "status": null,
-        "supersedes": null,
-        "tests": [],
-        "title": null
-      }
-    },
+    "ids": {},
     "summary": {
       "candidates": 0,
       "claims": 0,
-      "dangling_references": [
-        "ARC-3",
-        "REQ-refunds-3"
-      ],
+      "dangling_references": [],
       "decisions": 0,
-      "ids_indexed": 2,
+      "ids_indexed": 0,
       "invariants_without_tests": [],
       "tests_tagged": 0,
-      "tests_total": 139
+      "tests_total": 144
     }
   },
-  "generated_from_commit": "5c9dd01f1c773d6f329d328b4649bf601901e5bc",
+  "generated_from_commit": "6d75c8334235d73916b055ba98b4fc8d26455418",
   "generator": "forge sync derived",
   "tool": "forge"
 }

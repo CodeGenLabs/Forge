@@ -265,7 +265,7 @@
           },
           {
             "covers": [],
-            "line": 220,
+            "line": 224,
             "name": "test_output_is_ascii_only"
           }
         ],
@@ -408,9 +408,34 @@
             "covers": [],
             "line": 263,
             "name": "test_a_real_change_still_registers_as_stale"
+          },
+          {
+            "covers": [],
+            "line": 276,
+            "name": "test_exclude_id_scan_keeps_the_file_but_drops_its_ids"
+          },
+          {
+            "covers": [],
+            "line": 287,
+            "name": "test_exclude_drops_the_file_entirely"
+          },
+          {
+            "covers": [],
+            "line": 293,
+            "name": "test_a_directory_pattern_covers_its_subtree"
+          },
+          {
+            "covers": [],
+            "line": 303,
+            "name": "test_a_malformed_config_falls_back_to_defaults"
+          },
+          {
+            "covers": [],
+            "line": 317,
+            "name": "test_no_config_is_not_an_error"
           }
         ],
-        "untagged": 27
+        "untagged": 32
       },
       "tests/test_fingerprint.py": {
         "language": "python",
@@ -748,9 +773,9 @@
       }
     },
     "tagged_tests": 0,
-    "total_tests": 139
+    "total_tests": 144
   },
-  "generated_from_commit": "5c9dd01f1c773d6f329d328b4649bf601901e5bc",
+  "generated_from_commit": "6d75c8334235d73916b055ba98b4fc8d26455418",
   "generator": "forge sync derived",
   "tool": "forge"
 }
