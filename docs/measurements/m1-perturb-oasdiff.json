@@ -1,0 +1,63 @@
+{
+  "repo": "C:\\Users\\TUAN\\AppData\\Local\\Temp\\claude\\D--git-2609-forge-harness\\f075e14c-2627-4b4b-ab71-8ffe1898e95c\\scratchpad\\hist\\oasdiff",
+  "head": "445da908641f73d2c9d8b83cd2425d418b91168b",
+  "seed": 20260910,
+  "elapsed_seconds": 153.7,
+  "samples": 25,
+  "samples_by_language": {
+    "go": 25
+  },
+  "cases_applied": {
+    "rewrite_comments": 17,
+    "double_indent": 25,
+    "blank_lines": 25,
+    "trailing_whitespace": 25,
+    "crlf": 25,
+    "pure_rename": 25,
+    "rename_plus_comments": 17,
+    "flip_operator": 25,
+    "rename_declaration": 25
+  },
+  "cases_discarded_as_not_neutral": {},
+  "outcomes": {
+    "neutral:blank_lines": {
+      "fresh": 25
+    },
+    "neutral:crlf": {
+      "fresh": 25
+    },
+    "neutral:double_indent": {
+      "fresh": 25
+    },
+    "neutral:pure_rename": {
+      "fresh": 25
+    },
+    "neutral:rename_plus_comments": {
+      "fresh": 14,
+      "missing": 3
+    },
+    "neutral:rewrite_comments": {
+      "fresh": 17
+    },
+    "neutral:trailing_whitespace": {
+      "fresh": 25
+    },
+    "substantive:flip_operator": {
+      "shifted": 4,
+      "stale": 21
+    },
+    "substantive:rename_declaration": {
+      "stale": 6,
+      "missing": 19
+    }
+  },
+  "false_positive_examples": {},
+  "totals": {
+    "neutral_cases": 159,
+    "neutral_false_positives": 3,
+    "neutral_false_positive_rate": 0.0189,
+    "substantive_cases": 50,
+    "substantive_false_negatives": 0,
+    "substantive_false_negative_rate": 0.0
+  }
+}

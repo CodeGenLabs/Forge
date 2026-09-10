@@ -1,0 +1,11 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# The kernel's only non-source directory: fingerprint cache, disposable by
+# design. Deleting it changes nothing but speed (ARCHITECTURE.md section 3.1).
+.forge/cache/

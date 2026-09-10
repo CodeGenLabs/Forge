@@ -61,6 +61,23 @@ S1–S11 has a fixture that fails it with the right code and a working `fix` str
 
 ### M1 — Anchors and drift **(the risk milestone, ~3 days)**
 
+> **Status: done, 2026-09-10.** Results and verdict in
+> [docs/measurements/M1-anchor-stability.md](docs/measurements/M1-anchor-stability.md). Four deviations
+> from the plan below, each with its reason:
+>
+> 1. **Built before M0**, at the user's direction, and it was the better order: if the measurement had
+>    failed, the claim schema in M0 would have had to change. Measure before fixing the format.
+> 2. **`shifted` was added as a fourth status and `coarse` demoted to a flag.** Body-only edits are 79%
+>    of non-fresh verdicts; surfacing them by default would have quadrupled the ledger.
+>    SYSTEM_KNOWLEDGE.md §5.1 was updated to match, with the reason recorded there.
+> 3. **`drift resolve`, `drift waive` and `reanchor` are not built.** All three write to a claim file or
+>    the ledger, neither of which exists until M0. `forge drift` classifies anchors given on the command
+>    line instead — enough to check the milestone by hand and to script against.
+> 4. **A second measurement harness was needed.** The planned replay could not measure the
+>    false-positive rate, because 600 commits of real history contained no pure renames and no
+>    formatting-only commits. `tools/perturb_anchors.py` injects perturbations with known ground truth
+>    instead.
+
 **Build.**
 
 - Anchor parser: `path[#Symbol][@sha]`. Reject absolute paths, `..`, NUL, and any SHA that is not 4–40

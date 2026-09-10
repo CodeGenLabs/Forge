@@ -1,10 +1,21 @@
-# forge — research & design phase
+# forge
 
 A personal software-engineering harness that makes an AI coding agent behave like a disciplined senior
 engineer: investigate before modifying, specify before implementing, and — the part nobody has solved —
 keep accurate, verifiable knowledge of an existing system.
 
-**This repository currently contains research and design only. No implementation.**
+**Status: design complete; implementation at milestone M1 of six.** What exists today is the anchor
+engine — the deterministic staleness detector the whole design rests on — plus the measurement that
+gates the rest of the build. No claim store, no lifecycle, no skills yet.
+
+```bash
+pip install -e ".[grammars,dev]"
+forge doctor
+forge drift "src/forge/anchor.py#classify" --baseline <sha>
+```
+
+`forge drift` exits 0 when every anchor is fresh, 1 when any needs a look, 2 on a usage error — so it
+composes as a gate.
 
 ## Read in this order
 
@@ -70,7 +81,18 @@ Everything else is borrowed on purpose: OpenSpec's artifact DAG and archive fold
 gates, Superpowers' scale router and plan format, Spec Kit's requirement vocabulary, mini-SWE-agent's
 budgets, BMAD's admission criterion and deletion grounds.
 
-## Next step
+## Implementation status
 
-Implement [MVP.md](MVP.md) in milestone order. **M1 has a stop condition** — measure the anchor
-false-positive rate on replayed history before building M2–M5.
+| Milestone | State | What it is |
+|---|---|---|
+| **M1 — anchors & drift** | **done** | `src/forge/{gitio,fingerprint,anchor,cli}.py`, 141 tests, and the measurement in [docs/measurements/M1-anchor-stability.md](docs/measurements/M1-anchor-stability.md) |
+| M0 — claim store & validation | not started | Deliberately after M1: the measurement could have forced the claim schema to change |
+| M2 — derived tier & trace index | not started | |
+| M3 — change DAG, gates, one workflow | not started | |
+| M4 — skills | not started | |
+| M5 — bootstrap | not started | |
+
+M1 came first because it carried the stop condition: if anchors were too noisy on real history, the
+claim schema in M0 would have had to change (coarser anchors, or component-level only). Measuring
+before fixing the format was the cheaper order. See [MVP.md](MVP.md) for the milestone plan and
+[OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) Q2 for the risk this retired.

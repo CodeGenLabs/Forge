@@ -1,0 +1,105 @@
+{
+  "repo": "C:\\Users\\TUAN\\AppData\\Local\\Temp\\claude\\D--git-2609-forge-harness\\f075e14c-2627-4b4b-ab71-8ffe1898e95c\\scratchpad\\hist\\mini-swe-agent",
+  "head": "04d809ceab9df28f9adaed044884180159172930",
+  "base": "b3aa86d155aea747adbebd78ff7a158061200186",
+  "seed": 20260910,
+  "elapsed_seconds": 65.9,
+  "commits_replayed": 200,
+  "commits_touching_an_anchor": 80,
+  "anchors": 30,
+  "anchors_by_language": {
+    "python": 30
+  },
+  "anchor_list": [
+    "src/minisweagent/__init__.py#Agent",
+    "src/minisweagent/models/litellm_model.py#LitellmModelConfig",
+    "src/minisweagent/agents/default.py#FormatError",
+    "src/minisweagent/models/portkey_model.py#__init__",
+    "src/minisweagent/run/mini.py#main",
+    "src/minisweagent/models/openrouter_model.py#OpenRouterRateLimitError",
+    "src/minisweagent/models/requesty_model.py#RequestyAuthenticationError",
+    "src/minisweagent/agents/interactive.py#InteractiveAgent",
+    "src/minisweagent/models/litellm_response_api_model.py#LitellmResponseAPIModel",
+    "tests/agents/test_default.py#test_step_limit_enforcement",
+    "tests/run/test_swebench_single.py#test_swebench_single_end_to_end_exit_immediately",
+    "tests/agents/test_interactive.py#test_successful_completion_with_confirmation",
+    "tests/config/test_swebench_template.py#test_action_observation_template_long_output",
+    "tests/run/test_cli_integration.py#test_mini_command_calls_run_interactive",
+    "tests/run/test_swebench.py#test_get_image_name_with_none_image_name",
+    "src/minisweagent/config/__init__.py#get_config_path",
+    "src/minisweagent/models/portkey_response_api_model.py#__init__",
+    "tests/agents/test_interactive_textual.py#test_messages_to_steps_edge_cases",
+    "tests/run/test_inspector.py#test_trajectory_inspector_load_trajectory_formats",
+    "tests/run/test_local.py#test_local_end_to_end",
+    "src/minisweagent/environments/extra/bubblewrap.py#BubblewrapEnvironmentConfig",
+    "src/minisweagent/environments/local.py#__init__",
+    "src/minisweagent/environments/singularity.py#__init__",
+    "src/minisweagent/run/extra/swebench.py#get_swebench_docker_image_name",
+    "tests/run/test_extra_config.py#TestConfigSet",
+    "src/minisweagent/agents/interactive_textual.py#_TextualAgent",
+    "src/minisweagent/environments/__init__.py#get_environment_class",
+    "src/minisweagent/environments/docker.py#DockerEnvironmentConfig",
+    "src/minisweagent/environments/extra/swerex_docker.py#__init__",
+    "src/minisweagent/models/__init__.py#get_model_name"
+  ],
+  "evaluations": 170,
+  "errors": 0,
+  "per_step_status": {
+    "fresh": 117,
+    "shifted": 35,
+    "stale": 12,
+    "missing": 6
+  },
+  "retired": [
+    {
+      "anchor": "src/minisweagent/agents/default.py#FormatError",
+      "at": "27fba521531d2e2d58042ce4811ecfb78c394f04",
+      "why": "symbol FormatError not found at head"
+    },
+    {
+      "anchor": "src/minisweagent/models/litellm_response_api_model.py#LitellmResponseAPIModel",
+      "at": "27fba521531d2e2d58042ce4811ecfb78c394f04",
+      "why": "src/minisweagent/models/litellm_response_api_model.py does not exist at head under any followed name"
+    },
+    {
+      "anchor": "tests/config/test_swebench_template.py#test_action_observation_template_long_output",
+      "at": "27fba521531d2e2d58042ce4811ecfb78c394f04",
+      "why": "symbol test_action_observation_template_long_output not found at head"
+    },
+    {
+      "anchor": "src/minisweagent/models/portkey_response_api_model.py#__init__",
+      "at": "27fba521531d2e2d58042ce4811ecfb78c394f04",
+      "why": "src/minisweagent/models/portkey_response_api_model.py does not exist at head under any followed name"
+    },
+    {
+      "anchor": "tests/agents/test_interactive_textual.py#test_messages_to_steps_edge_cases",
+      "at": "27fba521531d2e2d58042ce4811ecfb78c394f04",
+      "why": "tests/agents/test_interactive_textual.py does not exist at head under any followed name"
+    },
+    {
+      "anchor": "src/minisweagent/agents/interactive_textual.py#_TextualAgent",
+      "at": "27fba521531d2e2d58042ce4811ecfb78c394f04",
+      "why": "src/minisweagent/agents/interactive_textual.py does not exist at head under any followed name"
+    }
+  ],
+  "false_positives": {
+    "formatting": {
+      "population": 0,
+      "false_positive": 0
+    },
+    "rename": {
+      "population": 0,
+      "false_positive": 0
+    }
+  },
+  "noise_rate": {
+    "stale_or_missing_per_touching_commit": 0.225,
+    "shifted_per_touching_commit": 0.438
+  },
+  "cumulative_from_base": {
+    "shifted": 9,
+    "stale": 9,
+    "fresh": 7,
+    "missing": 5
+  }
+}

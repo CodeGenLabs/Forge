@@ -38,7 +38,28 @@ maintain — the wrong shape for this question).
 
 ---
 
-## Q2 — Will anchors survive real refactoring? **P0**
+## Q2 — Will anchors survive real refactoring? **ANSWERED 2026-09-10 — largely yes**
+
+> **Resolution.** Measured in [docs/measurements/M1-anchor-stability.md](docs/measurements/M1-anchor-stability.md):
+> 600 commits replayed across three repositories plus a controlled perturbation experiment.
+> Recommendation **A + D** was implemented — path+symbol anchors with git rename following, plus the
+> `shifted`/`stale` split — and the perturbation results retire the risk for the mechanical cases
+> (formatting, comment edits, quote style, pure file moves). Option **C** (component-level anchors) was
+> not needed and is not implemented. Option **B** (content-addressed relocation) is *not* implemented:
+> it was only ever needed as the `forge reanchor` guard, and `reanchor` has to rewrite an `@sha` inside a
+> claim file, so it waits for the claim store in M0.
+>
+> Three residual pieces keep this from being fully closed:
+> 1. Semantically neutral refactors (extract variable, reorder independent statements) have no
+>    mechanical ground truth and are excluded from the measured rate, so the true false-positive rate is
+>    higher than reported by an unknown margin.
+> 2. Only declarations with a body were perturbed; interfaces, type aliases and `const` declarations are
+>    covered by unit tests only.
+> 3. Three languages, three repositories, shallow clones, mainline only.
+>
+> The original question and options are kept below because the residual pieces are still live.
+
+### Original question **P0**
 
 **Why it matters.** The entire staleness mechanism rests on `path#Symbol@sha` + normalised AST
 fingerprints. A rename, a file move, or an extract-method marks every anchor on the affected symbol
@@ -63,9 +84,14 @@ the fingerprint matches under git's rename mapping — free when nothing semanti
 something did. Add the `shifted`/`stale` distinction so a body-only edit is quieter than a
 signature change. Reject C: losing symbol precision loses the mechanism's whole advantage over GSD.
 
-**Missing evidence.** Empirical false-positive rate. **This is the single measurement that most changes
-the design**, and it is cheap: take a real repository with a real refactoring history, place 30 synthetic
-anchors, replay 200 commits, count spurious `stale` verdicts. Do this before writing the kernel.
+**Evidence obtained.** Both experiments were run (see the resolution above). Two findings changed the
+design rather than merely confirming it: `shifted` had to become a first-class status because body-only
+edits are 79% of all non-fresh verdicts, and `coarse` had to become a flag rather than a status.
+Three defects in the fingerprint were found by the perturbation harness, all of which would have
+surfaced as ledger noise rather than as crashes.
+
+**Evidence still missing.** A rate for semantically neutral refactors, which needs human labelling; and
+any language outside the three grammars.
 
 ---
 

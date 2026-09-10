@@ -393,12 +393,23 @@ src/domain/@a1b2c3d                              # directory anchor: the tree ha
    reported as `coarse: true` so the weaker signal is visible.
 5. Classify:
 
-| Result | Meaning |
+| Status | Meaning |
 |---|---|
 | `fresh` | fingerprint unchanged since baseline |
-| `stale` | fingerprint changed → the claim is **unverified**, not wrong |
+| `shifted` | the symbol's **body** changed, its signature did not → a weaker signal |
+| `stale` | the signature changed, or a non-symbol anchor changed → the claim is **unverified**, not wrong |
 | `missing` | anchor path or symbol no longer exists → **blocking**; a claim about code that is gone is either retired or re-anchored |
-| `coarse` | no grammar; formatting changes will produce false staleness |
+
+Plus two flags that travel with the status rather than replacing it: `coarse` (no grammar for this
+file, so the comparison is line-based and weaker) and `symbol_unresolved` (the declaration table could
+not locate the symbol, so the whole file was compared instead).
+
+> **Revised by measurement, 2026-09-10.** This table originally listed four statuses with `coarse` as
+> the fourth. Implementing M1 changed it twice. `coarse` became a flag because a coarse comparison still
+> yields a verdict, and folding it into the status would throw that verdict away. `shifted` was added
+> because the measurement showed body-only changes are 79% of all non-fresh verdicts (176 of 222 over
+> 600 commits) — surfacing them by default would have quadrupled the ledger. See
+> [docs/measurements/M1-anchor-stability.md](docs/measurements/M1-anchor-stability.md).
 
 **What this buys, precisely:** for every claim, a deterministic, format-insensitive answer to "has the
 code this claim describes changed since a human last confirmed the claim?" That is not "is the claim

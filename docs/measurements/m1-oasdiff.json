@@ -1,0 +1,85 @@
+{
+  "repo": "C:\\Users\\TUAN\\AppData\\Local\\Temp\\claude\\D--git-2609-forge-harness\\f075e14c-2627-4b4b-ab71-8ffe1898e95c\\scratchpad\\hist\\oasdiff",
+  "head": "445da908641f73d2c9d8b83cd2425d418b91168b",
+  "base": "21e8eb404453c5dd76a045da635abfc74693078c",
+  "seed": 20260910,
+  "elapsed_seconds": 91.1,
+  "commits_replayed": 200,
+  "commits_touching_an_anchor": 88,
+  "anchors": 30,
+  "anchors_by_language": {
+    "go": 30
+  },
+  "anchor_list": [
+    "checker/rules.go#GetAllRules",
+    "checker/config_test.go#TestNewConfig",
+    "internal/changelog.go#getChangelogCmd",
+    "internal/run_test.go#TestMain",
+    "checker/check_request_property_updated_test.go#TestRequiredRequestPropertiesAdded",
+    "checker/check_request_parameters_type_changed.go#isParameterScalarToFormExplodeArray",
+    "checker/check_request_property_type_changed.go#RequestBodyTypeChangedId",
+    "checker/check_request_property_updated.go#RequestPropertyUpdatedCheck",
+    "checker/media_type_walker.go#walkModifiedRequestBodySchemas",
+    "checker/check_breaking_property_test.go#TestBreaking_NewNonRequiredProperty",
+    "checker/check_request_parameters_type_changed_test.go#TestRequestPathParamTypeChanged",
+    "checker/check_request_property_type_changed_test.go#TestRequestBodyFormatChangedCheck",
+    "checker/check_response_property_type_changed.go#ResponsePropertyTypeChangedCheck",
+    "diff/schema_diff.go#getSchemaDiff",
+    "internal/flags.go#NewFlags",
+    "checker/check_breaking_test.go#TestBreaking_RequestBodyRequiredEnabled",
+    "checker/check_response_property_type_changed_test.go#TestResponsePropertyTypeChangedCheck",
+    "checker/check_response_required_property_updated.go#ResponseRequiredPropertyRemovedId",
+    "checker/check_response_required_property_updated_test.go#TestResponseRequiredPropertyRemoved",
+    "checker/check_types.go#breakingTypeFormatChangedInRequest",
+    "checker/helpers_test.go#open",
+    "internal/handlers.go#checkColor",
+    "load/load.go#from",
+    "checker/check_api_deprecation_test.go#TestBreaking_DeprecationWithoutSunsetNoPolicy",
+    "checker/check_breaking_request_type_changed_test.go#TestBreaking_ReqTypeNumberToString",
+    "checker/check_request_parameters_min_items_updated.go#RequestParameterMinItemsIncreasedId",
+    "checker/check_request_property_all_of_updated_test.go#TestRequestPropertyAllOfAdded",
+    "checker/check_response_property_all_of_updated_test.go#TestResponsePropertyAllOfAdded_WithSources_Inline",
+    "checker/checker.go#removeDraftAndAlphaOperationsDiffs",
+    "checker/source.go#displayFilePath"
+  ],
+  "evaluations": 255,
+  "errors": 0,
+  "per_step_status": {
+    "fresh": 187,
+    "shifted": 65,
+    "missing": 2,
+    "stale": 1
+  },
+  "retired": [
+    {
+      "anchor": "checker/check_types.go#breakingTypeFormatChangedInRequest",
+      "at": "9c5062b66c668719561cdbd67708ac596ef45cc5",
+      "why": "symbol breakingTypeFormatChangedInRequest not found at head"
+    },
+    {
+      "anchor": "checker/checker.go#removeDraftAndAlphaOperationsDiffs",
+      "at": "82dd007600314f167d8327df38fbcccf5b8ad92c",
+      "why": "symbol removeDraftAndAlphaOperationsDiffs not found at head"
+    }
+  ],
+  "false_positives": {
+    "formatting": {
+      "population": 0,
+      "false_positive": 0
+    },
+    "rename": {
+      "population": 0,
+      "false_positive": 0
+    }
+  },
+  "noise_rate": {
+    "stale_or_missing_per_touching_commit": 0.034,
+    "shifted_per_touching_commit": 0.739
+  },
+  "cumulative_from_base": {
+    "shifted": 17,
+    "fresh": 10,
+    "missing": 2,
+    "stale": 1
+  }
+}

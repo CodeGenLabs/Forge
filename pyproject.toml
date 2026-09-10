@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "forge-harness"
+version = "0.0.1"
+description = "A personal software engineering harness: anchored system knowledge with deterministic staleness detection"
+requires-python = ">=3.11"
+
+# Dependency budget: two, per ARCHITECTURE.md section 6. tree-sitter powers the
+# anchor fingerprints; PyYAML parses claim blocks and schema files. Everything
+# else is stdlib or a subprocess call to a tool the project already has.
+dependencies = [
+    "tree-sitter>=0.23",
+    "pyyaml>=6",
+]
+
+[project.optional-dependencies]
+# Grammars are optional on purpose: without them anchors fall back to
+# whitespace-normalised content hashes and are reported coarse. The harness
+# works with zero grammars, just less precisely.
+grammars = [
+    "tree-sitter-python>=0.23",
+    "tree-sitter-typescript>=0.23",
+    "tree-sitter-go>=0.23",
+]
+dev = ["pytest>=8"]
+
+[project.scripts]
+forge = "forge.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
