@@ -17,7 +17,8 @@ import json
 import sys
 from pathlib import Path
 
-from . import change, derive, gitio, impact, scaffold, schema, store, trace, validate
+from . import (change, derive, gitio, impact, scaffold, schema, spec, store, trace,
+               validate)
 from .anchor import AnchorError, Status, classify, parse_anchor
 from .fingerprint import available_languages, fingerprint_source
 from .validate import Issue
@@ -253,7 +254,23 @@ def _check_change(repo: Path, reference: str | None) -> list[Issue]:
             continue
         computed = impact.compute_impact(repo, item)
         issues.extend(impact.check_claim_touch(repo, item, computed, Issue))
+        for delta in _deltas_of(repo, item):
+            issues.extend(spec.check_delta(repo, delta, Issue))
+        # R13 - "a change with zero deltas is rejected" - is deliberately not
+        # here. It is true at `spec:post` and false before it, and a check
+        # that demands a spec from a change whose first artifact is still
+        # being written is a check people learn to run with --scope store.
     return issues
+
+
+def _deltas_of(repo: Path, item: change.Change) -> list[spec.Delta]:
+    deltas = []
+    for path in spec.delta_files(repo, item.relative):
+        deltas.append(spec.parse_delta(
+            (repo / path).read_text(encoding="utf-8", errors="replace"),
+            path, spec.capability_of(path, item.relative),
+        ))
+    return deltas
 
 
 def _tier_is_built(repo: Path) -> bool:
@@ -636,6 +653,97 @@ def _cmd_impact(args: argparse.Namespace) -> int:
     return _EXIT_OK
 
 
+def _fold_change(repo: Path, item: change.Change, *, dry_run: bool) -> tuple[int, list[str]]:
+    """Fold every delta of *item* into the permanent specs. Returns (exit, lines).
+
+    Validates the *rebuilt* spec before writing, not just the delta: a delta
+    can be individually well-formed and still fold into a file that has two
+    requirements with one id, and the moment to catch that is before the
+    permanent tier is touched.
+    """
+    lines: list[str] = []
+    deltas = _deltas_of(repo, item)
+    if not deltas:
+        return _EXIT_OK, ["no spec deltas to fold"]
+
+    planned: list[tuple[Path, str]] = []
+    for delta in deltas:
+        target = repo / spec.SPECS_DIR / delta.capability / "spec.md"
+        existing = target.read_text(encoding="utf-8") if target.is_file() else None
+        try:
+            rebuilt = spec.fold(existing, delta)
+        except spec.FoldError as exc:
+            print(f"forge: {delta.path}: {exc}", file=sys.stderr)
+            return _EXIT_CHANGED, lines
+
+        rebuilt_issues = _rebuilt_issues(delta, rebuilt, target, repo)
+        if rebuilt_issues:
+            for issue in rebuilt_issues:
+                print(f"forge: {issue}", file=sys.stderr)
+            return _EXIT_CHANGED, lines
+
+        verbs = ", ".join(f"{len(v)} {k.lower()}"
+                          for k, v in sorted(delta.sections.items()) if v)
+        relative = target.relative_to(repo).as_posix()
+        if existing == rebuilt:
+            lines.append(f"unchanged  {relative}")
+        else:
+            lines.append(f"{'would fold' if dry_run else 'folded'}   {relative}  ({verbs})")
+            planned.append((target, rebuilt))
+
+    if not dry_run:
+        for target, content in planned:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(content, encoding="utf-8", newline="\n")
+    return _EXIT_OK, lines
+
+
+def _rebuilt_issues(delta: spec.Delta, rebuilt: str, target: Path, repo: Path) -> list[str]:
+    requirements = spec.parse_permanent(rebuilt)
+    problems = []
+    seen: set[str] = set()
+    for requirement in requirements:
+        if requirement.id in seen:
+            problems.append(
+                f"{target.relative_to(repo).as_posix()} would define "
+                f"{requirement.id} twice after folding {delta.path}"
+            )
+        seen.add(requirement.id)
+        if not requirement.scenarios():
+            problems.append(
+                f"{target.relative_to(repo).as_posix()}: {requirement.id} would have "
+                f"no scenario after the fold"
+            )
+    return problems
+
+
+def _cmd_spec_fold(args: argparse.Namespace) -> int:
+    repo = args.repo.resolve()
+    if not gitio.is_repo(repo):
+        print(f"forge: {repo} is not a git repository", file=sys.stderr)
+        return _EXIT_USAGE
+    try:
+        item = change.find_change(repo, args.change)
+    except change.ChangeError as exc:
+        print(f"forge: {exc}", file=sys.stderr)
+        return _EXIT_USAGE
+
+    deltas = _deltas_of(repo, item)
+    grammar = [i for delta in deltas for i in spec.check_delta(repo, delta, Issue)]
+    if grammar:
+        for issue in grammar:
+            print(f"{issue.level}  {issue.code}  {issue.path}"
+                  f"{f':{issue.line}' if issue.line else ''}\n"
+                  f"        {issue.message}\n        fix: {issue.fix}")
+        print(f"\n{len(grammar)} grammar error(s); nothing folded.", file=sys.stderr)
+        return _EXIT_CHANGED
+
+    code, lines = _fold_change(repo, item, dry_run=args.dry_run)
+    for line in lines:
+        print(line)
+    return code
+
+
 def _cmd_doctor(args: argparse.Namespace) -> int:
     langs = available_languages()
     print(f"python           {sys.version.split()[0]}")
@@ -794,6 +902,19 @@ def main(argv: list[str] | None = None) -> int:
     imp.add_argument("--repo", type=Path, default=Path.cwd())
     imp.add_argument("--json", action="store_true")
     imp.set_defaults(func=_cmd_impact)
+
+    spc = sub.add_parser("spec", help="work with capability specs")
+    spc_sub = spc.add_subparsers(dest="spec_command", required=True)
+    spc_fold = spc_sub.add_parser(
+        "fold",
+        help="apply a change's spec deltas to the permanent specs",
+        description="Deterministic: two people folding the same delta get the same "
+                    "file. The rebuilt spec is validated before anything is written.",
+    )
+    spc_fold.add_argument("--change", required=True)
+    spc_fold.add_argument("--dry-run", action="store_true")
+    spc_fold.add_argument("--repo", type=Path, default=Path.cwd())
+    spc_fold.set_defaults(func=_cmd_spec_fold)
 
     doctor = sub.add_parser("doctor", help="report the toolchain the kernel found")
     doctor.set_defaults(func=_cmd_doctor)
