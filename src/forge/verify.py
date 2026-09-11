@@ -87,6 +87,16 @@ def _commands(repo: Path) -> dict[str, str]:
     return {str(k): str(v) for k, v in section.items() if v}
 
 
+#: Keys under `commands:` that configure the runner rather than name a command.
+#: `forge doctor` would otherwise try to resolve `1800` as a program.
+_NOT_A_COMMAND = frozenset({"timeout"})
+
+
+def commands(repo: Path) -> dict[str, str]:
+    """The declared commands, without the runner's own settings."""
+    return {k: v for k, v in _commands(repo).items() if k not in _NOT_A_COMMAND}
+
+
 def resolve_command(repo: Path, line: str) -> str | None:
     """Why *line* cannot be run, or None if it can.
 

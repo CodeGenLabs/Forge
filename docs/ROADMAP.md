@@ -276,4 +276,12 @@ repository survives contact) → R8 (the other agents) → everything else, meas
 >   one-line change to `requests` touched 10 claims out of 10. This is R1's failure
 >   through a second door, and it needs the same narrowing.
 >
-> Revised order: **G14 → R4 (which subsumes G16) → R2 → R5, R6 → R8**.
+> Revised order: **~~G14~~ → R4 (which subsumes G16) → R2 → R5, R6 → R8**.
+>
+> **G14 is done** (2026-09-11), with G15, G17a, G17b and G1 in the same pass:
+> obligations are computed against the diff, and claims reached only through the
+> import graph are reported under a `Nearby` heading that says no account is owed -
+> so the blast radius keeps its reading value without becoming an obligation. On this
+> repository's own open change the split is 3 touched, 1 nearby. `forge doctor` now
+> takes `--repo` and checks that every declared command resolves, which closes the
+> item R3 left open.

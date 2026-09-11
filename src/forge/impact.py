@@ -34,6 +34,7 @@ from pathlib import Path
 from . import derive, gitio, store
 from .anchor import AnchorError, parse_anchor
 from .change import Change
+from .config import load_config
 from .store import Claim
 
 __all__ = [
@@ -97,6 +98,9 @@ class Impact:
     changed_files: list[str]
     reverse_deps: list[str]
     touched: dict[str, ClaimTouch]
+    #: Claims the diff only reaches through the import graph. Reported so the
+    #: reading value of the blast radius survives; never owed an account.
+    nearby: dict[str, ClaimTouch] = field(default_factory=dict)
 
     @property
     def blast_radius(self) -> list[str]:
@@ -111,6 +115,8 @@ class Impact:
             "blast_radius": self.blast_radius,
             "claims_touched": sorted(self.touched),
             "claims": [self.touched[k].to_dict() for k in sorted(self.touched)],
+            "claims_nearby": sorted(self.nearby),
+            "nearby": [self.nearby[k].to_dict() for k in sorted(self.nearby)],
         }
 
 
@@ -171,11 +177,17 @@ def _is_component_glob(claim: Claim, value: str) -> bool:
 
 def compute_impact(repo: Path, item: Change, *, base: str | None = None) -> Impact:
     resolved_base = resolve_base(repo, item, base)
+    config = load_config(repo)
     changed = [p for p in gitio.changed_files(repo, resolved_base)
-               if not p.startswith(f"{item.relative}/")]
-    # The change's own artifacts are excluded: `impact.md` naming itself as
-    # blast radius is noise, and every change would touch every claim defined
-    # in a file the change happens to store under `changes/`.
+               # The change's own artifacts are excluded: `impact.md` naming
+               # itself as blast radius is noise, and every change would touch
+               # every claim defined in a file it happens to store under
+               # `changes/`. Vendored and built paths go too - `gitio` reports
+               # untracked files on purpose, and a repository with no
+               # `.gitignore` was reporting `__pycache__/*.pyc` as changed
+               # source.
+               if not p.startswith(f"{item.relative}/")
+               and not derive.is_ignored(p, config)]
 
     deps = ((derive.read_json(repo / derive.DERIVED_DIR / "deps.json") or {})
             .get("data") or {})
@@ -185,9 +197,22 @@ def compute_impact(repo: Path, item: Change, *, base: str | None = None) -> Impa
         reverse.update(reverse_index.get(path, []))
     reverse -= set(changed)
 
-    radius = set(changed) | reverse
+    # Obligations are computed against the diff, never against the blast
+    # radius. SYSTEM_KNOWLEDGE.md section 9.2 defines `claim_touch_set(D)` on
+    # the diff `D`, and the two are not interchangeable: the blast radius
+    # answers "what might this affect?" and is a reading aid, while the touch
+    # set answers "what must you account for?" and is an obligation.
+    #
+    # Measured on `requests` - 35 modules, 88 import edges, 20 cycles - a
+    # one-line type-annotation change to `models.py` touched 10 claims out of
+    # 10, eight of them anchored to files the diff never opened. An obligation
+    # that always fires is one people learn to discharge without reading, and
+    # a rule that is satisfied without reading is worse than no rule, because
+    # the gate still prints `pass`.
+    diff = set(changed)
     claims = store.load_store(repo)
     touched: dict[str, ClaimTouch] = {}
+    near: dict[str, ClaimTouch] = {}
     # Memoised per file: several claims share one claim file, and asking git
     # for the same file's hunks once per claim is the difference between one
     # subprocess and forty.
@@ -195,6 +220,18 @@ def compute_impact(repo: Path, item: Change, *, base: str | None = None) -> Impa
 
     def note(claim: Claim, reason: str) -> None:
         entry = touched.setdefault(claim.id, ClaimTouch(claim.id, claim))
+        if reason not in entry.reasons:
+            entry.reasons.append(reason)
+
+    def nearby(claim: Claim, reason: str) -> None:
+        """Worth reading, never owed a sentence.
+
+        A claim whose anchors only *import* the diff is exactly what the blast
+        radius is for. Reporting it keeps the reading value that matching on
+        the radius used to provide; keeping it out of `touched` is what stops
+        it becoming an obligation.
+        """
+        entry = near.setdefault(claim.id, ClaimTouch(claim.id, claim))
         if reason not in entry.reasons:
             entry.reasons.append(reason)
 
@@ -211,19 +248,23 @@ def compute_impact(repo: Path, item: Change, *, base: str | None = None) -> Impa
             except AnchorError:
                 continue
             if _is_component_glob(claim, path):
-                hits = [f for f in radius if _glob_matches(f, path)]
+                hits = [f for f in diff if _glob_matches(f, path)]
                 if hits:
-                    note(claim, f"component boundary {path} matches {hits[0]}"
+                    note(claim, f"component boundary {path} matches {sorted(hits)[0]}"
                                 + (f" (+{len(hits) - 1} more)" if len(hits) > 1 else ""))
-            elif path in radius:
+                elif any(_glob_matches(f, path) for f in reverse):
+                    nearby(claim, f"component boundary {path} is imported by the diff")
+            elif path in diff:
                 note(claim, f"anchor {path}")
-            elif any(f == path or f.startswith(f"{path}/") for f in radius):
+            elif any(f == path or f.startswith(f"{path}/") for f in diff):
                 note(claim, f"anchor directory {path}")
+            elif path in reverse:
+                nearby(claim, f"anchor {path} imports something the diff changed")
 
         for entry in claim.evidence:
             kind, _, value = entry.partition(":")
             target = value.split("::", 1)[0].strip()
-            if target and target in radius:
+            if target and target in diff:
                 note(claim, f"evidence {kind.strip()} {target}")
 
         # File-level would be wrong here, and wrong in the direction that
@@ -233,7 +274,7 @@ def compute_impact(repo: Path, item: Change, *, base: str | None = None) -> Impa
         # are to write `Updated` about a claim nobody updated, or to split
         # every claim into its own file - which is the rubber-stamping
         # OPEN_QUESTIONS.md Q3 asks about, arriving by the front door.
-        if claim.file in radius:
+        if claim.file in diff:
             if claim.file not in edited_ranges:
                 edited_ranges[claim.file] = gitio.changed_line_ranges(
                     repo, resolved_base, claim.file)
@@ -246,6 +287,10 @@ def compute_impact(repo: Path, item: Change, *, base: str | None = None) -> Impa
         changed_files=sorted(changed),
         reverse_deps=sorted(reverse),
         touched=touched,
+        # A claim can be both: anchored to one file the diff changed and to
+        # another that merely imports it. `touched` wins, because an obligation
+        # outranks a suggestion.
+        nearby={k: v for k, v in near.items() if k not in touched},
     )
 
 

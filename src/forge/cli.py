@@ -753,16 +753,27 @@ def _cmd_impact(args: argparse.Namespace) -> int:
     for path in computed.reverse_deps:
         print(f"  imports   {path}")
 
+    width = max((len(i) for i in (*computed.touched, *computed.nearby)), default=20)
     if not computed.touched:
         print("\nClaims touched  none")
-        return _EXIT_OK
-    print(f"\nClaims touched  {len(computed.touched)} - every one needs a heading "
-          f"in impact.md")
-    for identifier in sorted(computed.touched):
-        entry = computed.touched[identifier]
-        print(f"  {identifier:20} {entry.reasons[0]}")
-        for extra in entry.reasons[1:]:
-            print(f"  {'':20} {extra}")
+    else:
+        print(f"\nClaims touched  {len(computed.touched)} - every one needs a heading "
+              f"in impact.md")
+        for identifier in sorted(computed.touched):
+            entry = computed.touched[identifier]
+            print(f"  {identifier:{width}} {entry.reasons[0]}")
+            for extra in entry.reasons[1:]:
+                print(f"  {'':{width}} {extra}")
+
+    # Printed under a heading that says plainly it is not owed anything. The
+    # import graph is worth reading and is not an obligation; on a codebase
+    # with cycles, making it one means every change touches every claim.
+    if computed.nearby:
+        print(f"\nNearby          {len(computed.nearby)} reached only through the "
+              f"import graph - worth reading, no heading owed")
+        for identifier in sorted(computed.nearby):
+            entry = computed.nearby[identifier]
+            print(f"  {identifier:{width}} {entry.reasons[0]}")
     return _EXIT_OK
 
 
@@ -781,6 +792,17 @@ def _fold_change(repo: Path, item: change.Change, *, dry_run: bool) -> tuple[int
 
     planned: list[tuple[Path, str]] = []
     for delta in deltas:
+        if not delta.capability:
+            # `spec/<capability>/spec.md` is the layout `capability_of` reads.
+            # A flat `spec/<name>.md` yields no capability, and folding it
+            # anyway wrote every change's requirements into one
+            # `docs/system/specs/spec.md` titled `# capability` - silently,
+            # and found only the first time the fold was ever executed.
+            print(f"forge: {delta.path}: cannot tell which capability this delta "
+                  f"belongs to; move it to "
+                  f"{item.relative}/spec/<capability>/spec.md",
+                  file=sys.stderr)
+            return _EXIT_CHANGED, lines
         target = repo / spec.SPECS_DIR / delta.capability / "spec.md"
         existing = target.read_text(encoding="utf-8") if target.is_file() else None
         try:
@@ -1033,7 +1055,11 @@ def _scaffold_artifact(repo: Path, item, resolved: dict, name: str) -> str | Non
         if not stem:
             print(f"forge: {name!r} is not a usable file name", file=sys.stderr)
             return _EXIT_USAGE
-        relative = f"{generates.split('*', 1)[0].rstrip('/')}/{stem}.md"
+        # `<capability>/spec.md`, not `<capability>.md`. `spec.capability_of`
+        # reads the capability from the directory, so the flat spelling folded
+        # every delta into one `docs/system/specs/spec.md` titled `# capability`
+        # - found on `requests` the first time the fold was ever executed.
+        relative = f"{generates.split('*', 1)[0].rstrip('/')}/{stem}/spec.md"
     else:
         relative = generates
         stem = ""
@@ -1267,16 +1293,37 @@ def _cmd_bootstrap_seal(args: argparse.Namespace) -> int:
 
 
 def _cmd_doctor(args: argparse.Namespace) -> int:
+    repo = args.repo.resolve()
     langs = available_languages()
     print(f"python           {sys.version.split()[0]}")
     print(f"grammars         {', '.join(langs) if langs else 'none (all anchors will be coarse)'}")
     try:
-        version = gitio.git(Path.cwd(), "--version").strip()
+        version = gitio.git(repo, "--version").strip()
     except gitio.GitError as exc:
         print(f"git              unavailable: {exc}")
         return _EXIT_USAGE
     print(f"git              {version.removeprefix('git version ')}")
-    return _EXIT_OK
+
+    # The project's own commands, checked here rather than twenty minutes into
+    # its first `forge verify`. On `requests`, bootstrap detected the bare
+    # `pytest` and `ruff check .`; neither was on PATH, and the first thing
+    # that said so was a verification run that had already taken the suite's
+    # full running time to get there.
+    declared = verify.commands(repo)
+    if not declared:
+        print("commands         none declared in .forge/config.yaml")
+        return _EXIT_OK
+
+    unresolved = 0
+    for name in sorted(declared):
+        line = declared[name]
+        problem = verify.resolve_command(repo, line)
+        if problem:
+            unresolved += 1
+            print(f"{name:16} {line}\n{'':16} {problem}")
+        else:
+            print(f"{name:16} {line}")
+    return _EXIT_CHANGED if unresolved else _EXIT_OK
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1567,7 +1614,16 @@ def build_parser() -> argparse.ArgumentParser:
     boot_seal.add_argument("--json", action="store_true")
     boot_seal.set_defaults(func=_cmd_bootstrap_seal)
 
-    doctor = sub.add_parser("doctor", help="report the toolchain the kernel found")
+    doctor = sub.add_parser(
+        "doctor",
+        help="report the toolchain the kernel found, and whether this project's "
+             "declared commands resolve",
+        description="Exits 1 when a declared command cannot be run, so the first "
+                    "thing a new project hears about an unresolvable `commands.test` "
+                    "is this, not a verification that spent the suite's full running "
+                    "time to say the same.",
+    )
+    doctor.add_argument("--repo", type=Path, default=Path.cwd())
     doctor.set_defaults(func=_cmd_doctor)
 
     return parser

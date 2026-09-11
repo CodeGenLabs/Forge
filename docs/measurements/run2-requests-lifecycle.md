@@ -138,3 +138,39 @@ rather than a port — is still untested.
 **Drift.** No claim went stale during the run, so `forge drift --store` classified ten
 fresh claims and nothing else. The mechanism that makes this project novel remains
 unexercised on real decay.
+
+
+---
+
+## 7. Postscript: G14 repaired, and re-measured on the same change
+
+Fixed the same day. Obligations are now computed against the diff; claims reached only
+through the import graph are reported under a `Nearby` heading that says plainly no
+account is owed, so the reading value of the blast radius survives without becoming an
+obligation.
+
+Re-run against the identical change, `0001-content-may-be-none`:
+
+| | before | after |
+|---|---|---|
+| Claims **touched** (a sentence owed each) | 10 | **5** |
+| Claims **nearby** (reading only) | - | 5 |
+
+The five that moved are the ones anchored to `sessions.py` and `utils.py`, which the
+diff never opened.
+
+**The five that remain are still too many, and the reason is worth writing down.** All
+five are anchored to `src/requests/models.py`, which the diff did change - but they are
+anchored to *symbols* in it: `models.py#PreparedRequest`, `models.py#Response.next`,
+`models.py#Response.iter_content`. The diff touched only `Response.content`. Matching
+is still at file level on the anchor side, so a change to one method taxes every claim
+about every other method in the same module.
+
+The machinery to fix it already exists: `fingerprint.find_symbol` locates a symbol's
+span, which is how the anchor engine has classified drift since M1, and
+`gitio.changed_line_ranges` is what R1 added. Intersecting the two would take this
+change from five to one. That is the next narrowing, and it is deliberately not done
+here: symbol resolution fails on coarse files and on languages with no grammar
+installed, and deciding what a *failed* resolution should mean - fall back to the file,
+or report nothing - is a decision that deserves its own change rather than a footnote
+in this one.

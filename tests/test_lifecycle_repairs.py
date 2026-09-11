@@ -132,7 +132,7 @@ def test_a_glob_artifact_needs_a_name(opened):
                  "--repo", str(opened.root)]) == 2
     assert main(["instructions", "spec", "--change", "1", "--write", "payments",
                  "--repo", str(opened.root)]) == 0
-    assert (opened.root / "changes/0001-add-a-thing/spec/payments.md").is_file()
+    assert (opened.root / "changes/0001-add-a-thing/spec/payments/spec.md").is_file()
 
 
 def test_scaffolding_never_overwrites(opened):
@@ -240,3 +240,71 @@ def test_an_archived_delta_does_not_define_anything(opened):
 
     index = trace.build_trace(opened.root)
     assert "REQ-pay-1" not in index["ids"]
+
+
+# ---------------------------------------------------------------------------
+# `forge doctor` meets the unresolvable command, not `forge verify`
+# ---------------------------------------------------------------------------
+
+def test_doctor_reports_an_unresolvable_command(opened, capsys):
+    (opened.root / ".forge/config.yaml").write_text(
+        "commands:\n  test: definitely-not-a-real-binary -q\n",
+        encoding="utf-8", newline="\n")
+    code = main(["doctor", "--repo", str(opened.root)])
+    out = capsys.readouterr().out
+    assert code == 1
+    assert "definitely-not-a-real-binary" in out
+    assert "not on PATH" in out
+
+
+def test_doctor_is_clean_when_every_command_resolves(opened, capsys):
+    (opened.root / ".forge/config.yaml").write_text(
+        "commands:\n  test: git status\n", encoding="utf-8", newline="\n")
+    assert main(["doctor", "--repo", str(opened.root)]) == 0
+
+
+def test_doctor_does_not_try_to_run_the_timeout(opened, capsys):
+    """`timeout` lives under `commands:` and configures the runner. Resolving
+    it would report `1800` as a missing program."""
+    (opened.root / ".forge/config.yaml").write_text(
+        "commands:\n  timeout: 1800\n  test: git status\n",
+        encoding="utf-8", newline="\n")
+    assert main(["doctor", "--repo", str(opened.root)]) == 0
+    assert "1800" not in capsys.readouterr().out
+
+
+def test_doctor_says_so_when_nothing_is_declared(opened, capsys):
+    (opened.root / ".forge/config.yaml").write_text("version: 1\n",
+                                                    encoding="utf-8", newline="\n")
+    assert main(["doctor", "--repo", str(opened.root)]) == 0
+    assert "none declared" in capsys.readouterr().out
+
+
+# ---------------------------------------------------------------------------
+# A delta the fold cannot place
+# ---------------------------------------------------------------------------
+
+def test_the_spec_scaffold_writes_the_layout_the_fold_reads(opened):
+    """`--write NAME` used to write `spec/NAME.md`, which `capability_of`
+    reads as no capability at all."""
+    from forge import spec
+
+    assert main(["instructions", "spec", "--change", "1", "--write", "payments",
+                 "--repo", str(opened.root)]) == 0
+    target = opened.root / "changes/0001-add-a-thing/spec/payments/spec.md"
+    assert target.is_file()
+    assert spec.capability_of(
+        "changes/0001-add-a-thing/spec/payments/spec.md",
+        "changes/0001-add-a-thing") == "payments"
+
+
+def test_the_fold_refuses_a_delta_it_cannot_place(opened, capsys):
+    """Folding it anyway wrote every change into one `specs/spec.md` titled
+    `# capability`, silently."""
+    opened.write("changes/0001-add-a-thing/spec/flat.md", DELTA)
+    code = main(["archive", "--change", "1", "--dry-run", "--force",
+                 "--repo", str(opened.root)])
+    err = capsys.readouterr().err
+    assert code == 1
+    assert "cannot tell which capability" in err
+    assert not (opened.root / "docs/system/specs/spec.md").exists()

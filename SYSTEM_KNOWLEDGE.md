@@ -699,6 +699,20 @@ appears under `Superseded` without an existing ADR.
 >    new piece of knowledge — the single most common thing a change should do, and the reason the store
 >    exists. `New` now counts, which is what [WORKFLOW.md](WORKFLOW.md) §3.4's own worked example always
 >    assumed.
+>
+> **Corrected again on `requests`, 2026-09-11.** The definition above says `D` and means it, and the
+> implementation had been matching anchors against the **blast radius** — the diff *plus every file that
+> imports it*. Measured on `requests` (35 modules, 88 import edges, 20 cycles), a one-line type-annotation
+> change to `models.py` put 10 claims out of 10 into the touch set; eight were anchored to files the diff
+> never opened. `impact.md` then carried nine honest `Unaffected` sentences about code the change could
+> not have reached.
+>
+> The two sets answer different questions and are not interchangeable. The **blast radius** answers *what
+> might this affect?* and is a reading aid, so a wide answer costs a reader some time. The **touch set**
+> answers *what must you account for?* and is an obligation, so a wide answer costs every change a page of
+> sentences — and an obligation that always fires is one people learn to discharge without reading. Claims
+> reached only through the import graph are now reported separately, under a heading that says no account
+> is owed. See [docs/measurements/run2-requests-lifecycle.md](docs/measurements/run2-requests-lifecycle.md).
 
 Consequences worth stating plainly:
 
