@@ -1077,6 +1077,273 @@
         ],
         "untagged": 31
       },
+      "tests/test_instructions.py": {
+        "language": "python",
+        "tests": [
+          {
+            "covers": [],
+            "line": 80,
+            "name": "test_a_path_selector_resolves_to_existing_files"
+          },
+          {
+            "covers": [],
+            "line": 83,
+            "name": "test_a_missing_file_is_simply_absent"
+          },
+          {
+            "covers": [],
+            "line": 92,
+            "name": "test_the_change_variable_is_substituted"
+          },
+          {
+            "covers": [],
+            "line": 101,
+            "name": "test_a_derived_selector_names_the_artifact_file"
+          },
+          {
+            "covers": [],
+            "line": 107,
+            "name": "test_an_unbuilt_derived_artifact_is_reported_unresolved"
+          },
+          {
+            "covers": [],
+            "line": 118,
+            "name": "test_claims_metadata_is_the_index_not_the_prose"
+          },
+          {
+            "covers": [],
+            "line": 127,
+            "name": "test_claims_metadata_excludes_candidates"
+          },
+          {
+            "covers": [],
+            "line": 134,
+            "name": "test_the_impact_selector_expands_to_the_computed_touch_set"
+          },
+          {
+            "covers": [],
+            "line": 144,
+            "name": "test_the_impact_selector_is_empty_when_nothing_is_touched"
+          },
+          {
+            "covers": [],
+            "line": 149,
+            "name": "test_an_unknown_selector_is_reported_not_ignored"
+          },
+          {
+            "covers": [],
+            "line": 164,
+            "name": "test_an_explicit_claim_id_list_resolves_to_bodies"
+          },
+          {
+            "covers": [],
+            "line": 187,
+            "name": "test_instructions_prints_the_contract_and_the_instruction"
+          },
+          {
+            "covers": [],
+            "line": 195,
+            "name": "test_instructions_json"
+          },
+          {
+            "covers": [],
+            "line": 204,
+            "name": "test_an_unknown_artifact_names_the_ones_that_exist"
+          },
+          {
+            "covers": [],
+            "line": 210,
+            "name": "test_an_artifact_absent_from_the_track_still_resolves"
+          }
+        ],
+        "untagged": 15
+      },
+      "tests/test_lifecycle.py": {
+        "language": "python",
+        "tests": [
+          {
+            "covers": [],
+            "line": 28,
+            "name": "test_bounded"
+          },
+          {
+            "covers": [],
+            "line": 157,
+            "name": "test_the_default_table_matches_the_architecture_document"
+          },
+          {
+            "covers": [],
+            "line": 172,
+            "name": "test_a_project_can_replace_the_table"
+          },
+          {
+            "covers": [],
+            "line": 181,
+            "name": "test_an_unimplemented_check_never_passes_silently"
+          },
+          {
+            "covers": [],
+            "line": 191,
+            "name": "test_an_unimplemented_check_does_not_block_either"
+          },
+          {
+            "covers": [],
+            "line": 197,
+            "name": "test_a_non_blocking_gate_still_reports_what_it_found"
+          },
+          {
+            "covers": [],
+            "line": 206,
+            "name": "test_the_same_check_at_a_later_point_does_block"
+          },
+          {
+            "covers": [],
+            "line": 215,
+            "name": "test_an_unknown_point_is_a_usage_error"
+          },
+          {
+            "covers": [],
+            "line": 221,
+            "name": "test_a_change_scoped_check_without_a_change_says_so"
+          },
+          {
+            "covers": [],
+            "line": 231,
+            "name": "test_spec_post_blocks_until_a_delta_exists"
+          },
+          {
+            "covers": [],
+            "line": 236,
+            "name": "test_spec_post_accepts_a_named_skip"
+          },
+          {
+            "covers": [],
+            "line": 243,
+            "name": "test_impact_post_blocks_until_every_claim_is_accounted_for"
+          },
+          {
+            "covers": [],
+            "line": 250,
+            "name": "test_analyze_post_blocks_until_tasks_discharge_the_requirements"
+          },
+          {
+            "covers": [],
+            "line": 259,
+            "name": "test_a_task_naming_no_requirement_blocks"
+          },
+          {
+            "covers": [],
+            "line": 268,
+            "name": "test_a_chore_task_needs_no_requirement"
+          },
+          {
+            "covers": [],
+            "line": 274,
+            "name": "test_converge_post_blocks_on_a_dirty_tree"
+          },
+          {
+            "covers": [],
+            "line": 280,
+            "name": "test_converge_post_passes_on_a_clean_tree"
+          },
+          {
+            "covers": [],
+            "line": 289,
+            "name": "test_verify_records_every_condition_not_just_the_tests"
+          },
+          {
+            "covers": [],
+            "line": 294,
+            "name": "test_an_undeclared_command_is_unavailable_and_blocks_the_verdict"
+          },
+          {
+            "covers": [],
+            "line": 303,
+            "name": "test_a_kernel_owed_condition_is_pending_and_does_not_block"
+          },
+          {
+            "covers": [],
+            "line": 313,
+            "name": "test_an_undischarged_requirement_fails_verification"
+          },
+          {
+            "covers": [],
+            "line": 320,
+            "name": "test_a_tagged_test_discharges_it"
+          },
+          {
+            "covers": [],
+            "line": 330,
+            "name": "test_a_failing_command_fails_the_verdict_and_keeps_its_output"
+          },
+          {
+            "covers": [],
+            "line": 341,
+            "name": "test_an_unaccounted_claim_fails_verification"
+          },
+          {
+            "covers": [],
+            "line": 348,
+            "name": "test_no_run_records_the_commands_as_unproven"
+          },
+          {
+            "covers": [],
+            "line": 354,
+            "name": "test_a_waiver_is_recorded_in_the_report"
+          },
+          {
+            "covers": [],
+            "line": 360,
+            "name": "test_verify_writes_the_report"
+          },
+          {
+            "covers": [],
+            "line": 368,
+            "name": "test_verify_post_reads_the_report"
+          },
+          {
+            "covers": [],
+            "line": 383,
+            "name": "test_archive_refuses_without_a_passing_verification"
+          },
+          {
+            "covers": [],
+            "line": 390,
+            "name": "test_archive_folds_then_moves"
+          },
+          {
+            "covers": [],
+            "line": 401,
+            "name": "test_archive_dry_run_changes_nothing"
+          },
+          {
+            "covers": [],
+            "line": 410,
+            "name": "test_force_records_which_blockers_were_overridden"
+          },
+          {
+            "covers": [],
+            "line": 420,
+            "name": "test_an_archived_number_is_never_reused"
+          },
+          {
+            "covers": [],
+            "line": 427,
+            "name": "test_the_archive_is_not_a_citation"
+          },
+          {
+            "covers": [],
+            "line": 456,
+            "name": "test_the_acceptance_case"
+          },
+          {
+            "covers": [],
+            "line": 500,
+            "name": "test_a_folded_requirement_is_not_a_dangling_reference"
+          }
+        ],
+        "untagged": 36
+      },
       "tests/test_perturbations.py": {
         "language": "python",
         "tests": [
@@ -1965,9 +2232,9 @@
       }
     },
     "tagged_tests": 0,
-    "total_tests": 374
+    "total_tests": 425
   },
-  "generated_from_commit": "77a2ef1d068da483b90604ce0024452b488a97dd",
+  "generated_from_commit": "7d7549889ddf99b4662c45265adfb283ceac5ba0",
   "generator": "forge sync derived",
   "tool": "forge"
 }
