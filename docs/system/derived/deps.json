@@ -60,6 +60,7 @@
         "src/forge/__init__.py",
         "src/forge/anchor.py",
         "src/forge/change.py",
+        "src/forge/config.py",
         "src/forge/derive.py",
         "src/forge/gitio.py",
         "src/forge/store.py"
@@ -146,6 +147,7 @@
         "src/forge/bootstrap.py",
         "src/forge/derive.py",
         "src/forge/gates.py",
+        "src/forge/impact.py",
         "src/forge/scaffold.py",
         "src/forge/validate.py",
         "src/forge/verify.py"
@@ -227,7 +229,7 @@
     "tool": "forge",
     "unresolved_relative_imports": 0
   },
-  "generated_from_commit": "5ad73f0269f2876b833542cc81f71febcfbf7d29",
+  "generated_from_commit": "ebda59f9aa1eb6f4144fb50a33c1136776725372",
   "generator": "forge sync derived",
   "tool": "forge"
 }

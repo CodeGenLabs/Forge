@@ -1430,6 +1430,47 @@
         ],
         "untagged": 31
       },
+      "tests/test_impact_scope.py": {
+        "language": "python",
+        "tests": [
+          {
+            "covers": [],
+            "line": 81,
+            "name": "test_an_importer_is_in_the_radius_but_not_the_touch_set"
+          },
+          {
+            "covers": [],
+            "line": 89,
+            "name": "test_the_importer_is_reported_with_a_reason"
+          },
+          {
+            "covers": [],
+            "line": 98,
+            "name": "test_editing_the_importer_makes_it_a_touch"
+          },
+          {
+            "covers": [],
+            "line": 107,
+            "name": "test_a_claim_that_is_both_is_only_touched"
+          },
+          {
+            "covers": [],
+            "line": 123,
+            "name": "test_the_account_owes_nothing_for_a_nearby_claim"
+          },
+          {
+            "covers": [],
+            "line": 144,
+            "name": "test_bytecode_is_not_in_the_blast_radius"
+          },
+          {
+            "covers": [],
+            "line": 153,
+            "name": "test_a_vendored_directory_is_not_in_the_blast_radius"
+          }
+        ],
+        "untagged": 7
+      },
       "tests/test_instructions.py": {
         "language": "python",
         "tests": [
@@ -1784,9 +1825,39 @@
             "covers": [],
             "line": 234,
             "name": "test_an_archived_delta_does_not_define_anything"
+          },
+          {
+            "covers": [],
+            "line": 248,
+            "name": "test_doctor_reports_an_unresolvable_command"
+          },
+          {
+            "covers": [],
+            "line": 258,
+            "name": "test_doctor_is_clean_when_every_command_resolves"
+          },
+          {
+            "covers": [],
+            "line": 264,
+            "name": "test_doctor_does_not_try_to_run_the_timeout"
+          },
+          {
+            "covers": [],
+            "line": 274,
+            "name": "test_doctor_says_so_when_nothing_is_declared"
+          },
+          {
+            "covers": [],
+            "line": 286,
+            "name": "test_the_spec_scaffold_writes_the_layout_the_fold_reads"
+          },
+          {
+            "covers": [],
+            "line": 299,
+            "name": "test_the_fold_refuses_a_delta_it_cannot_place"
           }
         ],
-        "untagged": 17
+        "untagged": 23
       },
       "tests/test_perturbations.py": {
         "language": "python",
@@ -2877,9 +2948,9 @@
       }
     },
     "tagged_tests": 0,
-    "total_tests": 548
+    "total_tests": 561
   },
-  "generated_from_commit": "5ad73f0269f2876b833542cc81f71febcfbf7d29",
+  "generated_from_commit": "ebda59f9aa1eb6f4144fb50a33c1136776725372",
   "generator": "forge sync derived",
   "tool": "forge"
 }
