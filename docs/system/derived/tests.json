@@ -1309,126 +1309,131 @@
           },
           {
             "covers": [],
-            "line": 184,
+            "line": 186,
             "name": "test_a_component_anchor_is_read_as_a_glob"
           },
           {
             "covers": [],
-            "line": 195,
+            "line": 197,
             "name": "test_only_component_anchors_are_globbed"
           },
           {
             "covers": [],
-            "line": 203,
+            "line": 205,
             "name": "test_an_evidence_artifact_in_the_diff_touches_its_claim"
           },
           {
             "covers": [],
-            "line": 210,
+            "line": 212,
             "name": "test_editing_a_claim_file_touches_the_claims_in_it"
           },
           {
             "covers": [],
-            "line": 219,
+            "line": 221,
             "name": "test_candidates_and_retired_claims_are_not_taxed"
           },
           {
             "covers": [],
-            "line": 237,
+            "line": 239,
             "name": "test_no_impact_file_with_a_non_empty_touch_set_blocks"
           },
           {
             "covers": [],
-            "line": 243,
+            "line": 248,
+            "name": "test_appending_an_unrelated_function_does_not_touch_the_symbol_claim"
+          },
+          {
+            "covers": [],
+            "line": 258,
             "name": "test_no_impact_file_with_an_empty_touch_set_is_fine"
           },
           {
             "covers": [],
-            "line": 247,
+            "line": 262,
             "name": "test_a_complete_account_passes"
           },
           {
             "covers": [],
-            "line": 255,
+            "line": 270,
             "name": "test_an_unaccounted_member_blocks_and_names_why_it_is_in_the_set"
           },
           {
             "covers": [],
-            "line": 265,
+            "line": 280,
             "name": "test_an_entry_with_no_reason_is_not_an_account"
           },
           {
             "covers": [],
-            "line": 278,
+            "line": 293,
             "name": "test_the_reason_never_swallows_the_next_line"
           },
           {
             "covers": [],
-            "line": 289,
+            "line": 304,
             "name": "test_a_claim_under_two_headings_blocks"
           },
           {
             "covers": [],
-            "line": 298,
+            "line": 313,
             "name": "test_editing_a_claim_and_filing_it_unaffected_blocks"
           },
           {
             "covers": [],
-            "line": 310,
+            "line": 325,
             "name": "test_a_missing_section_blocks"
           },
           {
             "covers": [],
-            "line": 318,
+            "line": 333,
             "name": "test_an_invented_heading_blocks"
           },
           {
             "covers": [],
-            "line": 327,
+            "line": 342,
             "name": "test_over_accounting_is_a_warning_not_an_error"
           },
           {
             "covers": [],
-            "line": 343,
+            "line": 358,
             "name": "test_superseded_without_an_adr_blocks"
           },
           {
             "covers": [],
-            "line": 353,
+            "line": 368,
             "name": "test_superseded_naming_a_missing_adr_blocks"
           },
           {
             "covers": [],
-            "line": 364,
+            "line": 379,
             "name": "test_superseded_naming_an_existing_adr_passes"
           },
           {
             "covers": [],
-            "line": 381,
+            "line": 396,
             "name": "test_impact_command_prints_the_set_and_why"
           },
           {
             "covers": [],
-            "line": 390,
+            "line": 405,
             "name": "test_impact_json_carries_the_ids_the_design_phase_reads"
           },
           {
             "covers": [],
-            "line": 399,
+            "line": 414,
             "name": "test_check_scope_change_runs_the_rule"
           },
           {
             "covers": [],
-            "line": 405,
+            "line": 420,
             "name": "test_check_scope_change_can_be_limited_to_one_change"
           },
           {
             "covers": [],
-            "line": 415,
+            "line": 430,
             "name": "test_an_unknown_change_is_reported_not_ignored"
           }
         ],
-        "untagged": 31
+        "untagged": 32
       },
       "tests/test_impact_scope.py": {
         "language": "python",
@@ -1467,9 +1472,39 @@
             "covers": [],
             "line": 153,
             "name": "test_a_vendored_directory_is_not_in_the_blast_radius"
+          },
+          {
+            "covers": [],
+            "line": 227,
+            "name": "test_only_the_claim_about_the_changed_symbol_is_touched"
+          },
+          {
+            "covers": [],
+            "line": 237,
+            "name": "test_the_untouched_symbol_is_still_reported"
+          },
+          {
+            "covers": [],
+            "line": 246,
+            "name": "test_a_file_level_anchor_is_touched_by_any_edit_to_its_file"
+          },
+          {
+            "covers": [],
+            "line": 258,
+            "name": "test_an_unresolvable_symbol_falls_back_to_the_file"
+          },
+          {
+            "covers": [],
+            "line": 271,
+            "name": "test_a_language_with_no_grammar_falls_back_to_the_file"
+          },
+          {
+            "covers": [],
+            "line": 283,
+            "name": "test_a_new_file_touches_every_claim_anchored_into_it"
           }
         ],
-        "untagged": 7
+        "untagged": 13
       },
       "tests/test_instructions.py": {
         "language": "python",
@@ -1798,62 +1833,62 @@
           },
           {
             "covers": [],
-            "line": 358,
+            "line": 365,
             "name": "test_no_run_records_the_commands_as_unproven"
           },
           {
             "covers": [],
-            "line": 364,
+            "line": 371,
             "name": "test_a_waiver_is_recorded_in_the_report"
           },
           {
             "covers": [],
-            "line": 370,
+            "line": 377,
             "name": "test_verify_writes_the_report"
           },
           {
             "covers": [],
-            "line": 378,
+            "line": 385,
             "name": "test_verify_post_reads_the_report"
           },
           {
             "covers": [],
-            "line": 393,
+            "line": 400,
             "name": "test_archive_refuses_without_a_passing_verification"
           },
           {
             "covers": [],
-            "line": 400,
+            "line": 407,
             "name": "test_archive_folds_then_moves"
           },
           {
             "covers": [],
-            "line": 411,
+            "line": 418,
             "name": "test_archive_dry_run_changes_nothing"
           },
           {
             "covers": [],
-            "line": 420,
+            "line": 427,
             "name": "test_force_records_which_blockers_were_overridden"
           },
           {
             "covers": [],
-            "line": 430,
+            "line": 437,
             "name": "test_an_archived_number_is_never_reused"
           },
           {
             "covers": [],
-            "line": 437,
+            "line": 444,
             "name": "test_the_archive_is_not_a_citation"
           },
           {
             "covers": [],
-            "line": 466,
+            "line": 473,
             "name": "test_the_acceptance_case"
           },
           {
             "covers": [],
-            "line": 510,
+            "line": 517,
             "name": "test_a_folded_requirement_is_not_a_dangling_reference"
           }
         ],
@@ -1976,9 +2011,39 @@
             "covers": [],
             "line": 299,
             "name": "test_the_fold_refuses_a_delta_it_cannot_place"
+          },
+          {
+            "covers": [],
+            "line": 316,
+            "name": "test_a_step_declared_none_is_skipped_not_unproven"
+          },
+          {
+            "covers": [],
+            "line": 328,
+            "name": "test_silence_is_still_unproven"
+          },
+          {
+            "covers": [],
+            "line": 337,
+            "name": "test_the_unavailable_message_offers_the_none_spelling"
+          },
+          {
+            "covers": [],
+            "line": 344,
+            "name": "test_doctor_does_not_try_to_resolve_none"
+          },
+          {
+            "covers": [],
+            "line": 357,
+            "name": "test_verification_json_is_not_described_by_the_derived_tier"
+          },
+          {
+            "covers": [],
+            "line": 368,
+            "name": "test_a_verification_report_does_not_dirty_the_derived_tier"
           }
         ],
-        "untagged": 23
+        "untagged": 29
       },
       "tests/test_perturbations.py": {
         "language": "python",
@@ -3069,9 +3134,9 @@
       }
     },
     "tagged_tests": 0,
-    "total_tests": 584
+    "total_tests": 597
   },
-  "generated_from_commit": "f96585a4cef2fc93ad29de0a4a07f444f9ffd28e",
+  "generated_from_commit": "903f4c3b191e762c8151d7c658563826c2b60f52",
   "generator": "forge sync derived",
   "tool": "forge"
 }
