@@ -263,6 +263,17 @@ testing the parts. What they could not test was a change reaching the end.
 ~~R1, R3~~, R2 (a change can finish) → **R4 (the ledger)** → R5, R6 (an existing
 repository survives contact) → R8 (the other agents) → everything else, measured.
 
-The immediate next step is the second dogfood run: `forge init` and a full track C change
-on a repository that is not this one, which is the only thing that can say whether the
-repairs above actually cleared the path.
+> **Run 2 is done** (2026-09-11) - `forge init`, bootstrap and a full track C change on
+> `requests` 2.34.2, recorded in
+> [docs/measurements/run2-requests-lifecycle.md](measurements/run2-requests-lifecycle.md).
+> Four of the five repairs held on unfamiliar code; F2 introduced a new defect. The run
+> added eighteen findings, two of which reorder everything below:
+>
+> - **G16 - `forge archive` is unreachable on any repository today.** It blocks on a
+>   verdict of `unproven`, which three kernel-owed conditions guarantee. R4 (the ledger)
+>   is no longer only about the marquee feature; it is what unblocks the lifecycle.
+> - **G14 - the claim-touch set is matched against the blast radius, not the diff.** A
+>   one-line change to `requests` touched 10 claims out of 10. This is R1's failure
+>   through a second door, and it needs the same narrowing.
+>
+> Revised order: **G14 → R4 (which subsumes G16) → R2 → R5, R6 → R8**.
