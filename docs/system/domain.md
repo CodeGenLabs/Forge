@@ -34,7 +34,15 @@ becomes a guess about meaning.
 
 ```claim
 kind:     invariant
-status:   asserted
+status:   retired
+retired-ground: 2
+retired-evidence: >
+  tests/test_deps.py::test_regeneration_is_a_no_op and the `derived.dirty`
+  check both fail the violation this names. Retired rather than kept because
+  this repository excludes `tests/*` from the `@covers` harvest - its test
+  suite is made of the strings the scanner looks for - so no invariant claim
+  here can ever be discharged, and an open item nobody can close is how a
+  signal gets ignored.
 truth-source: tests
 anchors:  ["src/forge/derive.py#write_json@8e06e5ca51"]
 evidence:

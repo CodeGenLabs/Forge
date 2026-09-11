@@ -148,3 +148,32 @@ still be; that is section 4's missing measurement. What is now clear is that it 
 too thin to be *honest*, and the failure mode it was designed against — forty
 plausible claims nobody checked — did not occur in either run and would have been
 visible in both.
+
+---
+
+## 6. Postscript: what the sealed store then reported
+
+Sealing this repository's baseline and running `forge status` produced one more
+finding, and it is the sharpest of the set.
+
+`INV-regeneration-is-a-no-op` was ratified with evidence naming a real, passing test.
+It immediately appeared under **invariants without tests**, and it could never stop
+appearing: this repository excludes `tests/*` from the `@covers` harvest, because its
+test suite is built out of exactly the strings the scanner looks for. No `@covers` tag
+here is ever read, so **no invariant claim in this repository can ever be discharged.**
+
+That is a property of the tool's own repository and not advice about using it — but it
+is a real conclusion, and the response was the one the design prescribes rather than a
+suppression. The claim was retired on ground 2, *mechanically enforced*: a test and the
+`derived.dirty` check both fail the violation it names, and the ground is recorded in
+the claim with its evidence. An open item nobody can close is how a signal comes to be
+ignored, and that is a worse outcome than one fewer claim.
+
+Two reporting bugs fell out of the same run: the undischarged-invariant summary counted
+*candidates* (a proposed invariant with no test is the candidate tier working, not a
+gap) and counted *retired* claims (which section 10.2 excludes from checks and budgets
+by design).
+
+The general lesson is narrower than "use `@covers`". It is that `exclude_id_scan` and
+the `INV-` kind are in tension, and a project that needs the first should know it is
+giving up the second.

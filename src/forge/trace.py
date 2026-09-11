@@ -202,9 +202,14 @@ def build_trace(repo: Path) -> dict:
             entry[key] = sorted(set(entry[key]))
 
     dangling = sorted(i for i, e in by_id.items() if e["defined_in"] is None)
+    # Candidates are excluded. A proposed invariant with no test is a guess
+    # that has not been reviewed yet, which is the candidate tier working -
+    # reporting it as an open item makes the store look in worse repair than
+    # it is, and the thing to do about it is the review, not a test.
     undischarged = sorted(
         i for i, e in by_id.items()
         if e["defined_in"] and e["kind"] == "invariant" and not e["tests"]
+        and not e["candidate"] and e["status"] != "retired"
     )
 
     return {
