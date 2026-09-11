@@ -43,6 +43,11 @@ class Config:
     #: How many recent changes the orphan check looks back over
     #: (`thresholds.orphan_change_window`).
     orphan_change_window: int = 20
+    #: How many commits the derived tier may lag before `derived.freshness`
+    #: warns (`thresholds.derived_stale_commits`). Only a warning: the content
+    #: still matches, which is what freshness actually means - this is about
+    #: how long it has been since anything re-checked that.
+    derived_stale_commits: int = 20
     #: Where the file came from, or None when defaults are in use.
     source: str | None = None
     #: Populated when the file exists but could not be read.
@@ -79,6 +84,9 @@ def load_config(repo: Path) -> Config:
         ),
         orphan_change_window=_positive_int(
             thresholds.get("orphan_change_window"), defaults.orphan_change_window
+        ),
+        derived_stale_commits=_positive_int(
+            thresholds.get("derived_stale_commits"), defaults.derived_stale_commits
         ),
         source=CONFIG_PATH,
     )

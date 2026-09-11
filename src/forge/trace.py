@@ -75,6 +75,12 @@ def _scan_changes(repo: Path) -> dict[str, list[str]]:
     for path in gitio.list_files_at(repo, "HEAD"):
         if not path.startswith(f"{_CHANGES_DIR}/") or not path.endswith(".md"):
             continue
+        if path.startswith(f"{_CHANGES_DIR}/archive/"):
+            # The archive is never an input to any phase (ARCHITECTURE.md 4.1),
+            # so it is not a citation either. Counting it would name every
+            # folded change "archive" and, worse, keep a retired claim looking
+            # consulted forever.
+            continue
         blob = gitio.blob_at(repo, "HEAD", path)
         if blob is None:
             continue
@@ -105,8 +111,30 @@ def recent_change_citations(repo: Path, window: int) -> set[str]:
             if keep.intersection(changes)}
 
 
+def _permanent_requirements(repo: Path) -> dict[str, tuple[str, int, str]]:
+    """`REQ-*` defined in `docs/system/specs/**`, by id.
+
+    Imported late for the same reason `derive` imports `trace` late: `spec`
+    reads the change directories this module also scans, and a module-level
+    import would be a cycle.
+    """
+    from .spec import SPECS_DIR, parse_permanent
+
+    root = repo / SPECS_DIR
+    if not root.is_dir():
+        return {}
+    out: dict[str, tuple[str, int, str]] = {}
+    for path in sorted(root.rglob("*.md")):
+        relative = path.relative_to(repo).as_posix()
+        text = path.read_text(encoding="utf-8", errors="replace")
+        for requirement in parse_permanent(text):
+            out.setdefault(requirement.id, (relative, requirement.line,
+                                            requirement.title))
+    return out
+
+
 def build_trace(repo: Path) -> dict:
-    """Compute the index from claims, ADRs, changes and the derived tier."""
+    """Compute the index from claims, ADRs, specs, changes and the derived tier."""
     claims = store.load_store(repo)
     decisions = store.load_decisions(repo)
     changes = _scan_changes(repo)
@@ -131,6 +159,17 @@ def build_trace(repo: Path) -> dict:
         entry["since"] = claim.since
         if claim.parse_error:
             entry["parse_error"] = claim.parse_error
+
+    # Requirements in the permanent specs are definitions too. Without this,
+    # a requirement a change folded in is reported as a dangling reference the
+    # moment a test tags `@covers` for it - which is the exact end state of a
+    # correctly completed change, and the first thing anyone would see after
+    # their first archive.
+    for identifier, (path, line, title) in _permanent_requirements(repo).items():
+        entry = by_id.setdefault(identifier, _empty_entry(identifier))
+        entry["kind"] = "requirement"
+        entry["title"] = title
+        entry["defined_in"] = f"{path}:{line}"
 
     for identifier, decision in decisions.items():
         entry = by_id.setdefault(identifier, _empty_entry(identifier))

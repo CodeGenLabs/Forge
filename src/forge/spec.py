@@ -34,6 +34,10 @@ __all__ = [
     "parse_delta",
     "parse_permanent",
     "check_delta",
+    "check_nonempty",
+    "check_task_coverage",
+    "check_requirement_discharged",
+    "promised_requirements",
     "fold",
     "delta_files",
     "capability_of",
@@ -353,6 +357,107 @@ def check_nonempty(item, deltas: list[Delta], issue) -> list:
         "write changes/<change>/spec/<capability>/spec.md, or set "
         "`skip_spec: <reason>` in .forge.yaml if it really alters no behaviour",
     )]
+
+
+# ---------------------------------------------------------------------------
+# R4 / R7 - requirements, tasks and tests
+# ---------------------------------------------------------------------------
+
+_REQ_MENTION_RE = re.compile(r"\bREQ-[A-Za-z0-9_-]+\b")
+_CHORE_RE = re.compile(r"\b(chore|refactor|cleanup|docs)\b", re.I)
+
+
+def promised_requirements(deltas: list[Delta]) -> dict[str, str]:
+    """Requirement id -> the delta file that promises it.
+
+    `REMOVED` and the old half of a `RENAMED` are excluded: a change that
+    deletes a promise does not also owe a task and a test for it.
+    """
+    promised: dict[str, str] = {}
+    for delta in deltas:
+        for verb in ("ADDED", "MODIFIED"):
+            for requirement in delta.sections.get(verb, []):
+                promised[requirement.id] = delta.path
+        for requirement in delta.sections.get("RENAMED", []):
+            if requirement.renamed_to:
+                promised[requirement.renamed_to] = delta.path
+    return promised
+
+
+def check_task_coverage(item, deltas: list[Delta], issue) -> list:
+    """R4: requirements and tasks account for each other, both ways.
+
+    Both directions matter and for different reasons. A requirement with no
+    task is a promise nobody planned to keep. A task with no requirement is
+    work nobody agreed to - which is how a change quietly grows past what was
+    approved, and the single most common way scope escapes review.
+    """
+    promised = promised_requirements(deltas)
+    tasks = item.tasks()
+    path = f"{item.relative}/tasks.md"
+
+    if promised and not tasks:
+        return [issue(
+            "ERROR", "trace.requirement_task_coverage", path,
+            f"{len(promised)} requirement(s) are promised and tasks.md lists no tasks: "
+            f"{', '.join(sorted(promised))}",
+            "write one task per requirement, naming the REQ- id in the task line",
+        )]
+
+    issues = []
+    mentioned: set[str] = set()
+    for index, (_, text) in enumerate(tasks, start=1):
+        found = set(_REQ_MENTION_RE.findall(text))
+        mentioned |= found
+        if found or _CHORE_RE.search(text):
+            continue
+        issues.append(issue(
+            "ERROR", "trace.requirement_task_coverage", path,
+            f"task {index} names no requirement: {text!r}",
+            "name the REQ- id this task discharges, or mark it a chore - work "
+            "nobody agreed to is how a change grows past what was approved",
+        ))
+
+    for identifier in sorted(promised):
+        if identifier in mentioned:
+            continue
+        issues.append(issue(
+            "ERROR", "trace.requirement_task_coverage", path,
+            f"{identifier} is promised in {promised[identifier]} and no task "
+            f"discharges it",
+            f"add a task naming {identifier}, or remove the requirement from the delta",
+        ))
+
+    for identifier in sorted(mentioned - set(promised)):
+        issues.append(issue(
+            "WARNING", "trace.requirement_task_coverage", path,
+            f"task(s) name {identifier}, which this change's spec delta does not "
+            f"promise",
+            f"harmless if {identifier} is an existing requirement; otherwise the id "
+            f"is a typo and nothing will discharge it",
+        ))
+    return issues
+
+
+def check_requirement_discharged(covers_index: dict, item, deltas: list[Delta],
+                                 issue) -> list:
+    """R7: every promised requirement carries at least one `@covers` test.
+
+    Tag presence, not a green run - `forge verify` owns whether the suite
+    passed. Separating them is deliberate: this answers "is there a test that
+    claims to prove this", which stays answerable from the repository alone.
+    """
+    issues = []
+    for identifier, path in sorted(promised_requirements(deltas).items()):
+        if covers_index.get(identifier):
+            continue
+        issues.append(issue(
+            "ERROR", "trace.requirement_discharged", path,
+            f"{identifier} has no test tagged `@covers {identifier}`",
+            f"tag the test that proves it and run `forge sync derived`; a "
+            f"requirement no test claims is a requirement nobody can show you kept",
+        ))
+    return issues
 
 
 # ---------------------------------------------------------------------------

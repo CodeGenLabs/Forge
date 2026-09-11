@@ -13,12 +13,14 @@ repository at a commit, which is what makes gates built on it trustworthy.
 from __future__ import annotations
 
 import argparse
+import datetime as _dt
 import json
+import shutil as _shutil
 import sys
 from pathlib import Path
 
-from . import (change, derive, gitio, impact, scaffold, schema, spec, store, trace,
-               validate)
+from . import (change, derive, gates, gitio, impact, scaffold, schema, spec, store,
+               trace, validate, verify)
 from .anchor import AnchorError, Status, classify, parse_anchor
 from .fingerprint import available_languages, fingerprint_source
 from .validate import Issue
@@ -744,6 +746,162 @@ def _cmd_spec_fold(args: argparse.Namespace) -> int:
     return code
 
 
+def _resolve_change(repo: Path, reference: str | None) -> change.Change | None | int:
+    if reference is None:
+        return None
+    try:
+        return change.find_change(repo, reference)
+    except change.ChangeError as exc:
+        print(f"forge: {exc}", file=sys.stderr)
+        return _EXIT_USAGE
+
+
+def _cmd_gate(args: argparse.Namespace) -> int:
+    repo = args.repo.resolve()
+    if not gitio.is_repo(repo):
+        print(f"forge: {repo} is not a git repository", file=sys.stderr)
+        return _EXIT_USAGE
+    item = _resolve_change(repo, args.change)
+    if isinstance(item, int):
+        return item
+
+    results = gates.run_gate(repo, args.point, item)
+    if not results:
+        known = ", ".join(gates.points(repo))
+        print(f"forge: no gate is declared at {args.point!r}; points are {known}",
+              file=sys.stderr)
+        return _EXIT_USAGE
+
+    if args.json:
+        print(json.dumps({
+            "point": args.point,
+            "change": item.name if item else None,
+            "blocked": any(r.blocks for r in results),
+            "gates": [r.to_dict() for r in results],
+        }, indent=2))
+        return _EXIT_CHANGED if any(r.blocks for r in results) else _EXIT_OK
+
+    for result in results:
+        if result.passed and result.available:
+            verdict = "pass"
+        elif not result.available:
+            verdict = "unproven"
+        else:
+            verdict = "BLOCK" if result.blocks else "warn"
+        print(f"{verdict:8} {result.gate.check}")
+        for issue in result.issues:
+            where = issue.path + (f":{issue.line}" if issue.line else "")
+            print(f"         {issue.level} {where}: {issue.message}")
+            print(f"         fix: {issue.fix}")
+
+    if any(r.blocks for r in results):
+        print(f"\n{args.point} is blocked.", file=sys.stderr)
+        return _EXIT_CHANGED
+    return _EXIT_OK
+
+
+def _cmd_verify(args: argparse.Namespace) -> int:
+    repo = args.repo.resolve()
+    if not gitio.is_repo(repo):
+        print(f"forge: {repo} is not a git repository", file=sys.stderr)
+        return _EXIT_USAGE
+    item = _resolve_change(repo, args.change)
+    if isinstance(item, int) or item is None:
+        return item if isinstance(item, int) else _EXIT_USAGE
+
+    report = verify.verify(repo, item, waived=tuple(args.waive or ()),
+                           run_commands=not args.no_run)
+    target = verify.write_verification(repo, item, report)
+
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        print(f"{report['change']} @ {report['commit'][:10]}")
+        for name, gate in report["gates"].items():
+            detail = gate.get("reason") or gate.get("cmd") or ""
+            print(f"  {gate['status']:12} {name:18} {detail}")
+        print(f"\nverdict: {report['verdict']}")
+        if report["verdict"] != "pass":
+            # Said plainly, because "one of eight" is the whole point and a
+            # reader who only sees a red line will assume the tests failed.
+            print("Tests passing is one of eight conditions, not the condition.")
+        if report.get("pending"):
+            # A pass with pending conditions is not a full verification, and
+            # the report must say so where the verdict is read, not only in
+            # the JSON.
+            print(f"still unchecked by this kernel: {', '.join(report['pending'])}")
+        print(f"written  {target.relative_to(repo).as_posix()}")
+    return _EXIT_OK if report["verdict"] == "pass" else _EXIT_CHANGED
+
+
+def _cmd_archive(args: argparse.Namespace) -> int:
+    """Fold the spec deltas, then move the change into the archive.
+
+    Ordered, and it refuses on the first failure (SYSTEM_KNOWLEDGE.md 9.3).
+    Archiving a change whose promises were never folded loses them: the
+    archive is never an input to any phase, so anything still only recorded
+    there is gone in practice.
+    """
+    repo = args.repo.resolve()
+    if not gitio.is_repo(repo):
+        print(f"forge: {repo} is not a git repository", file=sys.stderr)
+        return _EXIT_USAGE
+    item = _resolve_change(repo, args.change)
+    if isinstance(item, int) or item is None:
+        return item if isinstance(item, int) else _EXIT_USAGE
+
+    blocking: list[Issue] = []
+    for point in ("spec:post", "impact:post", "analyze:post"):
+        for result in gates.run_gate(repo, point, item):
+            if result.blocks:
+                blocking.extend(result.errors)
+    report = verify.read_verification(repo, item)
+    if report is None or report.get("verdict") != "pass":
+        blocking.append(Issue(
+            "ERROR", "verify.definition_of_done",
+            f"{item.relative}/{verify.VERIFICATION_FILE}",
+            "no passing verification report"
+            if report is None else f"verification verdict is {report.get('verdict')!r}",
+            f"forge verify --change {item.number}",
+        ))
+
+    if blocking and not args.force:
+        for issue in blocking:
+            print(f"{issue.level}  {issue.code}  {issue.path}\n"
+                  f"       {issue.message}\n       fix: {issue.fix}")
+        print(f"\n{len(blocking)} blocker(s); nothing archived. "
+              f"--force records the archive anyway and says so.", file=sys.stderr)
+        return _EXIT_CHANGED
+
+    code, lines = _fold_change(repo, item, dry_run=args.dry_run)
+    for line in lines:
+        print(line)
+    if code != _EXIT_OK:
+        return code
+
+    stamp = args.date or _dt.date.today().isoformat()
+    destination = repo / change.ARCHIVE_DIR / f"{stamp}-{item.name}"
+    if destination.exists():
+        print(f"forge: {destination.relative_to(repo).as_posix()} already exists",
+              file=sys.stderr)
+        return _EXIT_USAGE
+    if args.dry_run:
+        print(f"would move  {item.relative} -> "
+              f"{destination.relative_to(repo).as_posix()}")
+        return _EXIT_OK
+
+    if blocking and args.force:
+        item.meta["archived_with_blockers"] = [i.code for i in blocking]
+        item.write_meta()
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    _shutil.move(str(item.root), str(destination))
+    print(f"archived    {destination.relative_to(repo).as_posix()}")
+    print("\nNow: `forge sync derived` and commit. The archive is never an input "
+          "to any phase, so anything in it that still matters belongs in the "
+          "permanent tier.")
+    return _EXIT_OK
+
+
 def _cmd_doctor(args: argparse.Namespace) -> int:
     langs = available_languages()
     print(f"python           {sys.version.split()[0]}")
@@ -915,6 +1073,53 @@ def main(argv: list[str] | None = None) -> int:
     spc_fold.add_argument("--dry-run", action="store_true")
     spc_fold.add_argument("--repo", type=Path, default=Path.cwd())
     spc_fold.set_defaults(func=_cmd_spec_fold)
+
+    gate = sub.add_parser(
+        "gate",
+        help="run the gates declared at one lifecycle point",
+        description="Exit 1 when a blocking gate fails. A check the kernel does not "
+                    "implement reports `unproven` and never passes - a gate that "
+                    "succeeds because nobody wrote its check is evidence of a check "
+                    "that did not happen.",
+    )
+    gate.add_argument("point", metavar="POINT",
+                      help=f"one of {', '.join(gates.POINTS)}")
+    gate.add_argument("--change")
+    gate.add_argument("--repo", type=Path, default=Path.cwd())
+    gate.add_argument("--json", action="store_true")
+    gate.set_defaults(func=_cmd_gate)
+
+    ver = sub.add_parser(
+        "verify",
+        help="produce verification.json - evidence, not an opinion",
+        description="Eleven recorded conditions, of which tests passing is one. "
+                    "Generated, never authored: an authored verification report is a "
+                    "place to write 'all tests pass' without having run them.",
+    )
+    ver.add_argument("--change", required=True)
+    ver.add_argument("--waive", action="append", choices=list(verify.WAIVABLE),
+                     help="record a waiver for a waivable condition; repeatable")
+    ver.add_argument("--no-run", action="store_true",
+                     help="skip build/test commands and record them as unproven")
+    ver.add_argument("--repo", type=Path, default=Path.cwd())
+    ver.add_argument("--json", action="store_true")
+    ver.set_defaults(func=_cmd_verify)
+
+    arch = sub.add_parser(
+        "archive",
+        help="fold the spec deltas and move the change into the archive",
+        description="Refuses on the first blocker. Archiving a change whose promises "
+                    "were never folded loses them: the archive is never an input to "
+                    "any phase.",
+    )
+    arch.add_argument("--change", required=True)
+    arch.add_argument("--dry-run", action="store_true")
+    arch.add_argument("--force", action="store_true",
+                      help="archive despite blockers, recording which ones in "
+                           ".forge.yaml")
+    arch.add_argument("--date", help="the archive date stamp (default: today)")
+    arch.add_argument("--repo", type=Path, default=Path.cwd())
+    arch.set_defaults(func=_cmd_archive)
 
     doctor = sub.add_parser("doctor", help="report the toolchain the kernel found")
     doctor.set_defaults(func=_cmd_doctor)
