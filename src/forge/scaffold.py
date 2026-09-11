@@ -20,7 +20,7 @@ from __future__ import annotations
 import datetime as _dt
 from pathlib import Path
 
-from . import store
+from . import schema, store
 from .config import CONFIG_PATH
 
 __all__ = ["claim_template", "adr_template", "init_files", "scaffold", "KIND_FILE"]
@@ -256,6 +256,11 @@ def init_files(today: _dt.date | None = None) -> dict[str, str]:
     today = today or _dt.date.today()
     files = {
         CONFIG_PATH: _CONFIG,
+        # Written out rather than left implicit: the kernel would happily use
+        # its built-in copy forever, but a workflow you cannot see is a
+        # workflow you cannot edit, and editing it is the whole point of
+        # workflows being data.
+        f"{schema.SCHEMA_DIR}/feature.yaml": schema.builtin_schema_text("feature"),
         f"{store.STORE_DIR}/OVERVIEW.md": _OVERVIEW,
         f"{store.DECISIONS_DIR}/ADR-0001-adopt-forge.md":
             _ADOPTION_ADR.format(date=today.isoformat()),

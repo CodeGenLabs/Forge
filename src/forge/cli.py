@@ -17,7 +17,7 @@ import json
 import sys
 from pathlib import Path
 
-from . import derive, gitio, scaffold, store, trace, validate
+from . import change, derive, gitio, scaffold, schema, store, trace, validate
 from .anchor import AnchorError, Status, classify, parse_anchor
 from .fingerprint import available_languages, fingerprint_source
 from .validate import Issue
@@ -198,6 +198,21 @@ def _cmd_status(args: argparse.Namespace) -> int:
           f"{summary.get('decisions', 0)} ADRs")
     print(f"tests            {summary.get('tests_total', 0)} total, "
           f"{summary.get('tests_tagged', 0)} tagged with @covers")
+
+    open_changes = change.list_changes(repo)
+    if open_changes:
+        for item in open_changes:
+            try:
+                loaded = schema.load_schema(repo, item.workflow)
+            except schema.SchemaError as exc:
+                print(f"change {item.name:22} unreadable workflow: {exc}")
+                continue
+            nxt = item.next_artifact(loaded)
+            tasks = item.tasks()
+            done = sum(1 for is_done, _ in tasks if is_done)
+            progress = f"{done}/{len(tasks)} tasks" if tasks else "no tasks yet"
+            where = f"next {nxt.id}" if nxt else "artifacts complete"
+            print(f"change {item.name:22} track {item.track}  {where}, {progress}")
 
     problems = 0
     for label, key in (
@@ -410,6 +425,153 @@ def _cmd_claim_show(args: argparse.Namespace) -> int:
     return _EXIT_OK
 
 
+def _load_schema(repo: Path, name: str) -> schema.Schema | None:
+    try:
+        return schema.load_schema(repo, name)
+    except schema.SchemaError as exc:
+        print(f"forge: {exc}", file=sys.stderr)
+        return None
+
+
+def _cmd_change_new(args: argparse.Namespace) -> int:
+    repo = args.repo.resolve()
+    if not gitio.is_repo(repo):
+        print(f"forge: {repo} is not a git repository", file=sys.stderr)
+        return _EXIT_USAGE
+    try:
+        created = change.new_change(repo, args.title, track=args.track,
+                                    workflow=args.workflow)
+    except change.ChangeError as exc:
+        print(f"forge: {exc}", file=sys.stderr)
+        return _EXIT_USAGE
+    loaded = _load_schema(repo, created.workflow)
+    if loaded is None:
+        return _EXIT_USAGE
+    print(f"created    {created.relative}/")
+    print(f"track      {created.track}")
+    wanted = [a.id for a in loaded.for_track(created.track)]
+    print(f"artifacts  {', '.join(wanted) if wanted else 'none - track A is a question, '
+                                                        'not a deliverable'}")
+    return _EXIT_OK
+
+
+def _cmd_change_list(args: argparse.Namespace) -> int:
+    repo = args.repo.resolve()
+    if not gitio.is_repo(repo):
+        print(f"forge: {repo} is not a git repository", file=sys.stderr)
+        return _EXIT_USAGE
+    changes = change.list_changes(repo)
+    if args.json:
+        print(json.dumps([_change_summary(repo, c) for c in changes], indent=2))
+        return _EXIT_OK
+    if not changes:
+        print("no open changes. `forge change new \"<title>\"` starts one.")
+        return _EXIT_OK
+    for item in changes:
+        summary = _change_summary(repo, item)
+        print(f"{item.name:32} track {item.track}  {summary['state']}")
+    return _EXIT_OK
+
+
+def _change_summary(repo: Path, item: change.Change) -> dict:
+    loaded = schema.load_schema(repo, item.workflow)
+    states = item.state(loaded)
+    pending = [s for s in states if s.state in (change.MISSING, change.BLOCKED)]
+    tasks = item.tasks()
+    return {
+        "name": item.name,
+        "track": item.track,
+        "workflow": item.workflow,
+        "state": "complete" if not pending else f"next: {item.next_artifact(loaded).id}"
+                 if item.next_artifact(loaded) else "blocked",
+        "artifacts": [s.to_dict() for s in states],
+        "tasks": {"total": len(tasks), "done": sum(1 for done, _ in tasks if done)},
+        "upgraded_from": item.upgraded_from,
+    }
+
+
+def _cmd_change_show(args: argparse.Namespace) -> int:
+    repo = args.repo.resolve()
+    if not gitio.is_repo(repo):
+        print(f"forge: {repo} is not a git repository", file=sys.stderr)
+        return _EXIT_USAGE
+    try:
+        item = change.find_change(repo, args.change)
+    except change.ChangeError as exc:
+        print(f"forge: {exc}", file=sys.stderr)
+        return _EXIT_USAGE
+    loaded = _load_schema(repo, item.workflow)
+    if loaded is None:
+        return _EXIT_USAGE
+
+    if args.json:
+        print(json.dumps(_change_summary(repo, item), indent=2))
+        return _EXIT_OK
+
+    print(f"{item.name}   track {item.track}   workflow {item.workflow}")
+    if item.meta.get("title"):
+        print(f"  {item.meta['title']}")
+    for entry in item.upgraded_from:
+        print(f"  upgraded from {entry}")
+    print()
+    marks = {
+        change.COMPLETE: "[x]", change.MISSING: "[ ]", change.BLOCKED: "[-]",
+        change.SKIPPED: "[~]", change.NOT_ON_TRACK: "   ",
+    }
+    for state in item.state(loaded):
+        detail = ""
+        if state.state == change.BLOCKED:
+            detail = f"  waiting on {', '.join(state.waiting_on)}"
+        elif state.state == change.SKIPPED:
+            detail = f"  skipped: {state.reason}"
+        elif state.state == change.NOT_ON_TRACK:
+            detail = f"  not on track {item.track}"
+        print(f"  {marks[state.state]} {state.id:14}{detail}")
+
+    tasks = item.tasks()
+    if tasks:
+        print(f"\n  tasks          {sum(1 for done, _ in tasks if done)}/{len(tasks)} done")
+    nxt = item.next_artifact(loaded)
+    if nxt:
+        print(f"\nNext: write {nxt.artifact.generates} "
+              f"(`forge instructions {nxt.id} --change {item.number}`)")
+    return _EXIT_OK
+
+
+def _cmd_change_track(args: argparse.Namespace) -> int:
+    repo = args.repo.resolve()
+    if not gitio.is_repo(repo):
+        print(f"forge: {repo} is not a git repository", file=sys.stderr)
+        return _EXIT_USAGE
+    try:
+        item = change.find_change(repo, args.change)
+    except change.ChangeError as exc:
+        print(f"forge: {exc}", file=sys.stderr)
+        return _EXIT_USAGE
+    loaded = _load_schema(repo, item.workflow)
+    if loaded is None:
+        return _EXIT_USAGE
+
+    before = item.track
+    # Taken before the upgrade, so the report can name what the upgrade
+    # *added*. Listing the whole track instead would bury the two artifacts
+    # that are actually new among the four that were already owed.
+    settled = {s.id for s in item.state(loaded)
+               if s.state not in (change.MISSING, change.BLOCKED)}
+    try:
+        item.upgrade(args.to, reason=args.reason)
+    except change.ChangeError as exc:
+        print(f"forge: {exc}", file=sys.stderr)
+        return _EXIT_USAGE
+
+    print(f"{item.name}: track {before} -> {item.track}")
+    added = [s.id for s in item.state(loaded)
+             if s.state in (change.MISSING, change.BLOCKED) and s.id in settled]
+    if added:
+        print(f"newly required: {', '.join(added)}")
+    return _EXIT_OK
+
+
 def _cmd_doctor(args: argparse.Namespace) -> int:
     langs = available_languages()
     print(f"python           {sys.version.split()[0]}")
@@ -511,6 +673,48 @@ def main(argv: list[str] | None = None) -> int:
     claim_show.add_argument("--repo", type=Path, default=Path.cwd())
     claim_show.add_argument("--json", action="store_true")
     claim_show.set_defaults(func=_cmd_claim_show)
+
+    chg = sub.add_parser("change", help="open, inspect and re-track a change")
+    chg_sub = chg.add_subparsers(dest="change_command", required=True)
+
+    chg_new = chg_sub.add_parser(
+        "new",
+        help="open a change directory",
+        description="Track C is the default. WORKFLOW.md section 1: 'it's too simple "
+                    "to need a spec' is itself the signal to take the heavier track, "
+                    "and what scales down with simplicity is artifact size, never "
+                    "approval.",
+    )
+    chg_new.add_argument("title")
+    chg_new.add_argument("--track", default="C", choices=list(schema.TRACKS))
+    chg_new.add_argument("--workflow", default="feature")
+    chg_new.add_argument("--repo", type=Path, default=Path.cwd())
+    chg_new.set_defaults(func=_cmd_change_new)
+
+    chg_list = chg_sub.add_parser("list", help="open changes and where each one is")
+    chg_list.add_argument("--repo", type=Path, default=Path.cwd())
+    chg_list.add_argument("--json", action="store_true")
+    chg_list.set_defaults(func=_cmd_change_list)
+
+    chg_show = chg_sub.add_parser("show", help="one change: artifacts, tasks, next step")
+    chg_show.add_argument("change")
+    chg_show.add_argument("--repo", type=Path, default=Path.cwd())
+    chg_show.add_argument("--json", action="store_true")
+    chg_show.set_defaults(func=_cmd_change_show)
+
+    chg_track = chg_sub.add_parser(
+        "track",
+        help="upgrade a change to a heavier track",
+        description="One-way. Nothing downgrades: a change that turned out to touch an "
+                    "ARC- claim must not be able to shed the artifacts that account "
+                    "for it.",
+    )
+    chg_track.add_argument("change")
+    chg_track.add_argument("--to", required=True, choices=list(schema.TRACKS))
+    chg_track.add_argument("--reason", required=True,
+                           help="what was discovered that made the change bigger")
+    chg_track.add_argument("--repo", type=Path, default=Path.cwd())
+    chg_track.set_defaults(func=_cmd_change_track)
 
     doctor = sub.add_parser("doctor", help="report the toolchain the kernel found")
     doctor.set_defaults(func=_cmd_doctor)
