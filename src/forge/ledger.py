@@ -28,7 +28,8 @@ from . import gitio, store
 
 __all__ = [
     "DRIFT_FILE", "Entry", "LedgerError", "VERDICTS",
-    "load_ledger", "next_id", "record", "resolve", "waive", "open_entries",
+    "load_ledger", "next_id", "record", "resolve", "waive", "confirm",
+    "open_entries",
 ]
 
 DRIFT_FILE = "docs/system/DRIFT.md"
@@ -377,6 +378,77 @@ def resolve(repo: Path, entry_id: str, verdict: str, *,
         entry.evidence = "accepted as asserted, with no new evidence"
     write_ledger(repo, entries)
     return entry
+
+
+def confirm(repo: Path, entry_id: str, *, head: str = "HEAD",
+            today: _dt.date | None = None) -> tuple[Entry, list[str]]:
+    """Record that a human read the drift and the claim still holds, and restamp.
+
+    Not a fifth verdict. The four are a closed grammar about *what the drift
+    means*, and all four say something is wrong somewhere; this says nothing is.
+
+    It is needed because the commonest signal by far is a file-level anchor
+    going stale on an edit that never touched what the claim describes - the
+    first entry this ledger ever opened was exactly that, on a claim whose
+    regex was untouched by the change that flagged it. With only the four
+    verdicts available, the honest options were to file a false V1 or to leave
+    an entry open forever, and both end with the ledger being ignored.
+
+    The restamp is the kernel writing down what the human just asserted: that
+    the claim was confirmed at this commit. That is what `@sha` means, and it
+    is the opposite of the auto-reconciliation this design refuses - no prose
+    is touched, nothing is made to agree with the code, and it happens only
+    when somebody names an entry and asks for it.
+    """
+    today = today or _dt.date.today()
+    entries = load_ledger(repo)
+    entry = _find(entries, entry_id)
+    if entry.status == "resolved":
+        raise LedgerError(f"{entry_id} is already resolved as {entry.verdict}")
+    if not entry.claim:
+        raise LedgerError(f"{entry_id} names no claim, so there is nothing to restamp")
+
+    sha = gitio.rev_parse(repo, head)
+    restamped = _restamp(repo, entry.claim, sha, today)
+    if not restamped:
+        raise LedgerError(
+            f"no anchor of {entry.claim} could be restamped; the claim may have "
+            f"moved or its anchors may be malformed - `forge check --scope store`")
+
+    entry.status = "resolved"
+    entry.verdict = "confirmed"
+    entry.resolved = today.isoformat()
+    entry.evidence = f"re-confirmed at {sha[:10]}; anchors restamped, prose unchanged"
+    write_ledger(repo, entries)
+    return entry, restamped
+
+
+def _restamp(repo: Path, claim_id: str, sha: str, today: _dt.date) -> list[str]:
+    """Rewrite one claim's `@sha` values and its `reviewed:` date, in place."""
+    short = sha[:10]
+    changed: list[str] = []
+    for claim in store.load_store(repo):
+        if claim.id != claim_id or claim.is_candidate:
+            continue
+        target = repo / claim.file
+        lines = target.read_text(encoding="utf-8").split("\n")
+        for index in range(claim.line - 1, min(claim.end_line, len(lines))):
+            line = lines[index]
+            if line.lstrip().startswith("anchors:"):
+                new = re.sub(r"@[0-9a-fA-F]{4,40}", f"@{short}", line)
+                if "@" not in line:
+                    # An unstamped anchor is the case `forge check` reports as
+                    # a defect, not one to quietly invent a baseline for.
+                    continue
+                if new != line:
+                    lines[index] = new
+                    changed.append(f"{claim.file}:{index + 1}")
+            elif line.lstrip().startswith("reviewed:"):
+                lines[index] = re.sub(r"reviewed:\s*\S+",
+                                      f"reviewed: {today.isoformat()}", line)
+        if changed:
+            target.write_text("\n".join(lines), encoding="utf-8", newline="\n")
+    return changed
 
 
 def _adr_id(value: str) -> str:

@@ -270,6 +270,13 @@ def parse_claims(text: str, path: str) -> list[Claim]:
     return claims
 
 
+#: Documents under the store that are not claim files. `DRIFT.md` is the
+#: ledger: it has its own grammar and its own checks, and scanning it as a
+#: claim file means every claim-shaped rule runs over a document that was never
+#: meant to satisfy them.
+NOT_CLAIM_FILES = ("DRIFT.md",)
+
+
 def store_files(repo: Path) -> list[Path]:
     """Markdown files that may hold claims: the store and its candidates.
 
@@ -285,6 +292,8 @@ def store_files(repo: Path) -> list[Path]:
         if relative.startswith(f"{STORE_DIR}/derived/"):
             continue
         if relative.startswith(f"{DECISIONS_DIR}/"):
+            continue
+        if path.name in NOT_CLAIM_FILES:
             continue
         out.append(path)
     return out

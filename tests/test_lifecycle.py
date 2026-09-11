@@ -307,9 +307,19 @@ def test_a_kernel_owed_condition_is_pending_and_does_not_block(project):
     harness has not shipped cannot act on the finding at all, and a verdict
     nobody can reach is one people route around."""
     report = verify.verify(project.root, item(project))
-    assert report["gates"]["drift"]["status"] == "pending"
-    assert report["pending"] == ["debt", "drift", "no_new_skips"]
+    # `drift` left this list when the ledger shipped, which is what the list is
+    # for: it names what the kernel still owes, and shrinks as the kernel pays.
+    assert report["pending"] == ["debt", "no_new_skips"]
+    assert report["gates"]["debt"]["status"] == "pending"
     assert report["verdict"] == "pass"
+
+
+def test_a_clean_ledger_passes_the_drift_condition(project):
+    """No entries, nothing open, so nothing is owed - and the condition says
+    `pass` rather than staying silent about a store it did check."""
+    report = verify.verify(project.root, item(project))
+    assert report["gates"]["drift"]["status"] == "pass"
+    assert report["gates"]["drift"]["open"] == []
 
 
 def test_an_undischarged_requirement_fails_verification(project):

@@ -276,6 +276,17 @@ repository survives contact) → R8 (the other agents) → everything else, meas
 >   a step inapplicable) and G20 (`forge verify` writes a tracked file and so fails its
 >   own `derived_fresh`). R4 is back to being about the marquee feature, which is reason
 >   enough.
+>
+> **R4 is done** (2026-09-11). `docs/system/DRIFT.md`, `forge drift record | list |
+> resolve | confirm | waive`, and the `drift` condition is no longer pending: it reads
+> the ledger, scoped to the claims the change is accountable for. The first entry the
+> ledger ever opened was real and unplanned - `PIT-regex-across-newlines`, flagged
+> because the G14 edit touched the file its whole-file anchor points at.
+>
+> That entry also found the gap: **none of the four verdicts fitted it.** The claim was
+> true, the code was right, and the anchor was simply too coarse - which will be the
+> commonest signal there is. `forge drift confirm` is the answer and is deliberately not
+> a fifth verdict; the argument is in [SYSTEM_KNOWLEDGE.md](../SYSTEM_KNOWLEDGE.md) §6.
 > - **G14 - the claim-touch set is matched against the blast radius, not the diff.** A
 >   one-line change to `requests` touched 10 claims out of 10. This is R1's failure
 >   through a second door, and it needs the same narrowing.

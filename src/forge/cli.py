@@ -26,7 +26,8 @@ import sys
 from pathlib import Path
 
 from . import (bootstrap, change, derive, gates, gitio, impact, instructions,
-               scaffold, schema, skills, spec, store, trace, validate, verify)
+               ledger, scaffold, schema, skills, spec, store, trace, validate,
+               verify)
 from .anchor import (AnchorError, Status, classify, classify_store,
                      parse_anchor)
 from .fingerprint import available_languages, fingerprint_source
@@ -42,6 +43,9 @@ def _cmd_drift(args: argparse.Namespace) -> int:
     if not gitio.is_repo(repo):
         print(f"forge: {repo} is not a git repository", file=sys.stderr)
         return _EXIT_USAGE
+
+    if args.anchor and args.anchor[0] in _LEDGER_VERBS:
+        return _drift_ledger(repo, args)
 
     if args.store or args.changed:
         if args.anchor:
@@ -95,6 +99,80 @@ def _cmd_drift(args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
     return _EXIT_CHANGED if changed else _EXIT_OK
+
+
+_LEDGER_VERBS = ("record", "list", "resolve", "waive", "confirm")
+
+
+def _drift_ledger(repo: Path, args: argparse.Namespace) -> int:
+    """`forge drift record | list | resolve <id> | waive <id>`."""
+    verb, *rest = args.anchor
+
+    if verb == "record":
+        added = ledger.record(repo, classify_store(repo, head=args.head))
+        if not added:
+            print("no new drift; every claim is either fresh or already in the ledger")
+            return _EXIT_OK
+        for entry in added:
+            print(f"opened   {entry.id}  {entry.claim}  {entry.signal}"
+                  + (f"  proposed {entry.proposed_verdict}"
+                     if entry.proposed_verdict else ""))
+        print(f"\n{len(added)} entry(s) in {ledger.DRIFT_FILE}. The kernel proposes and "
+              f"never decides: `forge drift resolve <id> --verdict V1|V2|V3|V4`.",
+              file=sys.stderr)
+        return _EXIT_CHANGED
+
+    if verb == "list":
+        entries = ledger.load_ledger(repo)
+        if args.json:
+            print(json.dumps([e.to_dict() for e in entries], indent=2))
+            return _EXIT_OK
+        if not entries:
+            print(f"{ledger.DRIFT_FILE} holds no entries")
+            return _EXIT_OK
+        width = max(len(e.id) for e in entries)
+        for entry in entries:
+            detail = entry.verdict or entry.waived_until or entry.signal
+            print(f"{entry.id:{width}}  {entry.status:8}  {entry.claim}  {detail}")
+        still = ledger.open_entries(repo)
+        return _EXIT_CHANGED if still else _EXIT_OK
+
+    if not rest:
+        print(f"forge: `drift {verb}` needs an entry id, as in "
+              f"`forge drift {verb} D-001`", file=sys.stderr)
+        return _EXIT_USAGE
+
+    try:
+        if verb == "resolve":
+            if not args.verdict:
+                raise ledger.LedgerError(
+                    "resolve needs --verdict: " + ", ".join(
+                        f"{k} ({v})" for k, v in ledger.VERDICTS.items()))
+            entry = ledger.resolve(repo, rest[0], args.verdict,
+                                   evidence=args.evidence, adr=args.adr,
+                                   accept_asserted=args.accept_asserted)
+            print(f"resolved {entry.id}  {entry.claim}  {entry.verdict} - "
+                  f"{ledger.VERDICTS[entry.verdict]}")
+            # Said every time, because the one thing this design refuses is the
+            # command that would make it unnecessary.
+            print("\nThe claim itself is yours to edit. No command here rewrites a "
+                  "claim to match the code.", file=sys.stderr)
+        elif verb == "confirm":
+            entry, restamped = ledger.confirm(repo, rest[0], head=args.head)
+            print(f"confirmed {entry.id}  {entry.claim}  restamped "
+                  f"{len(restamped)} anchor line(s)")
+            for where in restamped:
+                print(f"  {where}")
+            print("\nNot a verdict. The four say something is wrong somewhere; "
+                  "this says a human read it and nothing is.", file=sys.stderr)
+        else:
+            entry = ledger.waive(repo, rest[0], until=args.until or "",
+                                 reason=args.reason or "")
+            print(f"waived   {entry.id}  {entry.claim}  until {entry.waived_until}")
+    except ledger.LedgerError as exc:
+        print(f"forge: {exc}", file=sys.stderr)
+        return _EXIT_USAGE
+    return _EXIT_OK
 
 
 def _drift_store(repo: Path, args: argparse.Namespace) -> int:
@@ -326,6 +404,20 @@ def _cmd_status(args: argparse.Namespace) -> int:
             problems += len(items)
             print(f"{label:16} {len(items)}: {', '.join(items[:6])}"
                   f"{' ...' if len(items) > 6 else ''}")
+
+    # Waivers are listed rather than counted silently: a bypass that nobody
+    # sees on the one screen everyone reads is a bypass that becomes permanent.
+    entries = ledger.load_ledger(repo)
+    still_open = ledger.open_entries(repo)
+    waived = [e for e in entries if e.status == "waived" and e not in still_open]
+    if still_open:
+        problems += len(still_open)
+        print(f"{'drift':16} {len(still_open)} unresolved: "
+              + ", ".join(f"{e.id} ({e.claim})" for e in still_open[:4])
+              + (" ..." if len(still_open) > 4 else ""))
+    if waived:
+        print(f"{'drift waived':16} {len(waived)}: "
+              + ", ".join(f"{e.id} until {e.waived_until}" for e in waived[:4]))
     if not problems:
         print("open items       none")
     return _EXIT_OK
@@ -1353,6 +1445,22 @@ def build_parser() -> argparse.ArgumentParser:
     drift.add_argument("--baseline", help="overrides each anchor's @sha")
     drift.add_argument("--head", default="HEAD")
     drift.add_argument("--json", action="store_true")
+    # The ledger verbs live in the first positional rather than in argparse
+    # subparsers, because subparsers would take that slot from `forge drift
+    # <anchor>` - a form this repository's own tests and measurement tools
+    # already script. `forge drift resolve D-014 --verdict V3` is the spelling
+    # SYSTEM_KNOWLEDGE.md section 6 specifies, and it is worth keeping both.
+    led = drift.add_argument_group(
+        "the drift ledger",
+        "forge drift record | list | resolve <id> | confirm <id> | waive <id>")
+    led.add_argument("--verdict", help="V1 | V2 | V3 | V4, for `resolve`")
+    led.add_argument("--evidence", help="how a V2 or V4 is known")
+    led.add_argument("--adr", help="the decision a V3 rests on")
+    led.add_argument("--accept-asserted", action="store_true",
+                     help="record on purpose that a V4's sharper claim is still "
+                          "only asserted")
+    led.add_argument("--until", help="when a waiver expires: a date or a commit")
+    led.add_argument("--reason", help="why a waiver is justified")
     drift.set_defaults(func=_cmd_drift)
 
     fp = sub.add_parser("fingerprint", help="print the normalised fingerprint of a file")

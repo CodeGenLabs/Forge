@@ -263,12 +263,27 @@ def _check_definition_of_done(repo: Path, item: change.Change | None) -> list[Is
         )]
     if report.get("verdict") == "pass":
         return []
-    failing = [name for name, gate in (report.get("gates") or {}).items()
-               if gate.get("status") not in ("pass", "waived", "skipped")]
+    # Three lists, not one. An earlier version put every non-passing condition
+    # under the word "failing", which put the kernel's own `pending` ones there
+    # too - and reading that line instead of the code is how this project came
+    # to record, wrongly, that no repository could ever archive a change.
+    # `pending` does not block the verdict; `fail` and `unavailable` do.
+    gates = report.get("gates") or {}
+    failing = [n for n, g in gates.items() if g.get("status") == "fail"]
+    unproven = [n for n, g in gates.items() if g.get("status") == "unavailable"]
+    pending = [n for n, g in gates.items() if g.get("status") == "pending"]
+
+    parts = []
+    if failing:
+        parts.append(f"failing: {', '.join(sorted(failing))}")
+    if unproven:
+        parts.append(f"unproven, and this project owes them: {', '.join(sorted(unproven))}")
     return [Issue(
         "ERROR", "verify.definition_of_done", f"{item.relative}/verification.json",
-        f"verification verdict is {report.get('verdict')!r}; failing: "
-        f"{', '.join(failing) or 'unknown'}",
+        f"verification verdict is {report.get('verdict')!r}; "
+        + ("; ".join(parts) or "no condition says why")
+        + (f" (not blocking: {', '.join(sorted(pending))} - the kernel owes those)"
+           if pending else ""),
         f"fix what failed and re-run `forge verify --change {item.number}`. Tests "
         f"passing is one of eight conditions, not the condition",
     )]

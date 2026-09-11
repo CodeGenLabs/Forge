@@ -21,7 +21,7 @@ evidence-from: two corrections recorded in SYSTEM_KNOWLEDGE.md section 2.3.
 kind:     pitfall
 status:   asserted
 truth-source: decision
-anchors:  ["src/forge/impact.py@8e06e5ca51"]
+anchors:  ["src/forge/impact.py@79b07211f8"]
 reviewed: 2026-09-11
 ```
 

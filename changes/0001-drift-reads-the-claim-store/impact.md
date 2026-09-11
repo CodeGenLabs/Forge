@@ -40,7 +40,6 @@ anchor paths the forecast intersects, accounted for by hand.
   involved at all.
 - PIT-derived-self-reference - about a census counting its own output; a drift scan
   produces no file, so it cannot count itself.
-- PIT-regex-across-newlines - no new multi-line regex is introduced by this change.
 - PIT-markdown-bullet-is-not-a-diff - no diff parsing is added by this change.
 
 ### Updated
@@ -48,6 +47,13 @@ anchor paths the forecast intersects, accounted for by hand.
 - CON-anchor - anchored to `src/forge/anchor.py#parse_anchor`. The file is edited and
   the claim's prose gains nothing new, but the anchor's SHA must be restamped once the
   edit lands, and the claim is the natural home for the store-wide scan's existence.
+- PIT-regex-across-newlines - the rule it states is untouched and still holds. It moved
+  here from `Unaffected` because this change's own ledger flagged it: its anchor is
+  whole-file on `src/forge/impact.py`, the G14 edit made it stale, and
+  `forge drift confirm D-001` restamped the anchor and the review date. A restamp is a
+  claim edit, the claim-touch rule said so, and the rule was right - which is the first
+  time in this project the ledger and the account have argued with each other and the
+  account lost.
 
 ### New
 

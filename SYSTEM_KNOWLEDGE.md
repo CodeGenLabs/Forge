@@ -514,6 +514,23 @@ alternative is a permanently red gate that gets disabled. A waiver is recorded, 
 `forge status`. This is OpenSpec's `skip_specs: true` pattern: make the bypass explicit, named, and
 committed.
 
+> **Added when the ledger was built, 2026-09-11: `forge drift confirm <id>`.** The four verdicts are a
+> closed grammar about what a drift *means*, and all four say something is wrong somewhere. The very
+> first entry this ledger ever opened — on this repository, unplanned — was none of them: a whole-file
+> anchor on `src/forge/impact.py` went stale because an unrelated edit touched the file, while the rule
+> the claim states was never touched and still held. With only V1–V4 available the honest options were
+> to file a false V1 or to leave the entry open forever, and both end with the ledger being ignored.
+>
+> This will be the *commonest* signal, not an edge case: a file-level anchor goes stale on every edit to
+> its file. `confirm` records that a human read the drift and the claim still holds, then restamps the
+> anchor's `@sha` and `reviewed:` — **and touches no prose**. That is not the auto-reconciliation this
+> design refuses: nothing is made to agree with the code, and it happens only when somebody names an
+> entry and asks. Restamping *is* what `@sha` means — the commit at which a human last confirmed the
+> claim — so recording a confirmation without moving it would be the dishonest option.
+>
+> It is deliberately not a fifth verdict. Adding it to `VERDICTS` would make "nothing is wrong" one of
+> the answers to "what is wrong", and the closed set is worth more than the symmetry.
+
 ---
 
 ## 7. Validation: what the kernel checks
