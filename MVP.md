@@ -217,6 +217,49 @@ repository. Regeneration is a no-op. `derived/` builds on Windows and Linux with
 
 ### M3 — Change DAG, gates, one workflow (~3 days)
 
+> **Status: done, 2026-09-11.** Acceptance met by
+> `tests/test_lifecycle.py::test_the_acceptance_case`: a change is created, artifacts are written
+> by hand, each gate blocks for its own reason and then passes, `forge verify` produces a report,
+> `forge archive` folds the delta into `docs/system/specs/payments/spec.md`, and `forge check` is
+> clean afterwards.
+>
+> Five deviations, each with its reason:
+>
+> 1. **`deps.json` is a built-in import scan, not a shelled-out dep tool.** Shelling out makes the
+>    blast radius — and therefore the claim-touch set, and therefore the central enforcement —
+>    depend on whether `depcruise` happens to be installed. A check that silently weakens when a
+>    tool is missing is worse than a narrower one that always runs. `derive.dep_tool` stays in the
+>    config shape for a graph this scan cannot see.
+> 2. **Ten gates at nine points, not twelve at ten.** ARCHITECTURE.md §3.3 says twelve and then
+>    lists ten; the list is the specification and the count was a sentence written before it.
+> 3. **`task.scope_and_covers` and `drift.rules_conformance` are not implemented**, and report
+>    `unproven` rather than passing. They need per-task execution records (M4) and the rule tier.
+> 4. **`apply:` is not a DAG node.** It generates nothing, so it can never be complete under the
+>    filesystem-derived state model; task completion comes from `tasks.md`.
+> 5. **`forge sync change N` is not a separate command.** Its six ordered operations are
+>    `forge archive` (fold, then move) plus `forge sync derived`; re-anchoring at the merge commit
+>    needs `forge reanchor`, which needs the drift ledger.
+>
+> Four problems found by building it, all now tested:
+>
+> - **`tracks: [B?, C]` is not valid YAML** — a bare `?` opens a complex key. ARCHITECTURE.md §4.1
+>   corrected.
+> - **A lighter track filters prerequisites rather than blocking on them.** `tasks` requires
+>   `impact`, which track B does not have; treating that as unsatisfiable makes every bounded
+>   change block forever on a file its own track never asks for.
+> - **A leading `-` is not a diff marker.** Every scenario line in the delta grammar is a markdown
+>   bullet, so the obvious `^[+-]` heuristic rejects every correct MODIFIED block.
+> - **A folded requirement looked like a dangling reference.** The trace index knew claims and ADRs
+>   but not `REQ-*` in the permanent specs — so the correct end state of a completed change
+>   reported an error. The archive also counted as a citation, naming every folded change
+>   "archive".
+>
+> One judgement worth recording: **`unavailable` and `pending` are different verdicts.** A project
+> that never declared a test command has an unverified change and is told so. A project waiting on
+> a ledger *the harness* has not shipped cannot act on the finding at all, and a verdict nobody can
+> reach is one people route around — which would cost the seven conditions that do work. The first
+> blocks the verdict; the second is listed beside it, including in the terminal output.
+
 **Build.**
 
 - Schema loader with the OpenSpec validations: Zod-equivalent shape check, no duplicate ids, `requires`

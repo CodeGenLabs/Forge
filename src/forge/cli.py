@@ -19,8 +19,8 @@ import shutil as _shutil
 import sys
 from pathlib import Path
 
-from . import (change, derive, gates, gitio, impact, scaffold, schema, spec, store,
-               trace, validate, verify)
+from . import (change, derive, gates, gitio, impact, instructions, scaffold, schema,
+               spec, store, trace, validate, verify)
 from .anchor import AnchorError, Status, classify, parse_anchor
 from .fingerprint import available_languages, fingerprint_source
 from .validate import Issue
@@ -373,7 +373,7 @@ def _cmd_check(args: argparse.Namespace) -> int:
         "trace": "trace integrity",
         "change": "the claim-touch account",
     }[scope] for scope in SCOPES if scope in scopes)
-    pending = "requirement coverage and verification (M3)"
+    pending = "the gates, which are point-in-time: `forge gate <point>`"
     if issues:
         print(f"\n{len(errors)} error(s), {len(warnings)} warning(s). "
               f"Checked: {checked}.", file=sys.stderr)
@@ -902,6 +902,48 @@ def _cmd_archive(args: argparse.Namespace) -> int:
     return _EXIT_OK
 
 
+def _cmd_instructions(args: argparse.Namespace) -> int:
+    repo = args.repo.resolve()
+    if not gitio.is_repo(repo):
+        print(f"forge: {repo} is not a git repository", file=sys.stderr)
+        return _EXIT_USAGE
+    item = _resolve_change(repo, args.change)
+    if isinstance(item, int) or item is None:
+        return item if isinstance(item, int) else _EXIT_USAGE
+    try:
+        resolved = instructions.resolve(repo, item, args.artifact)
+    except (instructions.InstructionError, schema.SchemaError) as exc:
+        print(f"forge: {exc}", file=sys.stderr)
+        return _EXIT_USAGE
+
+    if args.json:
+        print(json.dumps(resolved, indent=2, sort_keys=True))
+        return _EXIT_OK
+
+    print(f"{resolved['artifact']}  ->  {resolved['generates'] or '(generated)'}")
+    print(f"  track {resolved['track']}, {resolved['required']}")
+    if resolved["blocked_by"]:
+        print(f"  blocked by: {', '.join(resolved['blocked_by'])}")
+    if resolved["template"]:
+        print(f"  template: {resolved['template']}")
+    reads = resolved["reads"]
+    for path in reads["files"]:
+        print(f"  read      {path}")
+    for path in reads["derived"]:
+        print(f"  read      {path}")
+    claims = reads.get("claims") or {}
+    if claims.get("mode") == "metadata":
+        print(f"  read      {len(claims['entries'])} claim(s), metadata only")
+    elif claims.get("entries"):
+        print(f"  read      {len(claims['entries'])} claim body/bodies: "
+              f"{', '.join(e['id'] for e in claims['entries'])}")
+    for item_text in resolved["unresolved"]:
+        print(f"  MISSING   {item_text}")
+    if resolved["instruction"]:
+        print(f"\n{resolved['instruction']}")
+    return _EXIT_OK
+
+
 def _cmd_doctor(args: argparse.Namespace) -> int:
     langs = available_languages()
     print(f"python           {sys.version.split()[0]}")
@@ -1120,6 +1162,19 @@ def main(argv: list[str] | None = None) -> int:
     arch.add_argument("--date", help="the archive date stamp (default: today)")
     arch.add_argument("--repo", type=Path, default=Path.cwd())
     arch.set_defaults(func=_cmd_archive)
+
+    instr = sub.add_parser(
+        "instructions",
+        help="resolve one artifact's `reads` contract",
+        description="What a phase is entitled to read is a property of the workflow "
+                    "schema, not of the prompt. A phase that wants more changes the "
+                    "schema, where the change is visible.",
+    )
+    instr.add_argument("artifact")
+    instr.add_argument("--change", required=True)
+    instr.add_argument("--repo", type=Path, default=Path.cwd())
+    instr.add_argument("--json", action="store_true")
+    instr.set_defaults(func=_cmd_instructions)
 
     doctor = sub.add_parser("doctor", help="report the toolchain the kernel found")
     doctor.set_defaults(func=_cmd_doctor)

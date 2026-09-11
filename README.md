@@ -4,26 +4,36 @@ A personal software-engineering harness that makes an AI coding agent behave lik
 engineer: investigate before modifying, specify before implementing, and — the part nobody has solved —
 keep accurate, verifiable knowledge of an existing system.
 
-**Status: design complete; implementation through milestone M2 of six, plus M0.** What exists today is
-the anchor engine — the deterministic staleness detector the whole design rests on — the measurement
-that gates the rest of the build, the derived tier and traceability index, and the claim store with all
-eighteen of its checks. No change lifecycle, no gates, no skills yet.
+**Status: design complete; implementation through milestone M3 of six.** What exists today is the
+anchor engine — the deterministic staleness detector the whole design rests on — the measurement that
+gates the rest of the build, the derived tier and traceability index, the claim store with all eighteen
+of its checks, and the change lifecycle: the artifact DAG, the claim-touch rule, the spec delta grammar
+and its fold, ten declarative gates, and `forge verify`. No skills and no bootstrap yet.
 
 ```bash
 pip install -e ".[grammars,dev]"
 forge doctor
-forge init                      # scaffold .forge/ and docs/system/
-forge claim new invariant       # a template; --append writes it to the right file
+forge init                            # scaffold .forge/ and docs/system/
+forge claim new invariant             # a template; --append writes it to the right file
 forge sync derived
 forge status
-forge drift "src/forge/anchor.py#classify" --baseline <sha>
-forge trace INV-7
-forge claim show INV-7
-forge check                     # --scope store|derived|trace, --json
+forge check                           # --scope store|derived|trace|change, --json
 ```
 
-`forge drift` and `forge check` exit 0 when clean, 1 when something needs a look, 2 on a usage error —
-so both compose as gates.
+A change, start to finish:
+
+```bash
+forge change new "refund support"     # --track A|B|C; C is the default
+forge instructions spec --change 1    # what this phase is entitled to read
+forge gate spec:post --change 1       # blocks until the delta parses
+forge impact --change 1               # blast radius + the claim-touch set
+forge gate impact:post --change 1     # blocks until impact.md accounts for all of it
+forge verify --change 1               # eight conditions; tests are one of them
+forge archive --change 1              # folds the spec delta, then archives
+```
+
+`forge drift`, `forge check`, `forge gate` and `forge verify` exit 0 when clean, 1 when something needs
+a look, 2 on a usage error — so all four compose as gates.
 
 ## Read in this order
 
@@ -96,7 +106,7 @@ budgets, BMAD's admission criterion and deletion grounds.
 | **M1 — anchors & drift** | **done** | `gitio`, `fingerprint`, `anchor`; the measurement in [docs/measurements/M1-anchor-stability.md](docs/measurements/M1-anchor-stability.md) — 0% false positives, 0% false negatives |
 | **M2 — derived tier & trace index** | **done** | `derive`, `store`, `trace`; `forge sync derived`, `forge trace`, `forge status`, `forge check` |
 | **M0 — claim store & validation** | **done** | `validate`, `scaffold`; all 18 store checks, `forge init`, `forge claim new/show`, `forge check --scope` |
-| M3 — change DAG, gates, one workflow | not started | First thing that needs `deps.json`, deferred from M2 |
+| **M3 — change DAG, gates, one workflow** | **done** | `schema`, `change`, `impact`, `spec`, `gates`, `verify`, `instructions`; `deps.json`; the claim-touch rule; `forge change`, `forge impact`, `forge gate`, `forge verify`, `forge archive` |
 | M4 — skills | not started | |
 | M5 — bootstrap | not started | |
 
@@ -105,12 +115,15 @@ claim schema in M0 would have had to change (coarser anchors, or component-level
 before fixing the format was the cheaper order, and it paid — see
 [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) Q2 for the risk it retired.
 
-Building M0–M2 corrected six things in the design documents, each recorded where it was wrong: the
+Building M0–M3 corrected ten things in the design documents, each recorded where it was wrong: the
 drift statuses (`shifted` added, `coarse` demoted to a flag), the derived-tier envelope (a timestamp
 that made the dirty check impossible), the ID grammar (slugs, not only digits), the staleness rule
 (twice — see below), the retirement fields (the policy said "records the ground in the claim" without
-saying where), and the store-check scope. Every correction says in the document why the original was
-wrong.
+saying where), the store-check scope, the workflow schema's `tracks: [B?, C]` (not valid YAML — a bare
+`?` opens a complex key), `apply:` as a DAG node (it generates nothing, so it can never be complete),
+track semantics (a track filters prerequisites rather than blocking on them), and the gate count
+("twelve at ten points" above a list of ten at nine). Every correction says in the document why the
+original was wrong.
 
 The staleness rule is worth singling out, because the first correction was itself wrong. A derived
 file cannot carry the id of the commit that contains it, so comparing that stamp against HEAD reports

@@ -296,8 +296,12 @@ gates:                          # GSD's declarative model
     blocking: true
 ```
 
-Twelve gates total, at ten points. GSD has 14 at `plan:pre` alone. The number is a budget, not an
-accident: every gate must be justifiable in one sentence, and gates that never fire get deleted.
+Ten gates, at nine points. GSD has 14 at `plan:pre` alone. The number is a budget, not an accident:
+every gate must be justifiable in one sentence, and gates that never fire get deleted.
+
+*Revised by implementation, 2026-09-11: this said "twelve gates at ten points" above a list of ten
+at nine. The list is the specification and the count was a sentence written before it, so the list
+was implemented as written rather than padded to match the number.*
 
 ---
 
@@ -324,7 +328,8 @@ artifacts:
     generates: "spec/**/*.md"
     template: spec.md
     requires: [proposal]
-    tracks: [B?, C]                     # B? = required only if behaviour changes
+    tracks: ["B?", C]                   # B? = required only if behaviour changes
+    skip_key: skip_spec                 # where the decision to skip it is recorded
     reads:                              # ADDITION 2: explicit context contract
       - changes/${change}/proposal.md
       - docs/system/specs/${capability}/spec.md
@@ -350,10 +355,16 @@ artifacts:
     generates: tasks.md
     requires: [spec, impact, design]
     tracks: [B, C]
-apply:
-  requires: [tasks]
-  tracks: tasks.md
 ```
+
+*Revised by implementation, 2026-09-11, in three places.* **`"B?"` is quoted** — a bare `?` opens a
+YAML complex key, so the original spelling does not parse — and a conditional track now needs a
+`skip_key` naming where the decision to skip is recorded, so the bypass is a line in `.forge.yaml`
+with a reason rather than a file quietly absent. **`apply:` is gone**: it generates nothing, so it
+can never be complete under the filesystem-derived state model in §4.4 — it is a phase, and task
+completion already comes from `tasks.md`. And **a track filters prerequisites rather than blocking
+on them**: `tasks` requires `impact`, which track B does not have, and treating that as
+unsatisfiable would make every bounded change block forever on a file its own track never asks for.
 
 **Addition 1 (`tracks`)** is the scale router expressed as data. The same DAG serves all tracks; the track
 selects which nodes are required. This avoids maintaining separate lightweight and heavyweight
