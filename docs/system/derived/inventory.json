@@ -7,16 +7,16 @@
         "lines": 468
       },
       "markdown": {
-        "files": 46,
-        "lines": 10288
+        "files": 59,
+        "lines": 10936
       },
       "other": {
         "files": 2,
         "lines": 37
       },
       "python": {
-        "files": 41,
-        "lines": 14980
+        "files": 43,
+        "lines": 16451
       },
       "toml": {
         "files": 1,
@@ -24,14 +24,14 @@
       },
       "yaml": {
         "files": 1,
-        "lines": 21
+        "lines": 28
       }
     },
     "entry_points": [
       "src/forge/cli.py"
     ],
-    "files_considered": 97,
-    "files_tracked": 97,
+    "files_considered": 112,
+    "files_tracked": 112,
     "stack": {
       "python": {
         "lockfile": null,
@@ -52,6 +52,10 @@
     "test_files": [
       "tests/conftest.py",
       "tests/skills/PRESSURE.md",
+      "tests/skills/bootstrap/confident-architecture-claims.md",
+      "tests/skills/bootstrap/invented-rationale.md",
+      "tests/skills/bootstrap/review-argues-for-candidates.md",
+      "tests/skills/bootstrap/unprovable-invariant.md",
       "tests/skills/curate-knowledge/confident-drift-verdict.md",
       "tests/skills/curate-knowledge/edited-claim-filed-unaffected.md",
       "tests/skills/curate-knowledge/retires-for-brevity.md",
@@ -74,6 +78,7 @@
       "tests/skills/specify/modified-as-a-fragment.md",
       "tests/test_anchor_classify.py",
       "tests/test_anchor_parse.py",
+      "tests/test_bootstrap.py",
       "tests/test_change.py",
       "tests/test_cli.py",
       "tests/test_deps.py",
@@ -93,7 +98,7 @@
       "tools/pressure_test.py"
     ]
   },
-  "generated_from_commit": "6071e0ed45291ca56d5d31fe8f0e356147ea898c",
+  "generated_from_commit": "50fe38d35afbfa50388dee474227290349f632ae",
   "generator": "forge sync derived",
   "tool": "forge"
 }

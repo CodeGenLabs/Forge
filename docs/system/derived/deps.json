@@ -13,12 +13,21 @@
         "src/forge/fingerprint.py",
         "src/forge/gitio.py"
       ],
+      "src/forge/bootstrap.py": [
+        "src/forge/__init__.py",
+        "src/forge/anchor.py",
+        "src/forge/config.py",
+        "src/forge/derive.py",
+        "src/forge/gitio.py",
+        "src/forge/store.py"
+      ],
       "src/forge/change.py": [
         "src/forge/schema.py"
       ],
       "src/forge/cli.py": [
         "src/forge/__init__.py",
         "src/forge/anchor.py",
+        "src/forge/bootstrap.py",
         "src/forge/change.py",
         "src/forge/derive.py",
         "src/forge/fingerprint.py",
@@ -26,8 +35,6 @@
         "src/forge/gitio.py",
         "src/forge/impact.py",
         "src/forge/instructions.py",
-        "src/forge/scaffold.py",
-        "src/forge/schema.py",
         "src/forge/validate.py"
       ],
       "src/forge/derive.py": [
@@ -99,10 +106,11 @@
         "src/forge/validate.py"
       ]
     },
-    "files_with_imports": 11,
+    "files_with_imports": 12,
     "reverse": {
       "src/forge/__init__.py": [
         "src/forge/anchor.py",
+        "src/forge/bootstrap.py",
         "src/forge/cli.py",
         "src/forge/derive.py",
         "src/forge/gates.py",
@@ -114,9 +122,13 @@
         "src/forge/verify.py"
       ],
       "src/forge/anchor.py": [
+        "src/forge/bootstrap.py",
         "src/forge/cli.py",
         "src/forge/impact.py",
         "src/forge/validate.py"
+      ],
+      "src/forge/bootstrap.py": [
+        "src/forge/cli.py"
       ],
       "src/forge/change.py": [
         "src/forge/cli.py",
@@ -126,6 +138,7 @@
         "src/forge/verify.py"
       ],
       "src/forge/config.py": [
+        "src/forge/bootstrap.py",
         "src/forge/derive.py",
         "src/forge/gates.py",
         "src/forge/scaffold.py",
@@ -133,6 +146,7 @@
         "src/forge/verify.py"
       ],
       "src/forge/derive.py": [
+        "src/forge/bootstrap.py",
         "src/forge/cli.py",
         "src/forge/gates.py",
         "src/forge/impact.py",
@@ -152,6 +166,7 @@
       ],
       "src/forge/gitio.py": [
         "src/forge/anchor.py",
+        "src/forge/bootstrap.py",
         "src/forge/cli.py",
         "src/forge/derive.py",
         "src/forge/gates.py",
@@ -169,12 +184,8 @@
       "src/forge/instructions.py": [
         "src/forge/cli.py"
       ],
-      "src/forge/scaffold.py": [
-        "src/forge/cli.py"
-      ],
       "src/forge/schema.py": [
         "src/forge/change.py",
-        "src/forge/cli.py",
         "src/forge/instructions.py",
         "src/forge/scaffold.py"
       ],
@@ -187,6 +198,7 @@
         "src/forge/verify.py"
       ],
       "src/forge/store.py": [
+        "src/forge/bootstrap.py",
         "src/forge/impact.py",
         "src/forge/instructions.py",
         "src/forge/scaffold.py",
@@ -209,7 +221,7 @@
     "tool": "forge",
     "unresolved_relative_imports": 0
   },
-  "generated_from_commit": "6071e0ed45291ca56d5d31fe8f0e356147ea898c",
+  "generated_from_commit": "50fe38d35afbfa50388dee474227290349f632ae",
   "generator": "forge sync derived",
   "tool": "forge"
 }
