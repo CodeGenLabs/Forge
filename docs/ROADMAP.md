@@ -269,9 +269,13 @@ repository survives contact) → R8 (the other agents) → everything else, meas
 > Four of the five repairs held on unfamiliar code; F2 introduced a new defect. The run
 > added eighteen findings, two of which reorder everything below:
 >
-> - **G16 - `forge archive` is unreachable on any repository today.** It blocks on a
->   verdict of `unproven`, which three kernel-owed conditions guarantee. R4 (the ledger)
->   is no longer only about the marquee feature; it is what unblocks the lifecycle.
+> - ~~**G16 - `forge archive` is unreachable on any repository today.**~~ **Wrong** -
+>   corrected 2026-09-11 by probing it. `pending` conditions do not block the verdict;
+>   `unavailable` ones do. With `build` and `typecheck` declared the same change reached
+>   `pass` and archived. What was really in the way is now G19 (a project cannot declare
+>   a step inapplicable) and G20 (`forge verify` writes a tracked file and so fails its
+>   own `derived_fresh`). R4 is back to being about the marquee feature, which is reason
+>   enough.
 > - **G14 - the claim-touch set is matched against the blast radius, not the diff.** A
 >   one-line change to `requests` touched 10 claims out of 10. This is R1's failure
 >   through a second door, and it needs the same narrowing.

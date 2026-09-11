@@ -5,8 +5,10 @@
 > this run existed to answer: **did those repairs actually clear the path, or did
 > they only clear it on the repository that produced them?**
 
-The answer is yes for four of the five, no for one, and the run found eighteen more
-things — including one that makes the lifecycle unfinishable on any repository.
+The answer is yes for four of the five, no for one, and the run found twenty more
+things. One of those — G16 — I got wrong, and the correction is recorded in place
+rather than quietly edited away, because the mistake is instructive: I read an error
+message instead of the code that produced the verdict.
 
 ---
 
@@ -89,14 +91,38 @@ claims-sharing-a-definition-file, and this is claims-sharing-an-import-graph.
 
 ### G16 — `forge archive` is unreachable on any repository today
 
-Archive blocks on a verdict of `unproven`. `unproven` is produced by three conditions
-the **kernel** owes — `DRIFT.md`, `DEBT.md`, and a baseline test run — which no user
-action can satisfy. The suggested fix, `forge verify --change 1`, yields the same
-verdict forever.
+> **This finding is wrong, and the correction is more useful than the original.**
+> Probed on 2026-09-11 by re-running the same change with `build` and `typecheck`
+> declared: the verdict reached `pass` and `forge archive` went through the
+> verification gate. `pending` conditions do **not** block the verdict —
+> [verify.py:301](../../src/forge/verify.py:301) computes `unproven` from
+> `unavailable` only. I read the blocker's error message, which lists pending
+> conditions among the "failing" ones, and did not check the code that produces the
+> verdict. Struck through below; what it got right is separated out as G19 and G20.
 
-This is why the spec fold had never been executed by anyone: the only route to it is
-`--force`, which is documented as recording blockers rather than as the normal path.
-Forcing it immediately found G17.
+~~Archive blocks on a verdict of `unproven`. `unproven` is produced by three conditions
+the **kernel** owes — `DRIFT.md`, `DEBT.md`, and a baseline test run — which no user
+action can satisfy.~~
+
+What was actually in the way, on `requests`:
+
+- **G19 — a project cannot say "not applicable".** The verdict was `unproven` because
+  `commands.build` and `commands.typecheck` were undeclared, and `unavailable` blocks
+  `pass`. A library with no build step has no way to record that, so it must either
+  declare a fake command or never reach `pass`. The distinction the report needs is
+  between *this project owes us a command* and *this project has no such step*.
+- **G20 — `forge verify` invalidates its own freshness condition.** It writes
+  `verification.json`, a tracked file, which changes `inventory.json`, which makes
+  `derived_fresh` fail — in the very report that just created the file. Reaching
+  `pass` takes `verify` → `sync derived` → commit → `verify` again, and nothing says
+  so. Both earlier green runs had done that sequence by accident.
+
+The blocker's message is worth fixing too: it lists every condition whose status is
+not `pass`, which puts the three `pending` ones in a line headed "failing" — the
+misreading that produced this finding.
+
+The fold really had never been executed before this run, but `--force` was not the
+only route to it; a passing verdict was.
 
 ---
 
@@ -119,7 +145,9 @@ Forcing it immediately found G17.
 | G13 | The spec template titles the file with the change name, not the capability |
 | **G14** | **The claim-touch set is matched against the blast radius, not the diff** |
 | G15 | `__pycache__/*.pyc` appears in the blast radius |
-| **G16** | **`forge archive` is unreachable on any repository today** |
+| ~~G16~~ | ~~`forge archive` is unreachable on any repository today~~ — **wrong**, see the correction in §4 |
+| **G19** | **A project cannot declare a step inapplicable, so a library with no build never reaches `pass`** |
+| **G20** | **`forge verify` writes a tracked file and thereby fails its own `derived_fresh` condition** |
 | G17 | (a) `--write NAME` writes a spec layout the fold cannot read — a defect introduced by F2. (b) `capability_of` returns `""` silently, folding every unplaceable delta into `specs/spec.md` titled `# capability` |
 | G18 | Eight things that worked, listed in §3 and the positives above |
 

@@ -270,10 +270,26 @@ def verify(repo: Path, item: Change, *, waived: tuple[str, ...] = (),
         "unaccounted": sorted(set(computed.touched) - accounted),
     }
 
-    # 5, 6, 8 - the ledgers and the baseline run
-    gates["drift"] = _pending(
-        "DRIFT.md is not built yet",
-        "until the ledger exists, run `forge drift` on the touch set by hand")
+    # 5. drift, from the ledger
+    #
+    # Scoped to the claims this change is accountable for, not to the whole
+    # store. A change is not responsible for drift somebody else left open in
+    # a corner of the repository it never touched, and making it so is how a
+    # condition becomes one people waive by reflex.
+    from . import ledger as _ledger
+
+    accountable = set(computed.touched)
+    still_open = [e for e in _ledger.open_entries(repo)
+                  if not accountable or e.claim in accountable]
+    gates["drift"] = {
+        "status": "fail" if still_open else "pass",
+        "open": [e.id for e in still_open],
+        "claims": sorted({e.claim for e in still_open if e.claim}),
+        "reason": ("every claim this change touches is either fresh or has a "
+                   "recorded verdict" if not still_open else
+                   "a claim this change touches has drift nobody has ruled on"),
+    }
+
     gates["debt"] = _pending(
         "DEBT.md is not built yet",
         "until the ledger exists, look for stubs and TODOs added by this change")
