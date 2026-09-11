@@ -1552,6 +1552,122 @@
         ],
         "untagged": 15
       },
+      "tests/test_ledger.py": {
+        "language": "python",
+        "tests": [
+          {
+            "covers": [],
+            "line": 59,
+            "name": "test_a_stale_claim_opens_an_entry"
+          },
+          {
+            "covers": [],
+            "line": 67,
+            "name": "test_the_proposal_is_a_proposal_and_only_for_the_case_evidence_supports"
+          },
+          {
+            "covers": [],
+            "line": 76,
+            "name": "test_a_body_only_change_proposes_nothing"
+          },
+          {
+            "covers": [],
+            "line": 90,
+            "name": "test_recording_twice_does_not_duplicate"
+          },
+          {
+            "covers": [],
+            "line": 98,
+            "name": "test_a_fresh_store_records_nothing"
+          },
+          {
+            "covers": [],
+            "line": 108,
+            "name": "test_ids_are_never_reused"
+          },
+          {
+            "covers": [],
+            "line": 123,
+            "name": "test_v2_needs_evidence"
+          },
+          {
+            "covers": [],
+            "line": 128,
+            "name": "test_v3_needs_an_adr"
+          },
+          {
+            "covers": [],
+            "line": 134,
+            "name": "test_v3_refuses_an_adr_that_does_not_exist"
+          },
+          {
+            "covers": [],
+            "line": 141,
+            "name": "test_v3_accepts_the_adr_forge_init_wrote"
+          },
+          {
+            "covers": [],
+            "line": 148,
+            "name": "test_an_adr_may_be_named_three_ways"
+          },
+          {
+            "covers": [],
+            "line": 153,
+            "name": "test_v4_needs_evidence_or_an_explicit_acceptance"
+          },
+          {
+            "covers": [],
+            "line": 162,
+            "name": "test_an_unknown_verdict_is_refused"
+          },
+          {
+            "covers": [],
+            "line": 168,
+            "name": "test_a_resolved_entry_is_not_overwritten"
+          },
+          {
+            "covers": [],
+            "line": 182,
+            "name": "test_confirm_restamps_and_leaves_the_prose_alone"
+          },
+          {
+            "covers": [],
+            "line": 194,
+            "name": "test_a_confirmed_claim_is_fresh_again"
+          },
+          {
+            "covers": [],
+            "line": 205,
+            "name": "test_confirm_refuses_an_already_resolved_entry"
+          },
+          {
+            "covers": [],
+            "line": 217,
+            "name": "test_a_waiver_needs_a_reason_and_an_expiry"
+          },
+          {
+            "covers": [],
+            "line": 224,
+            "name": "test_a_live_waiver_closes_the_entry"
+          },
+          {
+            "covers": [],
+            "line": 230,
+            "name": "test_an_expired_waiver_opens_it_again"
+          },
+          {
+            "covers": [],
+            "line": 238,
+            "name": "test_a_waiver_with_an_unreadable_expiry_is_expired"
+          },
+          {
+            "covers": [],
+            "line": 251,
+            "name": "test_the_ledger_survives_a_write_and_a_read"
+          }
+        ],
+        "untagged": 22
+      },
       "tests/test_lifecycle.py": {
         "language": "python",
         "tests": [
@@ -1657,86 +1773,91 @@
           },
           {
             "covers": [],
-            "line": 313,
+            "line": 315,
+            "name": "test_a_clean_ledger_passes_the_drift_condition"
+          },
+          {
+            "covers": [],
+            "line": 323,
             "name": "test_an_undischarged_requirement_fails_verification"
           },
           {
             "covers": [],
-            "line": 320,
+            "line": 330,
             "name": "test_a_tagged_test_discharges_it"
           },
           {
             "covers": [],
-            "line": 330,
+            "line": 340,
             "name": "test_a_failing_command_fails_the_verdict_and_keeps_its_output"
           },
           {
             "covers": [],
-            "line": 341,
+            "line": 351,
             "name": "test_an_unaccounted_claim_fails_verification"
           },
           {
             "covers": [],
-            "line": 348,
+            "line": 358,
             "name": "test_no_run_records_the_commands_as_unproven"
           },
           {
             "covers": [],
-            "line": 354,
+            "line": 364,
             "name": "test_a_waiver_is_recorded_in_the_report"
           },
           {
             "covers": [],
-            "line": 360,
+            "line": 370,
             "name": "test_verify_writes_the_report"
           },
           {
             "covers": [],
-            "line": 368,
+            "line": 378,
             "name": "test_verify_post_reads_the_report"
           },
           {
             "covers": [],
-            "line": 383,
+            "line": 393,
             "name": "test_archive_refuses_without_a_passing_verification"
           },
           {
             "covers": [],
-            "line": 390,
+            "line": 400,
             "name": "test_archive_folds_then_moves"
           },
           {
             "covers": [],
-            "line": 401,
+            "line": 411,
             "name": "test_archive_dry_run_changes_nothing"
           },
           {
             "covers": [],
-            "line": 410,
+            "line": 420,
             "name": "test_force_records_which_blockers_were_overridden"
           },
           {
             "covers": [],
-            "line": 420,
+            "line": 430,
             "name": "test_an_archived_number_is_never_reused"
           },
           {
             "covers": [],
-            "line": 427,
+            "line": 437,
             "name": "test_the_archive_is_not_a_citation"
           },
           {
             "covers": [],
-            "line": 456,
+            "line": 466,
             "name": "test_the_acceptance_case"
           },
           {
             "covers": [],
-            "line": 500,
+            "line": 510,
             "name": "test_a_folded_requirement_is_not_a_dangling_reference"
           }
         ],
-        "untagged": 36
+        "untagged": 37
       },
       "tests/test_lifecycle_repairs.py": {
         "language": "python",
@@ -2948,9 +3069,9 @@
       }
     },
     "tagged_tests": 0,
-    "total_tests": 561
+    "total_tests": 584
   },
-  "generated_from_commit": "ebda59f9aa1eb6f4144fb50a33c1136776725372",
+  "generated_from_commit": "f96585a4cef2fc93ad29de0a4a07f444f9ffd28e",
   "generator": "forge sync derived",
   "tool": "forge"
 }
