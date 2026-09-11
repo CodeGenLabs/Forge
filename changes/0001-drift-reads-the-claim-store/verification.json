@@ -1,0 +1,86 @@
+{
+  "base": "cd62b56febdddc708655859a1e785ce27903a0d0",
+  "change": "0001-drift-reads-the-claim-store",
+  "commit": "cd62b56febdddc708655859a1e785ce27903a0d0",
+  "failing": [
+    "claim_touch",
+    "derived_fresh",
+    "requirement_cover",
+    "tests"
+  ],
+  "gates": {
+    "build": {
+      "fix": "declare it, or accept that this condition is unproven - guessing the command is how a report goes green for a suite that never ran",
+      "reason": "no `commands.build` in .forge/config.yaml",
+      "status": "unavailable"
+    },
+    "claim_evidence": {
+      "enforced_claims": 0,
+      "failing": [],
+      "status": "pass"
+    },
+    "claim_touch": {
+      "status": "fail",
+      "unaccounted": []
+    },
+    "debt": {
+      "fix": "until the ledger exists, look for stubs and TODOs added by this change",
+      "reason": "DEBT.md is not built yet",
+      "status": "pending"
+    },
+    "derived_fresh": {
+      "commits_behind": 13,
+      "dirty": [
+        "trace.json"
+      ],
+      "status": "fail"
+    },
+    "drift": {
+      "fix": "until the ledger exists, run `forge drift` on the touch set by hand",
+      "reason": "DRIFT.md is not built yet",
+      "status": "pending"
+    },
+    "lint": {
+      "fix": "declare it, or accept that this condition is unproven - guessing the command is how a report goes green for a suite that never ran",
+      "reason": "no `commands.lint` in .forge/config.yaml",
+      "status": "unavailable"
+    },
+    "no_new_skips": {
+      "fix": "until the runner records per-test results, check the suite output for newly skipped tests",
+      "reason": "no baseline test run to compare against",
+      "status": "pending"
+    },
+    "requirement_cover": {
+      "discharged": 0,
+      "requirements": 3,
+      "status": "fail",
+      "undischarged": [
+        "REQ-drift-changed-only",
+        "REQ-drift-never-rewrites",
+        "REQ-drift-store-scan"
+      ]
+    },
+    "tests": {
+      "cmd": ".venv\\Scripts\\python.exe -m pytest -q",
+      "error": "timed out after 900s",
+      "status": "fail"
+    },
+    "typecheck": {
+      "fix": "declare it, or accept that this condition is unproven - guessing the command is how a report goes green for a suite that never ran",
+      "reason": "no `commands.typecheck` in .forge/config.yaml",
+      "status": "unavailable"
+    }
+  },
+  "pending": [
+    "debt",
+    "drift",
+    "no_new_skips"
+  ],
+  "unproven": [
+    "build",
+    "lint",
+    "typecheck"
+  ],
+  "verdict": "fail",
+  "waived": []
+}

@@ -32,6 +32,13 @@ forge bootstrap seal                  # ratified claims + the baseline ADR
 A change, start to finish:
 
 ```bash
+forge drift --store                   # every anchor in the store, reported per claim
+forge drift --changed                 # the same, narrowed to the claims the diff reaches
+```
+
+A change, start to finish:
+
+```bash
 forge change new "refund support"     # --track A|B|C; C is the default
 forge instructions spec --change 1    # what this phase is entitled to read
 forge gate spec:post --change 1       # blocks until the delta parses
@@ -56,6 +63,7 @@ a look, 2 on a usage error — so all four compose as gates.
 | [CONSTITUTION.md](CONSTITUTION.md) | 16 engineering principles, each with the mechanism that detects a violation |
 | [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) | 15 unresolved questions with options, recommendations, and what evidence is still missing |
 | [MVP.md](MVP.md) | Six milestones, 39 deterministic checks, what NOT to build, and the answer to "what would you build from zero today" |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | What comes after the MVP, ordered by the fifteen findings of the first real change rather than by the design's predictions |
 
 ## The short version
 
@@ -103,6 +111,9 @@ From that one shape follow three mechanisms that do not exist anywhere in the co
 - **A four-verdict drift ledger with no auto-reconciliation path.** The kernel contains no command that
   rewrites a claim to match the code. Drift is classified — code wrong / claim never true / decision
   changed (ADR required) / claim under-specified — and a human records the verdict.
+  **Half-built:** `forge drift --store` and `--changed` produce the signal, and no command rewrites a
+  claim. The ledger itself — `drift resolve --verdict`, the recorded consequences, the three `forge
+  verify` conditions that wait on it — does not exist yet. See [docs/ROADMAP.md](docs/ROADMAP.md) R4.
 
 Everything else is borrowed on purpose: OpenSpec's artifact DAG and archive fold, GSD's declarative
 gates, Superpowers' scale router and plan format, Spec Kit's requirement vocabulary, mini-SWE-agent's

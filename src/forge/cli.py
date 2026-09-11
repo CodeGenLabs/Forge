@@ -1,10 +1,16 @@
 """The kernel's command surface, as far as the milestones so far need it.
 
-Scope note: [MVP.md](../../MVP.md) lists a larger `forge drift` that reads anchors out of the claim
-store. This exposes the anchor engine directly instead - enough to check the
-milestone by hand and to script against. `drift resolve`, `drift waive` and
+Scope note: `forge drift --store` reads anchors out of the claim store and reports per claim;
+`--changed` narrows that to the claims anchoring files in the diff. The bare
+positional form stays, exposing the anchor engine directly for scripting and
+for checking a measurement by hand. `drift resolve`, `drift waive` and
 `reanchor` write to the drift ledger, which does not exist yet, so they are not
-here.
+here: this module produces the signal and records no verdict about it.
+
+One limit worth stating, because it decides what a hook can do: classification
+compares two *committed* revisions, so `--changed` selects claims by the
+working diff but still classifies against HEAD. A file edited and not yet
+committed is therefore selected and reported fresh.
 
 The kernel never calls a language model. Every output is reproducible from the
 repository at a commit, which is what makes gates built on it trustworthy.
@@ -21,7 +27,8 @@ from pathlib import Path
 
 from . import (bootstrap, change, derive, gates, gitio, impact, instructions,
                scaffold, schema, skills, spec, store, trace, validate, verify)
-from .anchor import AnchorError, Status, classify, parse_anchor
+from .anchor import (AnchorError, Status, classify, classify_store,
+                     parse_anchor)
 from .fingerprint import available_languages, fingerprint_source
 from .validate import Issue
 
@@ -34,6 +41,23 @@ def _cmd_drift(args: argparse.Namespace) -> int:
     repo = args.repo.resolve()
     if not gitio.is_repo(repo):
         print(f"forge: {repo} is not a git repository", file=sys.stderr)
+        return _EXIT_USAGE
+
+    if args.store or args.changed:
+        if args.anchor:
+            print("forge: --store and --changed read the anchors from the claim "
+                  "store; do not also name anchors", file=sys.stderr)
+            return _EXIT_USAGE
+        if args.baseline:
+            print("forge: --baseline overrides every anchor's recorded @sha, which "
+                  "is meaningless for a store-wide scan - each claim has its own",
+                  file=sys.stderr)
+            return _EXIT_USAGE
+        return _drift_store(repo, args)
+
+    if not args.anchor:
+        print("forge: name an anchor, or pass --store to read them from the claim store",
+              file=sys.stderr)
         return _EXIT_USAGE
 
     results = []
@@ -71,6 +95,81 @@ def _cmd_drift(args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
     return _EXIT_CHANGED if changed else _EXIT_OK
+
+
+def _drift_store(repo: Path, args: argparse.Namespace) -> int:
+    """`forge drift --store` / `--changed`: the scan, rendered per claim."""
+    paths: frozenset[str] | None = None
+    if args.changed:
+        try:
+            paths = frozenset(gitio.changed_files(repo, args.head))
+        except (gitio.GitError, gitio.InvalidRevision) as exc:
+            print(f"forge: {exc}", file=sys.stderr)
+            return _EXIT_USAGE
+
+    try:
+        drifts = classify_store(repo, head=args.head, paths=paths)
+    except gitio.InvalidRevision as exc:
+        print(f"forge: {exc}", file=sys.stderr)
+        return _EXIT_USAGE
+
+    if args.json:
+        print(json.dumps([d.to_dict() for d in drifts], indent=2))
+    else:
+        _render_drifts(drifts, narrowed=paths is not None)
+
+    return _EXIT_CHANGED if any(d.obligating and d.changed for d in drifts) else _EXIT_OK
+
+
+def _render_drifts(drifts: list, *, narrowed: bool) -> None:
+    obligating = [d for d in drifts if d.obligating]
+    aside = [d for d in drifts if not d.obligating]
+
+    if not drifts:
+        # "nothing was checked" and "everything checked was fine" are different
+        # answers, and printing the same line for both is how a narrowed scan
+        # starts reading like a complete one.
+        print("no claim anchors the changed files" if narrowed
+              else "the store declares no anchors")
+        return
+
+    _render_drift_block(obligating, "")
+    if aside:
+        print("\nnot obligating (candidate or retired) - reported, never failing:")
+        _render_drift_block(aside, "  ")
+
+    changed = [d for d in obligating if d.changed]
+    scope = "anchoring the changed files" if narrowed else "in the store"
+    # Flushed, because the summary goes to stderr and the listing to stdout:
+    # without this the two streams interleave and the summary prints above the
+    # block it summarises.
+    sys.stdout.flush()
+    print(f"\n{len(obligating)} claim(s) {scope}: {len(obligating) - len(changed)} fresh, "
+          f"{len(changed)} needing a look", file=sys.stderr)
+
+
+def _render_drift_block(drifts: list, indent: str) -> None:
+    if not drifts:
+        print(f"{indent}(none)")
+        return
+    width = max(len(d.claim_id) for d in drifts)
+    for d in drifts:
+        if d.status:
+            status = d.status.value
+        else:
+            # A claim with anchors that all failed to classify is not the same
+            # as a claim with no anchors, and calling both "no-anchors" hides
+            # the case a reader has to act on.
+            status = "unclassified" if d.errors else "no-anchors"
+        print(f"{indent}{d.claim_id:{width}}  {status:11}  {d.title}")
+        # Only the anchors that caused the status, and only when it is not
+        # fresh: a fresh claim's anchor list is noise, and noise is what stops
+        # the report being read at all.
+        if d.changed:
+            for r in d.culprits:
+                print(f"{indent}  {' ' * width}{str(r.anchor)}  {r.detail}")
+        for text, message in d.errors:
+            print(f"{indent}  {' ' * width}{text}  ERROR {message}")
 
 
 def _cmd_fingerprint(args: argparse.Namespace) -> int:
@@ -1135,7 +1234,16 @@ def build_parser() -> argparse.ArgumentParser:
         description="Exit code 0 when every anchor is fresh, 1 when any is not, "
                     "2 on a usage error - so it composes as a gate.",
     )
-    drift.add_argument("anchor", nargs="+", help="path[#Symbol][@sha]")
+    drift.add_argument("anchor", nargs="*", help="path[#Symbol][@sha]")
+    # Not `--store` as the default when no anchor is given: this repository's
+    # own tests and measurement tools already script `forge drift <anchor>`,
+    # and silently changing what a bare invocation means is the kind of break
+    # that is found in somebody's CI. Making it the default is its own change.
+    scan = drift.add_mutually_exclusive_group()
+    scan.add_argument("--store", action="store_true",
+                      help="read every anchor from the claim store")
+    scan.add_argument("--changed", action="store_true",
+                      help="--store, narrowed to claims anchoring files in the diff")
     drift.add_argument("--repo", type=Path, default=Path.cwd())
     drift.add_argument("--baseline", help="overrides each anchor's @sha")
     drift.add_argument("--head", default="HEAD")

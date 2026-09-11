@@ -33,7 +33,8 @@ from pathlib import Path
 from . import gitio
 from .fingerprint import find_symbol, fingerprint_source, symbol_appears_textually
 
-__all__ = ["Anchor", "AnchorError", "Status", "AnchorResult", "parse_anchor", "classify"]
+__all__ = ["Anchor", "AnchorError", "Status", "AnchorResult", "ClaimDrift",
+           "parse_anchor", "classify", "classify_store"]
 
 _SHA_RE = re.compile(r"\A[0-9a-fA-F]{4,40}\Z")
 _SYMBOL_RE = re.compile(r"\A[A-Za-z_$][A-Za-z0-9_$]*(\.[A-Za-z_$][A-Za-z0-9_$]*)*\Z")
@@ -358,3 +359,154 @@ def _classify_file(repo: Path, anchor: Anchor, base_rev: str, head_rev: str) -> 
         result.detail = "whole-file comparison" + (" (coarse)" if result.coarse else "")
     result.status = Status.FRESH if base_digest == head_digest else Status.STALE
     return result
+
+
+# ---------------------------------------------------------------------------
+# The store-wide scan
+# ---------------------------------------------------------------------------
+#
+# `classify` answers the question for one anchor the caller already knows
+# about. That is the wrong shape for every real consumer: the ledger, `forge
+# verify` and a pre-commit hook all need the set of claims whose code has
+# moved, and none of them can name the anchors in advance. This is the loop
+# that turns the per-anchor engine M1 measured into that set.
+#
+# Nothing here re-implements anchor parsing or classification. A second parser
+# that disagreed slightly with `parse_anchor` about what an anchor is would be
+# a silent hole in exactly the mechanism this file exists to make trustworthy.
+
+#: Worst-first. The reducer below picks the maximum, so the order is the
+#: definition of "worse" and lives in exactly one place.
+_SEVERITY = {Status.FRESH: 0, Status.SHIFTED: 1, Status.STALE: 2, Status.MISSING: 3}
+
+
+@dataclass
+class ClaimDrift:
+    """One claim's drift: the worst status among its anchors, and the why.
+
+    Reported per claim rather than per anchor because a human acts on claims.
+    A five-anchor claim reported as five findings is five decisions about one
+    question, and a report nobody finishes reading is the failure mode
+    OPEN_QUESTIONS.md Q10 says kills a knowledge harness.
+    """
+    claim_id: str
+    kind: str
+    title: str
+    file: str
+    line: int
+    #: Whether this claim's staleness is somebody's obligation. False for a
+    #: candidate - nobody has agreed to it yet - and for a retired claim,
+    #: which describes something the project has stopped asserting. Both are
+    #: still scanned and reported; neither fails the command.
+    obligating: bool
+    results: list[AnchorResult]
+    #: (anchor text, message) for anchors that could not be classified at all.
+    errors: list[tuple[str, str]]
+
+    @property
+    def status(self) -> Status | None:
+        """The worst status among the anchors, or None if there are none."""
+        if not self.results:
+            return None
+        return max((r.status for r in self.results), key=lambda s: _SEVERITY[s])
+
+    @property
+    def changed(self) -> bool:
+        return any(r.changed for r in self.results) or bool(self.errors)
+
+    @property
+    def culprits(self) -> list[AnchorResult]:
+        """Only the anchors that produced the worst status."""
+        worst = self.status
+        return [r for r in self.results if r.status is worst] if worst else []
+
+    def to_dict(self) -> dict:
+        return {
+            "claim": self.claim_id,
+            "kind": self.kind,
+            "title": self.title,
+            "defined_in": f"{self.file}:{self.line}",
+            "obligating": self.obligating,
+            "status": self.status.value if self.status else None,
+            "changed": self.changed,
+            "anchors": [r.to_dict() for r in self.results],
+            "errors": [{"anchor": a, "message": m} for a, m in self.errors],
+        }
+
+
+def _anchor_touches(anchor: Anchor, paths: frozenset[str]) -> bool:
+    """Whether *anchor* points inside *paths*, a set of repo-relative files."""
+    if anchor.is_dir:
+        prefix = anchor.path if anchor.path.endswith("/") else anchor.path + "/"
+        return any(p.startswith(prefix) for p in paths)
+    return anchor.path in paths
+
+
+def classify_store(
+    repo: Path,
+    *,
+    head: str = "HEAD",
+    paths: frozenset[str] | None = None,
+) -> list[ClaimDrift]:
+    """Classify every anchor of every claim in the store, grouped by claim.
+
+    *paths* narrows the scan to claims with at least one anchor inside that set
+    of repo-relative files - the form a pre-commit hook can afford, since it
+    fingerprints only what the diff touched. A claim with no matching anchor is
+    not classified and does not appear in the result at all; that is the
+    difference between "checked and fine" and "not checked", and collapsing the
+    two is how a cheap scan starts reading like a complete one.
+
+    A malformed anchor is recorded in the claim's ``errors`` and the walk
+    continues. `trace.py` settled this rule for the index and it holds here for
+    the same reason: whether an anchor is well-formed is `forge check`'s
+    question, and a scan that dies on one bad anchor says nothing about the
+    other thirty-nine.
+
+    This function opens no file for writing. Reporting drift and resolving it
+    are separate acts and only the second one is a human's.
+    """
+    from . import store as _store   # local: store imports nothing from forge,
+                                    # but keeping the edge out of module scope
+                                    # keeps anchor.py loadable on its own.
+
+    out: list[ClaimDrift] = []
+    for claim in _store.load_store(repo):
+        results: list[AnchorResult] = []
+        errors: list[tuple[str, str]] = []
+        matched = False
+        for text in claim.anchors:
+            if not text.strip():
+                continue
+            try:
+                anchor = parse_anchor(text)
+            except AnchorError as exc:
+                # An unparseable anchor cannot be filtered by path either, so
+                # it is reported whatever `paths` says: silently dropping it
+                # under `--changed` would hide a real defect behind a flag.
+                errors.append((text, str(exc)))
+                matched = True
+                continue
+            if paths is not None and not _anchor_touches(anchor, paths):
+                continue
+            matched = True
+            try:
+                results.append(classify(repo, anchor, head=head))
+            except (AnchorError, gitio.GitError, gitio.InvalidRevision) as exc:
+                # A claim whose @sha names a commit this clone does not have -
+                # a shallow checkout, or a rebased branch - is a fact about the
+                # scan, not about the code. It is recorded and the walk goes on.
+                errors.append((text, str(exc)))
+        if paths is not None and not matched:
+            continue
+        out.append(ClaimDrift(
+            claim_id=claim.id,
+            kind=claim.kind,
+            title=claim.title,
+            file=claim.file,
+            line=claim.line,
+            obligating=not claim.is_candidate and claim.status != "retired",
+            results=results,
+            errors=errors,
+        ))
+    return out

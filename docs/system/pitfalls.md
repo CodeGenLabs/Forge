@@ -50,3 +50,25 @@ fixture during M3.
 - Are there pitfalls from using the harness, as opposed to from building it?
   Every candidate here was earned while writing the tool, which is not the
   same population as using it.
+
+### PIT-bullet-continuation-lines - A wrapped bullet is one item, not one line
+
+```claim
+kind:     pitfall
+status:   asserted
+truth-source: code
+anchors:  ["src/forge/bootstrap.py#_bullets@cd62b56feb"]
+reviewed: 2026-09-11
+```
+
+Markdown authors wrap long bullets. A parser that matches `^[-*] (.*)$` keeps the
+first physical line and silently discards the rest, so an item reads as a shorter,
+different item - never as an error. This has now been hit twice in this kernel, in
+two unrelated parsers: `## Uncertain` questions were truncated at their first line
+during M5, and `tasks.md` entries lose any `REQ-` id written on a continuation line,
+which makes `trace.requirement_task_coverage` block with a page of errors that are
+all wrong. `_bullets` is the join; `Change.tasks()` has not adopted it.
+
+The second occurrence is the reason this is written down. The first was found,
+fixed, and never recorded, so nothing stopped the same line-based match being
+written again three days later in a different file.

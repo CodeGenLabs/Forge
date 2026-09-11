@@ -25,4 +25,13 @@ derive:
 # verification condition is better than one proven by a command
 # nobody chose.
 commands:
-  test: pytest
+  # Not the bare `pytest` that `forge bootstrap seal` detected from the
+  # manifest: `forge verify` runs this line through the shell, and a bare
+  # console script is only on PATH when the virtualenv is activated. Every
+  # run without it reported the suite failing when the suite passed, which
+  # is the one thing a verification report must never do.
+  # Backslashes: this line is handed to the host shell, and cmd.exe rejects
+  # a leading `.venv/...`. The kernel has no notion of how to spell a path
+  # for the shell it will be run under, so the config carries the host's
+  # spelling and a project on two platforms needs two configs.
+  test: .venv\Scripts\python.exe -m pytest -q
