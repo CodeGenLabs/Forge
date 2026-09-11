@@ -3,35 +3,35 @@
   "data": {
     "by_language": {
       "json": {
-        "files": 6,
-        "lines": 468
+        "files": 7,
+        "lines": 554
       },
       "markdown": {
-        "files": 59,
-        "lines": 10973
+        "files": 65,
+        "lines": 11511
       },
       "other": {
         "files": 2,
         "lines": 37
       },
       "python": {
-        "files": 43,
-        "lines": 16456
+        "files": 44,
+        "lines": 16979
       },
       "toml": {
         "files": 1,
         "lines": 44
       },
       "yaml": {
-        "files": 1,
-        "lines": 28
+        "files": 2,
+        "lines": 41
       }
     },
     "entry_points": [
       "src/forge/cli.py"
     ],
-    "files_considered": 112,
-    "files_tracked": 112,
+    "files_considered": 121,
+    "files_tracked": 121,
     "stack": {
       "python": {
         "lockfile": null,
@@ -78,6 +78,7 @@
       "tests/skills/specify/modified-as-a-fragment.md",
       "tests/test_anchor_classify.py",
       "tests/test_anchor_parse.py",
+      "tests/test_anchor_store.py",
       "tests/test_bootstrap.py",
       "tests/test_change.py",
       "tests/test_cli.py",
@@ -98,7 +99,7 @@
       "tools/pressure_test.py"
     ]
   },
-  "generated_from_commit": "cdcdb9efc69c47061c720290705bc5437bf790cf",
+  "generated_from_commit": "b57444084191c4977e05e823af952d27150005a6",
   "generator": "forge sync derived",
   "tool": "forge"
 }

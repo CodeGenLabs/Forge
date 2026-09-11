@@ -180,6 +180,72 @@
         ],
         "untagged": 9
       },
+      "tests/test_anchor_store.py": {
+        "language": "python",
+        "tests": [
+          {
+            "covers": [],
+            "line": 43,
+            "name": "test_a_fresh_store_reports_every_claim_fresh"
+          },
+          {
+            "covers": [],
+            "line": 53,
+            "name": "test_a_moved_symbol_makes_its_claim_not_fresh"
+          },
+          {
+            "covers": [],
+            "line": 66,
+            "name": "test_a_claim_is_as_stale_as_its_worst_anchor"
+          },
+          {
+            "covers": [],
+            "line": 94,
+            "name": "test_a_malformed_anchor_does_not_abort_the_walk"
+          },
+          {
+            "covers": [],
+            "line": 117,
+            "name": "test_an_anchor_with_no_sha_is_an_error_not_a_crash"
+          },
+          {
+            "covers": [],
+            "line": 142,
+            "name": "test_a_candidate_is_scanned_but_does_not_obligate"
+          },
+          {
+            "covers": [],
+            "line": 154,
+            "name": "test_a_retired_claim_is_scanned_but_does_not_obligate"
+          },
+          {
+            "covers": [],
+            "line": 184,
+            "name": "test_the_filter_keeps_claims_anchoring_a_changed_file"
+          },
+          {
+            "covers": [],
+            "line": 192,
+            "name": "test_the_filter_drops_claims_anchoring_untouched_files"
+          },
+          {
+            "covers": [],
+            "line": 202,
+            "name": "test_the_filter_matches_inside_a_directory_anchor"
+          },
+          {
+            "covers": [],
+            "line": 219,
+            "name": "test_a_malformed_anchor_survives_the_filter"
+          },
+          {
+            "covers": [],
+            "line": 243,
+            "name": "test_a_scan_over_a_stale_store_writes_nothing"
+          }
+        ],
+        "untagged": 12
+      },
       "tests/test_bootstrap.py": {
         "language": "python",
         "tests": [
@@ -2674,9 +2740,9 @@
       }
     },
     "tagged_tests": 0,
-    "total_tests": 511
+    "total_tests": 523
   },
-  "generated_from_commit": "50fe38d35afbfa50388dee474227290349f632ae",
+  "generated_from_commit": "b57444084191c4977e05e823af952d27150005a6",
   "generator": "forge sync derived",
   "tool": "forge"
 }

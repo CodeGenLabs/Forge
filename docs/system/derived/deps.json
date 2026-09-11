@@ -11,7 +11,8 @@
       "src/forge/anchor.py": [
         "src/forge/__init__.py",
         "src/forge/fingerprint.py",
-        "src/forge/gitio.py"
+        "src/forge/gitio.py",
+        "src/forge/store.py"
       ],
       "src/forge/bootstrap.py": [
         "src/forge/__init__.py",
@@ -198,6 +199,7 @@
         "src/forge/verify.py"
       ],
       "src/forge/store.py": [
+        "src/forge/anchor.py",
         "src/forge/bootstrap.py",
         "src/forge/impact.py",
         "src/forge/instructions.py",
@@ -221,7 +223,7 @@
     "tool": "forge",
     "unresolved_relative_imports": 0
   },
-  "generated_from_commit": "50fe38d35afbfa50388dee474227290349f632ae",
+  "generated_from_commit": "b57444084191c4977e05e823af952d27150005a6",
   "generator": "forge sync derived",
   "tool": "forge"
 }
