@@ -437,6 +437,107 @@
         ],
         "untagged": 19
       },
+      "tests/test_deps.py": {
+        "language": "python",
+        "tests": [
+          {
+            "covers": [],
+            "line": 17,
+            "name": "test_a_relative_import_is_an_edge"
+          },
+          {
+            "covers": [],
+            "line": 24,
+            "name": "test_from_package_import_submodules_resolves_each_one"
+          },
+          {
+            "covers": [],
+            "line": 38,
+            "name": "test_an_attribute_in_an_import_list_is_not_invented_as_a_module"
+          },
+          {
+            "covers": [],
+            "line": 48,
+            "name": "test_a_src_layout_resolves_an_absolute_import"
+          },
+          {
+            "covers": [],
+            "line": 56,
+            "name": "test_an_import_that_leaves_the_repository_is_not_an_edge"
+          },
+          {
+            "covers": [],
+            "line": 65,
+            "name": "test_a_package_init_import_resolves"
+          },
+          {
+            "covers": [],
+            "line": 78,
+            "name": "test_a_relative_typescript_import_resolves_through_extensions"
+          },
+          {
+            "covers": [],
+            "line": 84,
+            "name": "test_an_index_file_resolves"
+          },
+          {
+            "covers": [],
+            "line": 91,
+            "name": "test_require_and_dynamic_import_count"
+          },
+          {
+            "covers": [],
+            "line": 100,
+            "name": "test_a_package_import_is_skipped_and_not_counted_unresolved"
+          },
+          {
+            "covers": [],
+            "line": 108,
+            "name": "test_a_dangling_relative_import_is_counted"
+          },
+          {
+            "covers": [],
+            "line": 122,
+            "name": "test_a_go_import_resolves_through_the_module_path"
+          },
+          {
+            "covers": [],
+            "line": 130,
+            "name": "test_a_go_import_edges_to_every_file_in_the_package"
+          },
+          {
+            "covers": [],
+            "line": 141,
+            "name": "test_a_standard_library_import_is_not_an_edge"
+          },
+          {
+            "covers": [],
+            "line": 153,
+            "name": "test_a_cycle_is_found"
+          },
+          {
+            "covers": [],
+            "line": 162,
+            "name": "test_a_cycle_is_rotated_to_a_stable_start"
+          },
+          {
+            "covers": [],
+            "line": 174,
+            "name": "test_the_reverse_index_is_the_inverse_of_the_edges"
+          },
+          {
+            "covers": [],
+            "line": 184,
+            "name": "test_regeneration_is_a_no_op"
+          },
+          {
+            "covers": [],
+            "line": 193,
+            "name": "test_the_derived_tier_does_not_describe_itself"
+          }
+        ],
+        "untagged": 19
+      },
       "tests/test_derive.py": {
         "language": "python",
         "tests": [
@@ -814,6 +915,167 @@
           }
         ],
         "untagged": 15
+      },
+      "tests/test_impact.py": {
+        "language": "python",
+        "tests": [
+          {
+            "covers": [],
+            "line": 40,
+            "name": "test_refund_never_exceeds_capture"
+          },
+          {
+            "covers": [],
+            "line": 136,
+            "name": "test_an_untouched_change_reaches_nothing"
+          },
+          {
+            "covers": [],
+            "line": 141,
+            "name": "test_the_working_tree_counts_before_anything_is_committed"
+          },
+          {
+            "covers": [],
+            "line": 150,
+            "name": "test_untracked_files_count"
+          },
+          {
+            "covers": [],
+            "line": 155,
+            "name": "test_reverse_dependencies_widen_the_radius"
+          },
+          {
+            "covers": [],
+            "line": 164,
+            "name": "test_the_changes_own_artifacts_are_not_blast_radius"
+          },
+          {
+            "covers": [],
+            "line": 177,
+            "name": "test_an_anchor_in_the_diff_touches_its_claim"
+          },
+          {
+            "covers": [],
+            "line": 184,
+            "name": "test_a_component_anchor_is_read_as_a_glob"
+          },
+          {
+            "covers": [],
+            "line": 195,
+            "name": "test_only_component_anchors_are_globbed"
+          },
+          {
+            "covers": [],
+            "line": 203,
+            "name": "test_an_evidence_artifact_in_the_diff_touches_its_claim"
+          },
+          {
+            "covers": [],
+            "line": 210,
+            "name": "test_editing_a_claim_file_touches_the_claims_in_it"
+          },
+          {
+            "covers": [],
+            "line": 219,
+            "name": "test_candidates_and_retired_claims_are_not_taxed"
+          },
+          {
+            "covers": [],
+            "line": 237,
+            "name": "test_no_impact_file_with_a_non_empty_touch_set_blocks"
+          },
+          {
+            "covers": [],
+            "line": 243,
+            "name": "test_no_impact_file_with_an_empty_touch_set_is_fine"
+          },
+          {
+            "covers": [],
+            "line": 247,
+            "name": "test_a_complete_account_passes"
+          },
+          {
+            "covers": [],
+            "line": 255,
+            "name": "test_an_unaccounted_member_blocks_and_names_why_it_is_in_the_set"
+          },
+          {
+            "covers": [],
+            "line": 265,
+            "name": "test_an_entry_with_no_reason_is_not_an_account"
+          },
+          {
+            "covers": [],
+            "line": 278,
+            "name": "test_the_reason_never_swallows_the_next_line"
+          },
+          {
+            "covers": [],
+            "line": 289,
+            "name": "test_a_claim_under_two_headings_blocks"
+          },
+          {
+            "covers": [],
+            "line": 298,
+            "name": "test_editing_a_claim_and_filing_it_unaffected_blocks"
+          },
+          {
+            "covers": [],
+            "line": 310,
+            "name": "test_a_missing_section_blocks"
+          },
+          {
+            "covers": [],
+            "line": 318,
+            "name": "test_an_invented_heading_blocks"
+          },
+          {
+            "covers": [],
+            "line": 327,
+            "name": "test_over_accounting_is_a_warning_not_an_error"
+          },
+          {
+            "covers": [],
+            "line": 343,
+            "name": "test_superseded_without_an_adr_blocks"
+          },
+          {
+            "covers": [],
+            "line": 353,
+            "name": "test_superseded_naming_a_missing_adr_blocks"
+          },
+          {
+            "covers": [],
+            "line": 364,
+            "name": "test_superseded_naming_an_existing_adr_passes"
+          },
+          {
+            "covers": [],
+            "line": 381,
+            "name": "test_impact_command_prints_the_set_and_why"
+          },
+          {
+            "covers": [],
+            "line": 390,
+            "name": "test_impact_json_carries_the_ids_the_design_phase_reads"
+          },
+          {
+            "covers": [],
+            "line": 399,
+            "name": "test_check_scope_change_runs_the_rule"
+          },
+          {
+            "covers": [],
+            "line": 405,
+            "name": "test_check_scope_change_can_be_limited_to_one_change"
+          },
+          {
+            "covers": [],
+            "line": 415,
+            "name": "test_an_unknown_change_is_reported_not_ignored"
+          }
+        ],
+        "untagged": 31
       },
       "tests/test_perturbations.py": {
         "language": "python",
@@ -1497,9 +1759,9 @@
       }
     },
     "tagged_tests": 0,
-    "total_tests": 284
+    "total_tests": 334
   },
-  "generated_from_commit": "3ac5729e1925c2a9cb4dd9f0607260b7797c89bb",
+  "generated_from_commit": "d94b0d645310a12397f0df4de76d20c60bfc0135",
   "generator": "forge sync derived",
   "tool": "forge"
 }
