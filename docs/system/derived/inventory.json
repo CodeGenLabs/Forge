@@ -8,15 +8,15 @@
       },
       "markdown": {
         "files": 65,
-        "lines": 11518
+        "lines": 11564
       },
       "other": {
         "files": 2,
         "lines": 37
       },
       "python": {
-        "files": 44,
-        "lines": 16979
+        "files": 46,
+        "lines": 17857
       },
       "toml": {
         "files": 1,
@@ -24,14 +24,14 @@
       },
       "yaml": {
         "files": 2,
-        "lines": 41
+        "lines": 44
       }
     },
     "entry_points": [
       "src/forge/cli.py"
     ],
-    "files_considered": 121,
-    "files_tracked": 121,
+    "files_considered": 123,
+    "files_tracked": 123,
     "stack": {
       "python": {
         "lockfile": null,
@@ -81,6 +81,7 @@
       "tests/test_anchor_store.py",
       "tests/test_bootstrap.py",
       "tests/test_change.py",
+      "tests/test_claim_granularity.py",
       "tests/test_cli.py",
       "tests/test_deps.py",
       "tests/test_derive.py",
@@ -89,6 +90,7 @@
       "tests/test_impact.py",
       "tests/test_instructions.py",
       "tests/test_lifecycle.py",
+      "tests/test_lifecycle_repairs.py",
       "tests/test_perturbations.py",
       "tests/test_scaffold.py",
       "tests/test_schema.py",
@@ -99,7 +101,7 @@
       "tools/pressure_test.py"
     ]
   },
-  "generated_from_commit": "4501de0f00a19206c65691772ea4c68c7290aef2",
+  "generated_from_commit": "5ad73f0269f2876b833542cc81f71febcfbf7d29",
   "generator": "forge sync derived",
   "tool": "forge"
 }

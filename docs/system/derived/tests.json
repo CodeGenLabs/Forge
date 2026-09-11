@@ -643,6 +643,52 @@
         ],
         "untagged": 30
       },
+      "tests/test_claim_granularity.py": {
+        "language": "python",
+        "tests": [
+          {
+            "covers": [],
+            "line": 90,
+            "name": "test_appending_a_claim_does_not_touch_its_neighbours"
+          },
+          {
+            "covers": [],
+            "line": 101,
+            "name": "test_editing_a_claim_body_touches_that_claim"
+          },
+          {
+            "covers": [],
+            "line": 115,
+            "name": "test_editing_a_claim_fence_touches_that_claim"
+          },
+          {
+            "covers": [],
+            "line": 126,
+            "name": "test_a_new_claim_may_be_filed_under_new"
+          },
+          {
+            "covers": [],
+            "line": 138,
+            "name": "test_changed_line_ranges_reports_only_the_edited_lines"
+          },
+          {
+            "covers": [],
+            "line": 148,
+            "name": "test_changed_line_ranges_reports_an_added_file_whole"
+          },
+          {
+            "covers": [],
+            "line": 159,
+            "name": "test_changed_line_ranges_is_empty_for_an_untouched_file"
+          },
+          {
+            "covers": [],
+            "line": 165,
+            "name": "test_overlap_falls_back_to_the_heading_line_alone"
+          }
+        ],
+        "untagged": 8
+      },
       "tests/test_cli.py": {
         "language": "python",
         "tests": [
@@ -1650,6 +1696,97 @@
           }
         ],
         "untagged": 36
+      },
+      "tests/test_lifecycle_repairs.py": {
+        "language": "python",
+        "tests": [
+          {
+            "covers": [],
+            "line": 39,
+            "name": "test_a_wrapped_task_keeps_its_continuation"
+          },
+          {
+            "covers": [],
+            "line": 53,
+            "name": "test_an_unindented_paragraph_is_not_swallowed_into_the_last_task"
+          },
+          {
+            "covers": [],
+            "line": 66,
+            "name": "test_several_wrapped_tasks_stay_separate"
+          },
+          {
+            "covers": [],
+            "line": 84,
+            "name": "test_every_templated_artifact_has_a_template"
+          },
+          {
+            "covers": [],
+            "line": 93,
+            "name": "test_verification_has_no_template"
+          },
+          {
+            "covers": [],
+            "line": 99,
+            "name": "test_a_scaffolded_artifact_does_not_count_as_complete"
+          },
+          {
+            "covers": [],
+            "line": 111,
+            "name": "test_deleting_the_marker_completes_the_artifact"
+          },
+          {
+            "covers": [],
+            "line": 126,
+            "name": "test_a_glob_artifact_needs_a_name"
+          },
+          {
+            "covers": [],
+            "line": 136,
+            "name": "test_scaffolding_never_overwrites"
+          },
+          {
+            "covers": [],
+            "line": 151,
+            "name": "test_a_command_not_on_path_is_reported"
+          },
+          {
+            "covers": [],
+            "line": 155,
+            "name": "test_a_resolvable_command_reports_nothing"
+          },
+          {
+            "covers": [],
+            "line": 159,
+            "name": "test_a_path_or_shell_construct_is_left_to_the_shell"
+          },
+          {
+            "covers": [],
+            "line": 165,
+            "name": "test_a_project_virtualenv_is_named_in_the_message"
+          },
+          {
+            "covers": [],
+            "line": 172,
+            "name": "test_an_unrunnable_command_is_unavailable_not_failed"
+          },
+          {
+            "covers": [],
+            "line": 186,
+            "name": "test_the_timeout_comes_from_config"
+          },
+          {
+            "covers": [],
+            "line": 220,
+            "name": "test_an_open_delta_defines_its_requirements"
+          },
+          {
+            "covers": [],
+            "line": 234,
+            "name": "test_an_archived_delta_does_not_define_anything"
+          }
+        ],
+        "untagged": 17
       },
       "tests/test_perturbations.py": {
         "language": "python",
@@ -2740,9 +2877,9 @@
       }
     },
     "tagged_tests": 0,
-    "total_tests": 523
+    "total_tests": 548
   },
-  "generated_from_commit": "b57444084191c4977e05e823af952d27150005a6",
+  "generated_from_commit": "5ad73f0269f2876b833542cc81f71febcfbf7d29",
   "generator": "forge sync derived",
   "tool": "forge"
 }
