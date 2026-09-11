@@ -730,6 +730,23 @@ appears under `Superseded` without an existing ADR.
 > sentences — and an obligation that always fires is one people learn to discharge without reading. Claims
 > reached only through the import graph are now reported separately, under a heading that says no account
 > is owed. See [docs/measurements/run2-requests-lifecycle.md](docs/measurements/run2-requests-lifecycle.md).
+>
+> **Third correction, the same day: "resolves to a file in `D`" is the wrong granularity too.** Narrowing
+> to the diff took that change from 10 claims to 5, and the five that remained were all anchored to
+> *symbols* in `models.py` — `#PreparedRequest`, `#Response.next`, `#Response.iter_content` — while the
+> diff had touched only `Response.content`. An anchor that names a symbol is a claim about that symbol,
+> and matching it against the file taxes it for every edit to every neighbour.
+>
+> The rule is now: a symbol anchor is touched when the diff's hunks intersect the symbol's own line span,
+> found with the same `find_symbol` the drift engine has used since M1. A **file** anchor is still touched
+> by any edit to its file, because a claim that points at a whole file is making a claim about the whole
+> file. Every way of *not knowing* — no grammar installed, a declaration form the table does not cover, a
+> symbol renamed away, a file gone from the working tree — falls back to the file, because over-reporting
+> costs a sentence and under-reporting costs a claim nobody re-read.
+>
+> Measured on the same change, third time: **10 → 5 → 1**, and the one is the only claim that describes
+> `Response.content`. The nine now appear under `Nearby`, which is the point: they are not hidden, they
+> are just not owed a sentence.
 
 Consequences worth stating plainly:
 

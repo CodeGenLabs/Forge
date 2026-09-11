@@ -157,3 +157,138 @@ def test_a_vendored_directory_is_not_in_the_blast_radius(two_modules):
     two_modules.write("src/pkg/core.py", CORE.replace("return 1", "return 2"))
 
     assert computed(two_modules).changed_files == ["src/pkg/core.py"]
+
+
+# ---------------------------------------------------------------------------
+# An anchor names a symbol, and the diff touched a different one
+# ---------------------------------------------------------------------------
+
+MODULE = '''\
+def alpha():
+    return 1
+
+
+def beta():
+    return 2
+
+
+def gamma():
+    return 3
+'''
+
+TWO_CLAIMS = """\
+
+### CON-alpha - what alpha is for
+
+```claim
+kind:     concept
+status:   asserted
+truth-source: decision
+anchors:  ["src/pkg/mod.py#alpha"]
+reviewed: 2026-09-01
+```
+
+Prose about alpha, long enough to read like a real claim and to say something a
+reader could not get from the function name alone.
+
+### CON-beta - what beta is for
+
+```claim
+kind:     concept
+status:   asserted
+truth-source: decision
+anchors:  ["src/pkg/mod.py#beta"]
+reviewed: 2026-09-01
+```
+
+Prose about beta, long enough to read like a real claim and to say something a
+reader could not get from the function name alone.
+"""
+
+
+@pytest.fixture
+def symbols(repo):
+    """One module, two functions, one claim anchored to each."""
+    repo.write("src/pkg/__init__.py", "")
+    repo.write("src/pkg/mod.py", MODULE)
+    main(["init", "--repo", str(repo.root)])
+    text = (repo.root / "docs/system/domain.md").read_text(encoding="utf-8")
+    repo.write("docs/system/domain.md", text + TWO_CLAIMS)
+    repo.commit("a module and two claims")
+    derive.derive_all(repo.root)
+    repo.commit("chore: sync derived tier")
+    change.new_change(repo.root, "change alpha", today=TODAY)
+    repo.commit("open a change")
+    return repo
+
+
+def touched_of(repo):
+    return impact.compute_impact(repo.root, change.find_change(repo.root, "1"))
+
+
+def test_only_the_claim_about_the_changed_symbol_is_touched(symbols):
+    """The measurement: on `requests` this took a one-method change from five
+    claims owed a sentence to one."""
+    symbols.write("src/pkg/mod.py", MODULE.replace("return 1", "return 11"))
+
+    result = touched_of(symbols)
+    assert set(result.touched) == {"CON-alpha"}
+    assert set(result.nearby) == {"CON-beta"}
+
+
+def test_the_untouched_symbol_is_still_reported(symbols):
+    """Dropping it entirely would be the wrong repair: the diff did open the
+    file this claim points into."""
+    symbols.write("src/pkg/mod.py", MODULE.replace("return 1", "return 11"))
+
+    entry = touched_of(symbols).nearby["CON-beta"]
+    assert "changed elsewhere" in entry.reasons[0]
+
+
+def test_a_file_level_anchor_is_touched_by_any_edit_to_its_file(symbols):
+    """The narrowing applies to symbol anchors only. A claim that points at a
+    whole file is making a claim about the whole file."""
+    text = (symbols.root / "docs/system/domain.md").read_text(encoding="utf-8")
+    symbols.write("docs/system/domain.md",
+                  text.replace('["src/pkg/mod.py#beta"]', '["src/pkg/mod.py"]'))
+    symbols.commit("CON-beta anchors the module")
+    symbols.write("src/pkg/mod.py", MODULE.replace("return 1", "return 11"))
+
+    assert "CON-beta" in touched_of(symbols).touched
+
+
+def test_an_unresolvable_symbol_falls_back_to_the_file(symbols):
+    """Every way of not knowing falls back to the file. Over-reporting costs a
+    sentence; under-reporting costs a claim nobody re-read."""
+    text = (symbols.root / "docs/system/domain.md").read_text(encoding="utf-8")
+    symbols.write("docs/system/domain.md",
+                  text.replace('["src/pkg/mod.py#beta"]', '["src/pkg/mod.py#vanished"]'))
+    symbols.commit("CON-beta anchors a symbol that is not there")
+    symbols.write("src/pkg/mod.py", MODULE.replace("return 1", "return 11"))
+
+    entry = touched_of(symbols).touched["CON-beta"]
+    assert "not resolvable" in entry.reasons[0]
+
+
+def test_a_language_with_no_grammar_falls_back_to_the_file(symbols):
+    symbols.write("src/pkg/thing.rb", "def alpha\n  1\nend\n")
+    text = (symbols.root / "docs/system/domain.md").read_text(encoding="utf-8")
+    symbols.write("docs/system/domain.md",
+                  text.replace('["src/pkg/mod.py#beta"]', '["src/pkg/thing.rb#alpha"]'))
+    symbols.commit("a claim on a language with no grammar installed")
+    symbols.write("src/pkg/thing.rb", "def alpha\n  2\nend\n")
+
+    entry = touched_of(symbols).touched["CON-beta"]
+    assert "not resolvable" in entry.reasons[0]
+
+
+def test_a_new_file_touches_every_claim_anchored_into_it(symbols):
+    """An added file has no hunks to intersect, and the whole thing is new."""
+    symbols.write("src/pkg/fresh.py", "def alpha():\n    return 1\n")
+    text = (symbols.root / "docs/system/domain.md").read_text(encoding="utf-8")
+    symbols.write("docs/system/domain.md",
+                  text.replace('["src/pkg/mod.py#beta"]', '["src/pkg/fresh.py#alpha"]'))
+    symbols.commit("a claim about a file that does not exist yet")
+    symbols.write("src/pkg/fresh.py", "def alpha():\n    return 1\n")
+
+    assert "CON-beta" in touched_of(symbols).touched

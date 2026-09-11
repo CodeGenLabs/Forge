@@ -861,8 +861,8 @@ def _cmd_impact(args: argparse.Namespace) -> int:
     # import graph is worth reading and is not an obligation; on a codebase
     # with cycles, making it one means every change touches every claim.
     if computed.nearby:
-        print(f"\nNearby          {len(computed.nearby)} reached only through the "
-              f"import graph - worth reading, no heading owed")
+        print(f"\nNearby          {len(computed.nearby)} the diff came close to "
+              f"but did not reach - worth reading, no heading owed")
         for identifier in sorted(computed.nearby):
             entry = computed.nearby[identifier]
             print(f"  {identifier:{width}} {entry.reasons[0]}")

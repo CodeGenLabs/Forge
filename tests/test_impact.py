@@ -180,7 +180,9 @@ def test_an_anchor_in_the_diff_touches_its_claim(worked):
                                            "max(0, captured_minor - settled_minor)"))
     result = computed(worked)
     assert sorted(result.touched) == ["CMP-payments", "INV-refund-cap"]
-    assert "anchor src/pay.py" in result.touched["INV-refund-cap"].reasons
+    # The reason names the symbol, not just the file: the anchor is
+    # `src/pay.py#refundable` and the diff edited that function's body.
+    assert "anchor src/pay.py#refundable" in result.touched["INV-refund-cap"].reasons
 
 
 def test_a_component_anchor_is_read_as_a_glob(worked):
@@ -236,10 +238,23 @@ def test_candidates_and_retired_claims_are_not_taxed(worked):
 # ---------------------------------------------------------------------------
 
 def test_no_impact_file_with_a_non_empty_touch_set_blocks(worked):
-    worked.write("src/pay.py", PAY + "\n\ndef void():\n    return None\n")
+    # Edits `refundable` itself, so the invariant anchored to that symbol is
+    # touched alongside the component whose glob covers the file.
+    worked.write("src/pay.py", PAY.replace("captured_minor - settled_minor",
+                                           "max(0, captured_minor - settled_minor)"))
     found = issues(worked)
     assert codes(found) == ["trace.claim_touch_complete"]
     assert "CMP-payments, INV-refund-cap" in found[0].message
+
+
+def test_appending_an_unrelated_function_does_not_touch_the_symbol_claim(worked):
+    """`INV-refund-cap` anchors `src/pay.py#refundable`. Adding a new function
+    beside it edits the file and not the thing the claim describes, so the
+    component is touched and the invariant is only nearby."""
+    worked.write("src/pay.py", PAY + "\n\ndef void():\n    return None\n")
+    result = computed(worked)
+    assert set(result.touched) == {"CMP-payments"}
+    assert set(result.nearby) == {"INV-refund-cap"}
 
 
 def test_no_impact_file_with_an_empty_touch_set_is_fine(worked):

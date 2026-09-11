@@ -114,19 +114,44 @@ def label_for_path(path: str) -> str:
     return "other"
 
 
+def is_generated(path: str) -> bool:
+    """Files the harness itself writes.
+
+    Kept apart from `is_ignored` because it is excluded from *both* halves of
+    the census - the raw tracked count as well as the described set. A file the
+    harness produces moves whichever number counts it, so committing it makes
+    the tier stale, which rewrites it, which is another commit. The derived
+    tier has been excluded on this ground since M2; `verification.json` was
+    found the long way, when `derived_fresh` failed inside the very report that
+    had just written the file.
+    """
+    return (path.startswith(f"{DERIVED_DIR}/")
+            or (path.startswith("changes/") and path.endswith("/verification.json")))
+
+
 def is_ignored(path: str, config: Config | None = None) -> bool:
     """Paths the derived tier does not describe.
 
-    Three reasons a path is skipped: it is vendored or built, it belongs to the
-    tier itself, or the project excluded it.
+    Four reasons a path is skipped: it is vendored or built, it belongs to the
+    tier itself, the harness generated it, or the project excluded it.
 
     The tier excludes *itself* because counting its own JSON is circular - the
     inventory would describe the describer. The project exclusions exist for
     repositories whose files contain IDs that are data rather than declarations;
     this repository is the extreme case, since its test fixtures are made of
     exactly the strings the scanner looks for.
+
+    `verification.json` is here for the same circularity, found the long way.
+    `forge verify` writes it; it is tracked JSON, so its line count moved the
+    census; so committing it made the inventory stale; so `derived_fresh`
+    failed - **in the report that had just written the file**. Reaching a
+    passing verdict took verify, sync, commit, verify again, and nothing said
+    so. A census that counts what the harness produces is not stable under the
+    harness running, which is `PIT-derived-self-reference` wearing a different
+    hat. The change's authored artifacts - proposal, spec, impact, design,
+    tasks - are somebody's writing and still count.
     """
-    if path.startswith(f"{DERIVED_DIR}/"):
+    if is_generated(path):
         return True
     segments = path.split("/")
     if any(segment in _IGNORED_SEGMENTS for segment in segments):
@@ -341,8 +366,7 @@ def build_inventory(repo: Path) -> dict:
     about the describer.
     """
     config = load_config(repo)
-    tracked = [p for p in gitio.list_files_at(repo, "HEAD")
-               if not p.startswith(f"{DERIVED_DIR}/")]
+    tracked = [p for p in gitio.list_files_at(repo, "HEAD") if not is_generated(p)]
     interesting = [p for p in tracked if not is_ignored(p, config)]
 
     by_language: dict[str, dict] = {}

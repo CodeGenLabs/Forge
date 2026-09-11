@@ -25,6 +25,12 @@ derive:
 # verification condition is better than one proven by a command
 # nobody chose.
 commands:
+  # `none` says this project has no such step, which is a different answer
+  # from saying nothing - that would mean nobody has declared one yet.
+  # A pure-Python library builds by being installed and has no compile
+  # step; there is no typechecker configured here either.
+  build: none
+  typecheck: none
   # This suite takes longer than the kernel's 900s default, so `tests`
   # reported `unavailable` on every run - correctly, but uselessly.
   timeout: 2400

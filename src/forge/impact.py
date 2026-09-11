@@ -33,6 +33,7 @@ from pathlib import Path
 
 from . import derive, gitio, store
 from .anchor import AnchorError, parse_anchor
+from .fingerprint import find_symbol
 from .change import Change
 from .config import load_config
 from .store import Claim
@@ -244,9 +245,10 @@ def compute_impact(repo: Path, item: Change, *, base: str | None = None) -> Impa
 
         for raw in claim.anchors:
             try:
-                path = parse_anchor(raw).path
+                parsed = parse_anchor(raw)
             except AnchorError:
                 continue
+            path = parsed.path
             if _is_component_glob(claim, path):
                 hits = [f for f in diff if _glob_matches(f, path)]
                 if hits:
@@ -255,7 +257,14 @@ def compute_impact(repo: Path, item: Change, *, base: str | None = None) -> Impa
                 elif any(_glob_matches(f, path) for f in reverse):
                     nearby(claim, f"component boundary {path} is imported by the diff")
             elif path in diff:
-                note(claim, f"anchor {path}")
+                if path not in edited_ranges:
+                    edited_ranges[path] = gitio.changed_line_ranges(
+                        repo, resolved_base, path)
+                reason = _symbol_hit(repo, parsed, edited_ranges[path])
+                if reason and reason.startswith(_NEAR):
+                    nearby(claim, reason[len(_NEAR):])
+                elif reason:
+                    note(claim, reason)
             elif any(f == path or f.startswith(f"{path}/") for f in diff):
                 note(claim, f"anchor directory {path}")
             elif path in reverse:
@@ -292,6 +301,54 @@ def compute_impact(repo: Path, item: Change, *, base: str | None = None) -> Impa
         # outranks a suggestion.
         nearby={k: v for k, v in near.items() if k not in touched},
     )
+
+
+#: Prefix marking a `_symbol_hit` result as worth reading rather than owed a
+#: heading. A sentinel rather than a second return value because every caller
+#: has to decide which bucket it goes in, and an ignorable flag is how a claim
+#: ends up silently in the wrong one.
+_NEAR = "NEARBY::"
+
+
+def _symbol_hit(repo: Path, parsed, ranges: list[tuple[int, int]]) -> str | None:
+    """Why this anchor counts as touched, or None if the diff missed its symbol.
+
+    A file-level anchor is touched whenever its file is. A *symbol* anchor
+    should not be: measured on `requests`, a one-method change put five claims
+    in the touch set because all five anchor symbols in `models.py`, and four
+    of those symbols the diff never opened.
+
+    Every way of not knowing falls back to the file, and that direction is
+    deliberate. No grammar installed, a declaration form the table does not
+    cover, a symbol that has been renamed away, a file that is gone from the
+    working tree - in each case the honest answer is "this might be about the
+    part that changed", and over-reporting costs a sentence while
+    under-reporting costs a claim nobody re-read.
+    """
+    if not parsed.symbol:
+        return f"anchor {parsed.path}"
+    if not ranges:
+        # An added file has no hunks to intersect; the whole thing is new.
+        return f"anchor {parsed.path}"
+
+    target = repo / parsed.path
+    try:
+        source = target.read_bytes()
+    except OSError:
+        return f"anchor {parsed.path} (unreadable at head, compared whole file)"
+
+    located = find_symbol(source, parsed.path, parsed.symbol)
+    if located is None or not located.start_line:
+        return (f"anchor {parsed.path}#{parsed.symbol} "
+                f"(symbol not resolvable, compared whole file)")
+    if any(start <= located.end_line and end >= located.start_line
+           for start, end in ranges):
+        return f"anchor {parsed.path}#{parsed.symbol}"
+    # Not nothing. The diff opened the file this claim points into and changed
+    # a different part of it, which is worth a reader's eye and is not worth a
+    # mandatory sentence - the same line the import graph sits on.
+    return _NEAR + (f"anchor {parsed.path}#{parsed.symbol} is in a file the diff "
+                    f"changed elsewhere")
 
 
 def _glob_matches(path: str, pattern: str) -> bool:

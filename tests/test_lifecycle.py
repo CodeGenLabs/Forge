@@ -351,7 +351,14 @@ def test_a_failing_command_fails_the_verdict_and_keeps_its_output(project):
 
 
 def test_an_unaccounted_claim_fails_verification(project):
-    project.write("src/pay.py", PAY + "\n\ndef void():\n    return None\n")
+    # Edits `refundable`, which `INV-refund-cap` anchors - appending an
+    # unrelated function beside it would leave the invariant merely nearby, and
+    # nearby owes no account. This fixture writes no impact.md, so the claim is
+    # touched and unaccounted, which is the thing under test.
+    edited = PAY.replace("return captured - settled",
+                         "return max(0, captured - settled)")
+    assert edited != PAY, "the fixture body moved; this test edits nothing"
+    project.write("src/pay.py", edited)
     report = verify.verify(project.root, item(project))
     assert report["gates"]["claim_touch"]["status"] == "fail"
     assert "INV-refund-cap" in report["gates"]["claim_touch"]["unaccounted"]

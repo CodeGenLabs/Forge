@@ -267,6 +267,11 @@ class SymbolNode:
     full_digest: str
     signature_digest: str
     node_type: str
+    #: 1-based, inclusive. Carried so a caller can ask whether a diff's hunks
+    #: touched this declaration rather than merely its file - the difference
+    #: between "a claim about this method" and "a claim about this module".
+    start_line: int = 0
+    end_line: int = 0
 
 
 def _name_of(node) -> str | None:
@@ -330,7 +335,10 @@ def find_symbol(source: bytes, path: str, symbol: str) -> SymbolNode | None:
     body = node.child_by_field_name("body")
     full = _digest(_tokens(node))
     signature = _digest(_tokens(node, exclude=body)) if body is not None else full
-    return SymbolNode(full_digest=full, signature_digest=signature, node_type=node.type)
+    return SymbolNode(full_digest=full, signature_digest=signature,
+                      node_type=node.type,
+                      start_line=node.start_point[0] + 1,
+                      end_line=node.end_point[0] + 1)
 
 
 def symbol_appears_textually(source: bytes, symbol: str) -> bool:

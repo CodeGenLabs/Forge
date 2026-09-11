@@ -287,6 +287,16 @@ repository survives contact) → R8 (the other agents) → everything else, meas
 > true, the code was right, and the anchor was simply too coarse - which will be the
 > commonest signal there is. `forge drift confirm` is the answer and is deliberately not
 > a fifth verdict; the argument is in [SYSTEM_KNOWLEDGE.md](../SYSTEM_KNOWLEDGE.md) §6.
+>
+> **Symbol-level narrowing is done too** (2026-09-11), with G19 and G20. A symbol anchor
+> is touched when the diff's hunks intersect that symbol's own line span; a file anchor
+> still answers for its whole file; every way of not knowing falls back to the file.
+> Measured a third time on the same `requests` change: **10 → 5 → 1**, and the nine that
+> left the obligation are listed under `Nearby` with the reason each is there.
+>
+> This loosened an obligation, and the thing to watch is a claim that needed re-reading
+> and now sits quietly under `Nearby`. That list exists so the failure is visible; whether
+> anybody reads it is unmeasured.
 > - **G14 - the claim-touch set is matched against the blast radius, not the diff.** A
 >   one-line change to `requests` touched 10 claims out of 10. This is R1's failure
 >   through a second door, and it needs the same narrowing.

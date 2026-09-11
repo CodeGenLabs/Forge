@@ -308,3 +308,82 @@ def test_the_fold_refuses_a_delta_it_cannot_place(opened, capsys):
     assert code == 1
     assert "cannot tell which capability" in err
     assert not (opened.root / "docs/system/specs/spec.md").exists()
+
+
+# ---------------------------------------------------------------------------
+# "No such step" is an answer; silence is a debt
+# ---------------------------------------------------------------------------
+
+def test_a_step_declared_none_is_skipped_not_unproven(opened):
+    """A library with no build step had no way to say so, so it could never
+    reach a passing verdict - and the workaround is a fake command, which
+    reports green for a step nobody ran."""
+    (opened.root / ".forge/config.yaml").write_text(
+        "commands:\n  build: none\n  typecheck: none\n  test: git status\n",
+        encoding="utf-8", newline="\n")
+    report = verify.verify(opened.root, item(opened))
+    assert report["gates"]["build"]["status"] == "skipped"
+    assert "build" not in report["unproven"]
+    assert report["skipped"] == ["build", "typecheck"]
+
+
+def test_silence_is_still_unproven(opened):
+    """The distinction only works if the other half keeps costing something."""
+    (opened.root / ".forge/config.yaml").write_text(
+        "commands:\n  test: git status\n", encoding="utf-8", newline="\n")
+    report = verify.verify(opened.root, item(opened))
+    assert report["gates"]["build"]["status"] == "unavailable"
+    assert "build" in report["unproven"]
+
+
+def test_the_unavailable_message_offers_the_none_spelling(opened):
+    (opened.root / ".forge/config.yaml").write_text(
+        "commands:\n  test: git status\n", encoding="utf-8", newline="\n")
+    report = verify.verify(opened.root, item(opened))
+    assert "none" in report["gates"]["build"]["fix"]
+
+
+def test_doctor_does_not_try_to_resolve_none(opened, capsys):
+    (opened.root / ".forge/config.yaml").write_text(
+        "commands:\n  build: none\n  test: git status\n",
+        encoding="utf-8", newline="\n")
+    assert main(["doctor", "--repo", str(opened.root)]) == 0
+    assert "none" not in capsys.readouterr().out.split("commands")[-1]
+
+
+# ---------------------------------------------------------------------------
+# The census must not count what the harness produces
+# ---------------------------------------------------------------------------
+
+def test_verification_json_is_not_described_by_the_derived_tier():
+    """`forge verify` writes it, it is tracked JSON, so its line count moved
+    the census - which made the inventory stale, which failed `derived_fresh`
+    in the report that had just written the file."""
+    from forge import derive
+
+    assert derive.is_ignored("changes/0001-x/verification.json")
+    # The authored artifacts beside it are somebody's writing and still count.
+    assert not derive.is_ignored("changes/0001-x/proposal.md")
+    assert not derive.is_ignored("changes/0001-x/spec/payments/spec.md")
+
+
+def test_a_verification_report_does_not_dirty_the_derived_tier(opened):
+    """The end-to-end shape of it: write a report, commit, and the tier that
+    describes the repository must not have moved."""
+    from forge import derive
+
+    (opened.root / ".forge/config.yaml").write_text(
+        "commands:\n  build: none\n  typecheck: none\n  lint: none\n"
+        "  test: git status\n", encoding="utf-8", newline="\n")
+    # Committed before the tier is rebuilt: the census reads HEAD, so syncing
+    # against a config that is not committed yet describes the wrong tree.
+    opened.commit("declare the commands")
+    derive.derive_all(opened.root)
+    opened.commit("sync derived")
+
+    report = verify.verify(opened.root, item(opened))
+    verify.write_verification(opened.root, item(opened), report)
+    opened.commit("a verification report")
+
+    assert [n for n, changed in derive.derive_all(opened.root, dry_run=True).items()
+            if changed] == []

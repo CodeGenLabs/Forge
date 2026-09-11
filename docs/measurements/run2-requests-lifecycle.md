@@ -202,3 +202,38 @@ here: symbol resolution fails on coarse files and on languages with no grammar
 installed, and deciding what a *failed* resolution should mean - fall back to the file,
 or report nothing - is a decision that deserves its own change rather than a footnote
 in this one.
+
+
+---
+
+## 8. Postscript 2: the narrowing finished, 10 → 5 → 1
+
+The symbol-level narrowing §7 deferred was built the same day, once the drift ledger
+made the cost concrete: the very first entry that ledger ever opened existed *only*
+because an anchor was file-level. One root cause, two symptoms.
+
+A symbol anchor is now touched when the diff's hunks intersect that symbol's own line
+span, found with the `find_symbol` the drift engine has used since M1. A **file** anchor
+is unchanged — a claim that points at a whole file is making a claim about the whole
+file. Every way of not knowing falls back to the file: no grammar, a declaration form
+the table does not cover, a symbol renamed away, a file gone from the working tree.
+
+Re-run a third time against the identical change:
+
+| | run 2 | after G14 | after the symbol narrowing |
+|---|---|---|---|
+| Claims **touched** | 10 | 5 | **1** |
+| Claims **nearby** | — | 5 | 9 |
+
+The one is `CON-content-text-json`, the only claim in the store that describes
+`Response.content`. The nine are listed under `Nearby` with the reason each is there —
+five because their file merely imports the diff, four because the diff opened their file
+and changed a different part of it.
+
+**What this cost, and what to watch.** Two tests in the existing suite had encoded the
+file-level rule: both appended an unrelated function to `src/pay.py` and expected the
+invariant anchored to `src/pay.py#refundable` to be taxed for it. Under the new rule it
+is not, and that is the intended answer — but it is worth being plain that this run
+loosened an obligation, and the thing to watch for is a claim that needed re-reading and
+now sits quietly under `Nearby`. The `Nearby` list exists so that failure is visible
+rather than silent; whether anyone actually reads it is not something this run measured.

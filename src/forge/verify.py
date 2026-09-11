@@ -92,9 +92,24 @@ def _commands(repo: Path) -> dict[str, str]:
 _NOT_A_COMMAND = frozenset({"timeout"})
 
 
+#: What a project writes to say a step does not exist here, as opposed to
+#: saying nothing, which means it has not got round to declaring one.
+_NONE_SPELLINGS = frozenset({"none", "n/a", "not applicable", "-"})
+
+
+def _is_none(line: str | None) -> bool:
+    return bool(line) and line.strip().lower() in _NONE_SPELLINGS
+
+
 def commands(repo: Path) -> dict[str, str]:
-    """The declared commands, without the runner's own settings."""
-    return {k: v for k, v in _commands(repo).items() if k not in _NOT_A_COMMAND}
+    """The declared commands, without the runner's own settings.
+
+    A step declared `none` is not a command and is not offered to `forge
+    doctor` for resolution - asking whether `none` is on PATH would report the
+    honest answer as a problem.
+    """
+    return {k: v for k, v in _commands(repo).items()
+            if k not in _NOT_A_COMMAND and not _is_none(v)}
 
 
 def resolve_command(repo: Path, line: str) -> str | None:
@@ -212,13 +227,25 @@ def verify(repo: Path, item: Change, *, waived: tuple[str, ...] = (),
 
     # 1. build / typecheck / lint / tests
     for name in ("build", "typecheck", "lint", "tests"):
-        line = commands.get("test" if name == "tests" else name)
-        if not line:
+        key = "test" if name == "tests" else name
+        line = commands.get(key)
+        if _is_none(line):
+            # "This project has no such step" and "this project has not told us
+            # its command" are different answers, and only the second is a debt.
+            # Without the distinction a library with no build step can never
+            # reach a passing verdict, so it either writes a fake command or
+            # stops looking at the verdict - and a fake command is the worse
+            # outcome, because it reports green for a step nobody ran.
+            gates[name] = {
+                "status": "skipped",
+                "reason": f"`commands.{key}: none` - this project has no {name} step",
+            }
+        elif not line:
             gates[name] = _unavailable(
-                f"no `commands.{'test' if name == 'tests' else name}` in "
-                f".forge/config.yaml",
-                "declare it, or accept that this condition is unproven - guessing the "
-                "command is how a report goes green for a suite that never ran",
+                f"no `commands.{key}` in .forge/config.yaml",
+                f"declare it, write `{key}: none` if this project genuinely has no "
+                f"{name} step, or accept that this condition is unproven - guessing "
+                f"the command is how a report goes green for a suite that never ran",
             )
         elif not run_commands:
             gates[name] = _unavailable("commands were not run (--no-run)",
@@ -316,6 +343,9 @@ def verify(repo: Path, item: Change, *, waived: tuple[str, ...] = (),
     hard_fail = [n for n, g in gates.items() if g["status"] == "fail"]
     unproven = [n for n, g in gates.items() if g["status"] == "unavailable"]
     pending = [n for n, g in gates.items() if g["status"] == "pending"]
+    # Listed, not hidden. A step somebody declared absent is a claim about the
+    # project, and a reader of the report is entitled to disagree with it.
+    skipped = [n for n, g in gates.items() if g["status"] == "skipped"]
     verdict = "fail" if hard_fail else "unproven" if unproven else "pass"
 
     return {
@@ -327,6 +357,7 @@ def verify(repo: Path, item: Change, *, waived: tuple[str, ...] = (),
         "failing": sorted(hard_fail),
         "unproven": sorted(unproven),
         "pending": sorted(pending),
+        "skipped": sorted(skipped),
         "verdict": verdict,
     }
 
