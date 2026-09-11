@@ -68,6 +68,7 @@
         "src/forge/__init__.py",
         "src/forge/config.py",
         "src/forge/schema.py",
+        "src/forge/skills.py",
         "src/forge/store.py"
       ],
       "src/forge/trace.py": [
@@ -177,6 +178,9 @@
         "src/forge/instructions.py",
         "src/forge/scaffold.py"
       ],
+      "src/forge/skills.py": [
+        "src/forge/scaffold.py"
+      ],
       "src/forge/spec.py": [
         "src/forge/gates.py",
         "src/forge/trace.py",
@@ -205,7 +209,7 @@
     "tool": "forge",
     "unresolved_relative_imports": 0
   },
-  "generated_from_commit": "7d7549889ddf99b4662c45265adfb283ceac5ba0",
+  "generated_from_commit": "6071e0ed45291ca56d5d31fe8f0e356147ea898c",
   "generator": "forge sync derived",
   "tool": "forge"
 }
