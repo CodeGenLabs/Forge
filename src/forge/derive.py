@@ -55,6 +55,10 @@ _IGNORED_SEGMENTS = frozenset({
     "third_party", ".git", "site-packages", "coverage", ".next", "target",
 })
 
+# Build metadata that some projects commit. Matched by suffix rather than by
+# exact name because the directory carries the distribution's name.
+_IGNORED_SUFFIXES = (".egg-info", ".dist-info")
+
 _TEST_PATTERNS = (
     re.compile(r"(^|/)tests?/"),
     re.compile(r"(^|/)test_[^/]+\.py$"),
@@ -124,7 +128,10 @@ def is_ignored(path: str, config: Config | None = None) -> bool:
     """
     if path.startswith(f"{DERIVED_DIR}/"):
         return True
-    if any(segment in _IGNORED_SEGMENTS for segment in path.split("/")):
+    segments = path.split("/")
+    if any(segment in _IGNORED_SEGMENTS for segment in segments):
+        return True
+    if any(segment.endswith(_IGNORED_SUFFIXES) for segment in segments[:-1]):
         return True
     return bool(config and config.excludes(path))
 

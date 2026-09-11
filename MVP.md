@@ -355,6 +355,36 @@ runs end-to-end through the skills on a fixture repository.
 
 ### M5 — Bootstrap (~2 days)
 
+> **Status: done, 2026-09-11.** Run on this repository and on `requests` 2.34.2, with the numbers
+> recorded in [docs/measurements/M5-bootstrap.md](docs/measurements/M5-bootstrap.md): 8 candidates
+> and 6 ratified here, 5 candidates and 4 ratified there, both well under the cap of 40.
+>
+> **Three of the acceptance criterion's four numbers are recorded and the fourth is not.** "Which
+> kinds were actually useful in the first subsequent `investigate`" needs an agent session and a
+> judgement about which claims it consulted; putting a guess in a document headed "measured" would
+> be the exact failure this project objects to. The measurement says so in its own section rather
+> than estimating.
+>
+> Four deviations, each with its reason:
+>
+> 1. **Pass 3 is a review *sheet*, not a prompt loop.** `forge bootstrap review` writes
+>    `docs/system/candidates/REVIEW.md` - ordered, batched, every verdict prefilled `reject` - and
+>    `seal` applies it. The conversation belongs to the `bootstrap` skill; the ordering, the
+>    batching and the applying are deterministic and reviewable in git, which a dialogue is not.
+> 2. **Candidate rules are stricter than store rules, deliberately.** A ratified `concept` may be
+>    unanchored; a *proposed* one may not. Once a human has agreed a concept is real it needs no
+>    anchor to be trustworthy - a guess with nothing to point at can never be confirmed at all.
+> 3. **Seal blocks only on candidates marked for ratification.** A guess left as a guess does not
+>    have to be admissible; it stays readable and not citable.
+> 4. **An ADR citation counts as an inbound reference for the orphan check.** Otherwise a freshly
+>    sealed store warns that every one of its claims is an orphan - true, useless, and arriving at
+>    the moment someone decides whether the tool is worth its noise.
+>
+> Four defects the runs surfaced, all fixed and tested: the orphan warning above; `store.
+> stack_fact_smell` reading "section 2.3" as a pinned dependency; committed `.egg-info` counted as
+> a module; and wrapped bullets truncated in the `## Uncertain` section, which is the one place a
+> scan says what it could not determine.
+
 **Build.**
 
 - `forge bootstrap derive` — pass 1, pure derivation, no claims. This is most of the brief's bootstrap

@@ -87,11 +87,17 @@ def test_the_shipped_skills_obey_every_rule():
     assert errors == [], "\n".join(f"{i.path}: {i.message}" for i in errors)
 
 
-def test_the_mvp_ships_six_skills():
-    assert sorted(s.name for s in skills.load_skills(REPO)) == [
-        "curate-knowledge", "forge", "implement", "investigate", "plan-tasks",
-        "specify",
-    ]
+SHIPPED = [
+    "bootstrap", "curate-knowledge", "forge", "implement", "investigate",
+    "plan-tasks", "specify",
+]
+
+
+def test_the_mvp_ships_the_seven_skills():
+    """Six phase skills plus `bootstrap`. MVP.md M4 lists six; `bootstrap` is
+    M5's pass 2, which that milestone specifies as a skill rather than kernel
+    code."""
+    assert sorted(s.name for s in skills.load_skills(REPO)) == SHIPPED
 
 
 def test_every_shipped_skill_is_pressure_tested():
@@ -497,10 +503,7 @@ def test_a_project_with_no_skills_gets_the_packaged_set(repo):
     the procedures. They are the only part of the harness a model reads."""
     repo.write("README.md", "# x\n")
     repo.commit("no skills")
-    assert [s.name for s in skills.load_skills(repo.root)] == [
-        "curate-knowledge", "forge", "implement", "investigate", "plan-tasks",
-        "specify",
-    ]
+    assert [s.name for s in skills.load_skills(repo.root)] == SHIPPED
 
 
 def test_a_project_copy_wins_whole(project):

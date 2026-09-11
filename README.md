@@ -4,12 +4,10 @@ A personal software-engineering harness that makes an AI coding agent behave lik
 engineer: investigate before modifying, specify before implementing, and — the part nobody has solved —
 keep accurate, verifiable knowledge of an existing system.
 
-**Status: design complete; implementation through milestone M4 of six.** What exists today is the
-anchor engine — the deterministic staleness detector the whole design rests on — the measurement that
-gates the rest of the build, the derived tier and traceability index, the claim store with all eighteen
-of its checks, the change lifecycle (artifact DAG, claim-touch rule, spec delta grammar and fold, ten
-declarative gates, `forge verify`), and the six skills with their pressure-test scenarios. No bootstrap
-yet.
+**Status: the MVP is built — all six milestones.** The anchor engine and its measurement, the derived
+tier and traceability index, the claim store with all eighteen checks, the change lifecycle (artifact
+DAG, claim-touch rule, spec delta grammar and fold, ten declarative gates, `forge verify`), seven skills
+with pressure-test scenarios, and a three-pass bootstrap measured on two repositories.
 
 ```bash
 pip install -e ".[grammars,dev]"
@@ -19,7 +17,16 @@ forge claim new invariant             # a template; --append writes it to the ri
 forge sync derived
 forge status
 forge check                           # --scope store|derived|trace|change|skills, --json
-forge skill list                      # the six procedures; `forge init` copies them out
+forge skill list                      # the seven procedures; `forge init` copies them out
+```
+
+An existing repository, from nothing:
+
+```bash
+forge init
+forge bootstrap derive                # facts, and what a scan cannot learn
+forge bootstrap review                # a sheet; every verdict starts at `reject`
+forge bootstrap seal                  # ratified claims + the baseline ADR
 ```
 
 A change, start to finish:
@@ -109,8 +116,8 @@ budgets, BMAD's admission criterion and deletion grounds.
 | **M2 — derived tier & trace index** | **done** | `derive`, `store`, `trace`; `forge sync derived`, `forge trace`, `forge status`, `forge check` |
 | **M0 — claim store & validation** | **done** | `validate`, `scaffold`; all 18 store checks, `forge init`, `forge claim new/show`, `forge check --scope` |
 | **M3 — change DAG, gates, one workflow** | **done** | `schema`, `change`, `impact`, `spec`, `gates`, `verify`, `instructions`; `deps.json`; the claim-touch rule; `forge change`, `forge impact`, `forge gate`, `forge verify`, `forge archive` |
-| **M4 — skills** | **done** | `skills`; six SKILL.md files as package data, the five rules enforced by `forge check --scope skills`, 20 scenarios, `tools/pressure_test.py` |
-| M5 — bootstrap | not started | |
+| **M4 — skills** | **done** | `skills`; seven SKILL.md files as package data, the five rules enforced by `forge check --scope skills`, 24 scenarios, `tools/pressure_test.py` |
+| **M5 — bootstrap** | **done** | `bootstrap`; three passes, candidate admissibility rules, the review sheet, the baseline ADR; measured in [docs/measurements/M5-bootstrap.md](docs/measurements/M5-bootstrap.md) |
 
 M1 came first because it carried the stop condition: if anchors were too noisy on real history, the
 claim schema in M0 would have had to change (coarser anchors, or component-level only). Measuring

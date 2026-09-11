@@ -19,3 +19,10 @@ derive:
   exclude_id_scan:
     - "tests/*"
     - "tools/*"
+
+# Detected by `forge bootstrap seal` from this project's manifests.
+# Nothing here was guessed from a file merely existing: an unproven
+# verification condition is better than one proven by a command
+# nobody chose.
+commands:
+  test: pytest

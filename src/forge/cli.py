@@ -19,8 +19,8 @@ import shutil as _shutil
 import sys
 from pathlib import Path
 
-from . import (change, derive, gates, gitio, impact, instructions, scaffold, schema,
-               skills, spec, store, trace, validate, verify)
+from . import (bootstrap, change, derive, gates, gitio, impact, instructions,
+               scaffold, schema, skills, spec, store, trace, validate, verify)
 from .anchor import AnchorError, Status, classify, parse_anchor
 from .fingerprint import available_languages, fingerprint_source
 from .validate import Issue
@@ -232,7 +232,7 @@ def _cmd_status(args: argparse.Namespace) -> int:
     return _EXIT_OK
 
 
-SCOPES = ("store", "derived", "trace", "change", "skills")
+SCOPES = ("store", "derived", "trace", "change", "skills", "candidates")
 
 
 def _check_change(repo: Path, reference: str | None) -> list[Issue]:
@@ -350,6 +350,8 @@ def _cmd_check(args: argparse.Namespace) -> int:
     if "skills" in scopes:
         issues.extend(skills.check_skills(repo, Issue, known_subcommands()))
         issues.extend(skills.check_scenarios(repo, Issue))
+    if "candidates" in scopes:
+        issues.extend(bootstrap.check_candidates(repo, Issue))
 
     errors = [i for i in issues if i.level == "ERROR"]
     warnings = [i for i in issues if i.level != "ERROR"]
@@ -376,6 +378,7 @@ def _cmd_check(args: argparse.Namespace) -> int:
         "trace": "trace integrity",
         "change": "the claim-touch account",
         "skills": "the skill rules",
+        "candidates": "candidate admissibility",
     }[scope] for scope in SCOPES if scope in scopes)
     pending = "the gates, which are point-in-time: `forge gate <point>`"
     if issues:
@@ -988,6 +991,124 @@ def _cmd_skill_show(args: argparse.Namespace) -> int:
     return _EXIT_OK
 
 
+def _cmd_bootstrap_derive(args: argparse.Namespace) -> int:
+    repo = args.repo.resolve()
+    if not gitio.is_repo(repo):
+        print(f"forge: {repo} is not a git repository", file=sys.stderr)
+        return _EXIT_USAGE
+
+    derive.derive_all(repo)
+    summary = bootstrap.summarise(repo)
+    if args.json:
+        print(json.dumps(summary.to_dict(), indent=2, sort_keys=True))
+        return _EXIT_OK
+
+    print(f"repository     {repo.name} @ {summary.head[:10]}")
+    print(f"files          {summary.files_considered} described "
+          f"({summary.files_tracked} tracked)")
+    for name, data in sorted(summary.by_language.items(),
+                             key=lambda kv: -kv[1]["lines"])[:6]:
+        print(f"  {name:14} {data['files']:4} files  {data['lines']:6} lines")
+    print(f"entry points   {', '.join(summary.entry_points) or 'none detected'}")
+    print(f"modules        {', '.join(summary.modules) or 'none detected'}")
+    print(f"imports        {summary.import_edges} edges, "
+          f"{len(summary.import_cycles)} cycle(s)")
+    print(f"tests          {summary.tests_declared} declared in "
+          f"{summary.test_files} files")
+    for name, data in sorted(summary.stack.items()):
+        print(f"stack          {name}: {data}")
+    if summary.commands:
+        print("commands       " + ", ".join(f"{k}: {v}"
+                                            for k, v in summary.commands.items()))
+
+    # The most useful thing a bootstrap can say is what it did not learn.
+    print("\nNot derivable, and deliberately not guessed:")
+    for item in summary.not_derivable:
+        print(f"  - {item}")
+    print("\nNothing above is a claim. Pass 2 proposes candidates (the `bootstrap` "
+          "skill),\nand `forge bootstrap review` walks them - rejecting by default.")
+    return _EXIT_OK
+
+
+def _cmd_bootstrap_review(args: argparse.Namespace) -> int:
+    repo = args.repo.resolve()
+    if not gitio.is_repo(repo):
+        print(f"forge: {repo} is not a git repository", file=sys.stderr)
+        return _EXIT_USAGE
+
+    target = repo / bootstrap.REVIEW_FILE
+    existing = target.read_text(encoding="utf-8") if target.is_file() else None
+    sheet = bootstrap.build_review(repo, cap=args.cap, existing=existing)
+    if sheet != existing:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(sheet, encoding="utf-8", newline="\n")
+
+    verdicts = bootstrap.read_review(sheet)
+    if args.json:
+        print(json.dumps({"sheet": bootstrap.REVIEW_FILE,
+                          "verdicts": [v.__dict__ for v in verdicts]}, indent=2))
+        return _EXIT_OK
+
+    print(f"{'wrote' if sheet != existing else 'unchanged'}  {bootstrap.REVIEW_FILE}")
+    if not verdicts:
+        print("\nNo candidates to review.")
+        return _EXIT_OK
+
+    counts: dict[str, int] = {}
+    for verdict in verdicts:
+        counts[verdict.verdict] = counts.get(verdict.verdict, 0) + 1
+    print("  " + ", ".join(f"{n} {v}" for v, n in sorted(counts.items())))
+
+    pending = [v for v in verdicts if v.verdict == "reject"][:bootstrap.BATCH_SIZE]
+    if pending:
+        print(f"\nNext batch of {len(pending)} - edit the verdict in place:")
+        for verdict in pending:
+            print(f"  {bootstrap.REVIEW_FILE}:{verdict.line}  {verdict.id}")
+    print("\nEvery verdict starts at `reject`, and that is the posture rather than "
+          "a placeholder.\nTwelve ratified claims plus a complete derived tier is a "
+          "good outcome.")
+    return _EXIT_OK
+
+
+def _cmd_bootstrap_seal(args: argparse.Namespace) -> int:
+    repo = args.repo.resolve()
+    if not gitio.is_repo(repo):
+        print(f"forge: {repo} is not a git repository", file=sys.stderr)
+        return _EXIT_USAGE
+
+    blocking = bootstrap.check_candidates(repo, Issue)
+    ratified_ids = {c.id for c in bootstrap.plan_seal(repo, cap=args.cap).ratified}
+    blocking = [i for i in blocking if i.claim in ratified_ids]
+    if blocking:
+        for issue in blocking:
+            print(f"{issue.level}  {issue.code}  {issue.path}:{issue.line}\n"
+                  f"       {issue.message}\n       fix: {issue.fix}")
+        print(f"\n{len(blocking)} problem(s) in candidates marked for ratification; "
+              f"nothing sealed.", file=sys.stderr)
+        return _EXIT_CHANGED
+
+    plan = bootstrap.seal(repo, cap=args.cap, dry_run=args.dry_run)
+    if args.json:
+        print(json.dumps(plan.to_dict(), indent=2))
+        return _EXIT_OK
+
+    verb = "would write" if args.dry_run else "wrote"
+    for relative in sorted(plan.writes):
+        print(f"{verb:12} {relative}")
+    print(f"\nratified {len(plan.ratified)}, rejected {len(plan.rejected)}, "
+          f"deferred {len(plan.deferred)}")
+    if plan.over_cap:
+        print(f"over the cap of {args.cap}, left as candidates: "
+              f"{', '.join(c.id for c in plan.over_cap)}")
+    for verdict in plan.unknown_verdicts:
+        print(f"unreadable verdict {verdict.verdict!r} for {verdict.id}, "
+              f"treated as reject")
+    if not args.dry_run:
+        print("\nNow: `forge sync derived`, then `forge check`. Unratified "
+              "candidates stay where they are -\nreadable, not citable.")
+    return _EXIT_OK
+
+
 def _cmd_doctor(args: argparse.Namespace) -> int:
     langs = available_languages()
     print(f"python           {sys.version.split()[0]}")
@@ -1230,6 +1351,47 @@ def build_parser() -> argparse.ArgumentParser:
     skl_show.add_argument("name")
     skl_show.add_argument("--repo", type=Path, default=Path.cwd())
     skl_show.set_defaults(func=_cmd_skill_show)
+
+    boot = sub.add_parser(
+        "bootstrap",
+        help="give an existing repository a store it can trust",
+        description="Three passes. Pass 1 derives and claims nothing; pass 2 is a "
+                    "skill that proposes candidates; pass 3 is a human ratifying, "
+                    "and the default is reject.",
+    )
+    boot_sub = boot.add_subparsers(dest="bootstrap_command", required=True)
+
+    boot_derive = boot_sub.add_parser(
+        "derive",
+        help="pass 1: what a scan can see, and what it cannot",
+        description="Deterministic and re-runnable. Nothing it prints is a claim.",
+    )
+    boot_derive.add_argument("--repo", type=Path, default=Path.cwd())
+    boot_derive.add_argument("--json", action="store_true")
+    boot_derive.set_defaults(func=_cmd_bootstrap_derive)
+
+    boot_review = boot_sub.add_parser(
+        "review",
+        help="pass 3: write and read the candidate review sheet",
+        description="Ordered highest-value kind first, batched, every verdict "
+                    "prefilled `reject`. Edits already recorded are preserved.",
+    )
+    boot_review.add_argument("--cap", type=int, default=bootstrap.DEFAULT_CAP)
+    boot_review.add_argument("--repo", type=Path, default=Path.cwd())
+    boot_review.add_argument("--json", action="store_true")
+    boot_review.set_defaults(func=_cmd_bootstrap_review)
+
+    boot_seal = boot_sub.add_parser(
+        "seal",
+        help="write the ratified claims, the overview and the baseline ADR",
+        description="Anchors are stamped at HEAD and `reviewed` set to today, "
+                    "because this is the moment a human confirmed them.",
+    )
+    boot_seal.add_argument("--cap", type=int, default=bootstrap.DEFAULT_CAP)
+    boot_seal.add_argument("--dry-run", action="store_true")
+    boot_seal.add_argument("--repo", type=Path, default=Path.cwd())
+    boot_seal.add_argument("--json", action="store_true")
+    boot_seal.set_defaults(func=_cmd_bootstrap_seal)
 
     doctor = sub.add_parser("doctor", help="report the toolchain the kernel found")
     doctor.set_defaults(func=_cmd_doctor)

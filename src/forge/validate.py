@@ -101,6 +101,14 @@ _GLOB_RE = re.compile(r"[\w./*-]*[*][\w./*-]*|`[^`\n]*/[^`\n]*`")
 _VERSION_NEAR_PACKAGE_RE = re.compile(
     r"\b([A-Za-z][\w.@/-]{1,40})\b[\s@:v=><~^]{0,4}\bv?\d+\.\d+(?:\.\d+)?\b"
 )
+# Words that precede a dotted number for reasons that have nothing to do with
+# packaging. Without this, every cross-reference to a document section reads
+# as a pinned dependency - and the claims most likely to cite a section are
+# the pitfalls, which are the ones worth keeping.
+_NOT_A_PACKAGE = frozenset({
+    "section", "sections", "chapter", "figure", "table", "step", "item",
+    "clause", "part", "appendix", "rule", "note", "page", "line", "version",
+})
 
 # The acknowledgement comments that silence each anti-noise warning. They live
 # in the claim's prose, so disagreeing with a heuristic is a line in the store
@@ -839,7 +847,8 @@ def _listing_smell(claim: store.Claim, prose: str) -> list[Issue]:
 
 
 def _stack_fact_smell(claim: store.Claim, prose: str) -> list[Issue]:
-    match = _VERSION_NEAR_PACKAGE_RE.search(prose)
+    match = next((m for m in _VERSION_NEAR_PACKAGE_RE.finditer(prose)
+                  if m.group(1).lower() not in _NOT_A_PACKAGE), None)
     if not match:
         return []
     return [_warning(
@@ -896,6 +905,13 @@ def _check_orphans(repo: Path, claims: list[store.Claim], config: Config) -> lis
     governed: set[str] = set()
     for claim in claims:
         governed.update(claim.governs)
+    # An ADR citing a claim is something consulting it, and the baseline ADR
+    # cites every claim a bootstrap ratified. Without this, a freshly sealed
+    # store warns that all of its claims are orphans - which is true, useless,
+    # and arrives at the exact moment someone is deciding whether the tool is
+    # worth the noise.
+    for decision in store.load_decisions(repo).values():
+        governed.update(decision["references"])
 
     from .trace import recent_change_citations  # local: trace imports nothing here
 

@@ -330,6 +330,9 @@ KERNEL_SIGNALS = frozenset({
     "trace.superseded_has_adr", "trace.requirement_task_coverage",
     "trace.requirement_discharged", "trace.dangling_reference",
     "spec.grammar", "spec.nonempty_or_skip",
+    # candidates
+    "candidate.no_anchor", "candidate.no_confidence",
+    "candidate.invented_rationale", "candidate.unproven_invariant",
     # derived and verification
     "derived.dirty", "derived.not_built", "derived.freshness",
     "verify.definition_of_done", "repo.clean",

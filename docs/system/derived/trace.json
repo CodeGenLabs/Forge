@@ -1,19 +1,273 @@
 {
   "$schema": "forge/derived/v1",
   "data": {
-    "ids": {},
+    "ids": {
+      "ADR-0001": {
+        "anchor_paths": [],
+        "anchors": [],
+        "back_references": [],
+        "candidate": false,
+        "changes": [],
+        "defined_in": "docs/system/decisions/ADR-0001-adopt-forge.md",
+        "evidence": [],
+        "governed_by": [],
+        "governs": [],
+        "id": "ADR-0001",
+        "justifies": [],
+        "kind": "decision",
+        "referenced_by_adr": [],
+        "references": [
+          "CON-anchor",
+          "CON-claim",
+          "CON-derived-tier",
+          "INV-derived-bytes-stable",
+          "INV-regeneration-is-a-no-op",
+          "PIT-derived-self-reference",
+          "PIT-markdown-bullet-is-not-a-diff",
+          "PIT-regex-across-newlines"
+        ],
+        "since": null,
+        "status": null,
+        "supersedes": null,
+        "tests": [],
+        "title": "ADR-0001 - Adopt an anchored claim store"
+      },
+      "CON-anchor": {
+        "anchor_paths": [
+          "src/forge/anchor.py"
+        ],
+        "anchors": [
+          "src/forge/anchor.py#parse_anchor@8e06e5ca51"
+        ],
+        "back_references": [],
+        "candidate": false,
+        "changes": [],
+        "defined_in": "docs/system/domain.md:17",
+        "evidence": [],
+        "governed_by": [],
+        "governs": [],
+        "id": "CON-anchor",
+        "justifies": [],
+        "kind": "concept",
+        "referenced_by_adr": [
+          "ADR-0001"
+        ],
+        "references": [],
+        "since": null,
+        "status": "asserted",
+        "supersedes": null,
+        "tests": [],
+        "title": "A pointer from a claim into the code, as path, symbol and SHA"
+      },
+      "CON-claim": {
+        "anchor_paths": [
+          "src/forge/store.py"
+        ],
+        "anchors": [
+          "src/forge/store.py#Claim@8e06e5ca51"
+        ],
+        "back_references": [],
+        "candidate": false,
+        "changes": [],
+        "defined_in": "docs/system/domain.md:3",
+        "evidence": [],
+        "governed_by": [],
+        "governs": [],
+        "id": "CON-claim",
+        "justifies": [],
+        "kind": "concept",
+        "referenced_by_adr": [
+          "ADR-0001"
+        ],
+        "references": [],
+        "since": null,
+        "status": "asserted",
+        "supersedes": null,
+        "tests": [],
+        "title": "A statement about the system, anchored to the code it describes"
+      },
+      "CON-derived-tier": {
+        "anchor_paths": [
+          "src/forge/derive.py"
+        ],
+        "anchors": [
+          "src/forge/derive.py"
+        ],
+        "back_references": [],
+        "candidate": true,
+        "changes": [],
+        "defined_in": "docs/system/candidates/domain.md:5",
+        "evidence": [],
+        "governed_by": [],
+        "governs": [],
+        "id": "CON-derived-tier",
+        "justifies": [],
+        "kind": "concept",
+        "referenced_by_adr": [
+          "ADR-0001"
+        ],
+        "references": [],
+        "since": null,
+        "status": "proposed",
+        "supersedes": null,
+        "tests": [],
+        "title": "Machine-owned facts, regenerated and never authored"
+      },
+      "INV-derived-bytes-stable": {
+        "anchor_paths": [
+          "src/forge/derive.py"
+        ],
+        "anchors": [
+          "src/forge/derive.py#render_json"
+        ],
+        "back_references": [],
+        "candidate": true,
+        "changes": [],
+        "defined_in": "docs/system/candidates/domain.md:21",
+        "evidence": [
+          "test:tests/test_derive.py::test_render_uses_lf_and_sorted_keys"
+        ],
+        "governed_by": [],
+        "governs": [],
+        "id": "INV-derived-bytes-stable",
+        "justifies": [],
+        "kind": "invariant",
+        "referenced_by_adr": [
+          "ADR-0001"
+        ],
+        "references": [],
+        "since": null,
+        "status": "proposed",
+        "supersedes": null,
+        "tests": [],
+        "title": "Every derived file is LF with sorted keys"
+      },
+      "INV-regeneration-is-a-no-op": {
+        "anchor_paths": [
+          "src/forge/derive.py"
+        ],
+        "anchors": [
+          "src/forge/derive.py#write_json@8e06e5ca51"
+        ],
+        "back_references": [],
+        "candidate": false,
+        "changes": [],
+        "defined_in": "docs/system/domain.md:33",
+        "evidence": [
+          "test:tests/test_deps.py::test_regeneration_is_a_no_op"
+        ],
+        "governed_by": [],
+        "governs": [],
+        "id": "INV-regeneration-is-a-no-op",
+        "justifies": [],
+        "kind": "invariant",
+        "referenced_by_adr": [
+          "ADR-0001"
+        ],
+        "references": [],
+        "since": null,
+        "status": "asserted",
+        "supersedes": null,
+        "tests": [],
+        "title": "Regenerating the derived tier changes nothing"
+      },
+      "PIT-derived-self-reference": {
+        "anchor_paths": [
+          "src/forge/derive.py"
+        ],
+        "anchors": [
+          "src/forge/derive.py#build_inventory@8e06e5ca51"
+        ],
+        "back_references": [],
+        "candidate": false,
+        "changes": [],
+        "defined_in": "docs/system/pitfalls.md:3",
+        "evidence": [],
+        "governed_by": [],
+        "governs": [],
+        "id": "PIT-derived-self-reference",
+        "justifies": [],
+        "kind": "pitfall",
+        "referenced_by_adr": [
+          "ADR-0001"
+        ],
+        "references": [],
+        "since": null,
+        "status": "asserted",
+        "supersedes": null,
+        "tests": [],
+        "title": "A census that counts its own output never settles"
+      },
+      "PIT-markdown-bullet-is-not-a-diff": {
+        "anchor_paths": [
+          "src/forge/spec.py"
+        ],
+        "anchors": [
+          "src/forge/spec.py@8e06e5ca51"
+        ],
+        "back_references": [],
+        "candidate": false,
+        "changes": [],
+        "defined_in": "docs/system/pitfalls.md:33",
+        "evidence": [],
+        "governed_by": [],
+        "governs": [],
+        "id": "PIT-markdown-bullet-is-not-a-diff",
+        "justifies": [],
+        "kind": "pitfall",
+        "referenced_by_adr": [
+          "ADR-0001"
+        ],
+        "references": [],
+        "since": null,
+        "status": "asserted",
+        "supersedes": null,
+        "tests": [],
+        "title": "A leading dash is not a diff marker"
+      },
+      "PIT-regex-across-newlines": {
+        "anchor_paths": [
+          "src/forge/impact.py"
+        ],
+        "anchors": [
+          "src/forge/impact.py@8e06e5ca51"
+        ],
+        "back_references": [],
+        "candidate": false,
+        "changes": [],
+        "defined_in": "docs/system/pitfalls.md:18",
+        "evidence": [],
+        "governed_by": [],
+        "governs": [],
+        "id": "PIT-regex-across-newlines",
+        "justifies": [],
+        "kind": "pitfall",
+        "referenced_by_adr": [
+          "ADR-0001"
+        ],
+        "references": [],
+        "since": null,
+        "status": "asserted",
+        "supersedes": null,
+        "tests": [],
+        "title": "`\\s*` crosses the newline and eats the next line"
+      }
+    },
     "summary": {
-      "candidates": 0,
-      "claims": 0,
+      "candidates": 2,
+      "claims": 6,
       "dangling_references": [],
-      "decisions": 0,
-      "ids_indexed": 0,
-      "invariants_without_tests": [],
+      "decisions": 1,
+      "ids_indexed": 9,
+      "invariants_without_tests": [
+        "INV-derived-bytes-stable",
+        "INV-regeneration-is-a-no-op"
+      ],
       "tests_tagged": 0,
       "tests_total": 464
     }
   },
-  "generated_from_commit": "6071e0ed45291ca56d5d31fe8f0e356147ea898c",
+  "generated_from_commit": "8e06e5ca51cce6b3afb75e7b5bb737ef3b014793",
   "generator": "forge sync derived",
   "tool": "forge"
 }
