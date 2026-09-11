@@ -40,6 +40,7 @@ __all__ = [
     "build_inventory",
     "build_tests",
     "build_backrefs",
+    "build_deps",
     "label_for_path",
     "derive_all",
     "stale_artifacts",
@@ -487,6 +488,250 @@ def build_backrefs(repo: Path) -> dict:
 
 
 # --------------------------------------------------------------------------
+# deps.json - the module graph
+# --------------------------------------------------------------------------
+
+# Imports are a line-shaped construct in all three MVP languages, so this is a
+# regex scan rather than a parse, for the same reason the test-declaration
+# scan is (see `_TEST_DECL_RES`): the shapes are few and the cost of a parse
+# tree per file is not repaid.
+#
+# **Deviation from MVP.md M2**, which specified "by shelling out to the
+# project's configured dep tool". Rejected: it makes the blast radius - and
+# therefore the claim-touch set, and therefore the harness's central
+# enforcement - depend on whether `depcruise` happens to be installed. A check
+# that silently weakens when a tool is missing is worse than a narrower check
+# that always runs. `derive.dep_tool` stays in the config shape for a project
+# whose graph this scan cannot see; when it is used, the tier records which
+# produced the file.
+_PYTHON_FROM_RE = re.compile(r"^[ \t]*from\s+([.\w]+)\s+import\s+(?P<names>[^\n#]+)", re.M)
+_PYTHON_IMPORT_RE = re.compile(r"^[ \t]*import\s+([.\w]+)", re.M)
+_PYTHON_NAME_RE = re.compile(r"\b([A-Za-z_]\w*)")
+
+_IMPORT_RES = {
+    "typescript": [
+        re.compile(r"""^\s*import\s[^'"]*['"]([^'"]+)['"]""", re.M),
+        re.compile(r"""^\s*export\s[^'"]*from\s*['"]([^'"]+)['"]""", re.M),
+        re.compile(r"""\brequire\(\s*['"]([^'"]+)['"]\s*\)"""),
+        re.compile(r"""\bimport\(\s*['"]([^'"]+)['"]\s*\)"""),
+    ],
+    "go": [re.compile(r"""^\s*(?:[\w.]+\s+)?"([^"]+)"\s*$""", re.M)],
+}
+_IMPORT_RES["tsx"] = _IMPORT_RES["typescript"]
+
+_TS_EXTENSIONS = (".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs")
+
+
+def _python_targets(module: str, source: str, index: set[str]) -> str | None:
+    """Resolve a Python import to a tracked file, or None if it leaves the repo.
+
+    A relative import (`from .store import Claim`) resolves against the
+    importing file's package; an absolute one against every source root we can
+    see, because `src/` layouts are normal and the repository is not on
+    `sys.path`.
+    """
+    parts = module.lstrip(".")
+    dots = len(module) - len(parts)
+    if dots:
+        base = source.rsplit("/", 1)[0] if "/" in source else ""
+        for _ in range(dots - 1):
+            base = base.rsplit("/", 1)[0] if "/" in base else ""
+        stem = "/".join(p for p in (base, parts.replace(".", "/")) if p)
+        candidates = [stem]
+    else:
+        stem = parts.replace(".", "/")
+        candidates = [stem]
+        root = source.split("/", 1)[0]
+        if root and root != stem.split("/", 1)[0]:
+            candidates.append(f"{root}/{stem}")
+
+    for candidate in candidates:
+        for suffix in (".py", "/__init__.py"):
+            if (target := f"{candidate}{suffix}") in index:
+                return target
+    return None
+
+
+def _python_edges(text: str, source: str, index: set[str]) -> set[str]:
+    """Every in-repository file this module imports.
+
+    `from . import gitio, store` is the case worth spelling out: resolving only
+    the `.` would make the edge point at `__init__.py` and lose both real
+    dependencies. Since a name in a `from X import a, b` list may be either a
+    submodule or an attribute, each is tried as a submodule and kept only if a
+    file answers - an attribute simply does not resolve, so nothing is invented.
+    """
+    targets: set[str] = set()
+    for match in _PYTHON_FROM_RE.finditer(text):
+        module = match.group(1)
+        if (direct := _python_targets(module, source, index)):
+            targets.add(direct)
+        for name in _PYTHON_NAME_RE.findall(match.group("names")):
+            if name in ("import", "as"):
+                continue
+            separator = "" if module.endswith(".") else "."
+            submodule = _python_targets(f"{module}{separator}{name}", source, index)
+            if submodule:
+                targets.add(submodule)
+    for match in _PYTHON_IMPORT_RE.finditer(text):
+        if (direct := _python_targets(match.group(1), source, index)):
+            targets.add(direct)
+    return targets
+
+
+def _relative_targets(specifier: str, source: str, index: set[str]) -> str | None:
+    """Resolve a TypeScript/JavaScript specifier. Package imports are skipped:
+    the graph is about *this* repository's coupling, and `react` is a fact of
+    the lockfile that `inventory.json` already reports."""
+    if not specifier.startswith("."):
+        return None
+    base = source.rsplit("/", 1)[0] if "/" in source else ""
+    stem = f"{base}/{specifier}" if base else specifier
+    parts: list[str] = []
+    for part in stem.split("/"):
+        if part in ("", "."):
+            continue
+        if part == "..":
+            if parts:
+                parts.pop()
+            continue
+        parts.append(part)
+    stem = "/".join(parts)
+    for candidate in (stem, *(f"{stem}{ext}" for ext in _TS_EXTENSIONS),
+                      *(f"{stem}/index{ext}" for ext in _TS_EXTENSIONS)):
+        if candidate in index:
+            return candidate
+    return None
+
+
+def _go_targets(specifier: str, module_path: str | None, index: set[str]) -> str | None:
+    if module_path and specifier.startswith(module_path):
+        directory = specifier[len(module_path):].strip("/")
+    elif "/" not in specifier and specifier in {p.split("/", 1)[0] for p in index}:
+        directory = specifier
+    else:
+        return None
+    return directory or None
+
+
+def _go_module_path(repo: Path, tracked: list[str]) -> str | None:
+    if "go.mod" not in tracked:
+        return None
+    blob = gitio.blob_at(repo, "HEAD", "go.mod")
+    if blob is None:
+        return None
+    match = re.search(r"^\s*module\s+(\S+)", blob.decode("utf-8", "replace"), re.M)
+    return match.group(1) if match else None
+
+
+def build_deps(repo: Path) -> dict:
+    """File-to-file import edges within the repository, and the cycles in them.
+
+    Edges are between *files*, not modules: the claim-touch rule asks "which
+    files does this diff reach", and a module-level graph would have to be
+    mapped back to files to answer it. Imports that leave the repository are
+    dropped - the graph is about this repository's own coupling.
+    """
+    config = load_config(repo)
+    tracked = gitio.list_files_at(repo, "HEAD")
+    index = {p for p in tracked if not is_ignored(p, config)}
+    go_module = _go_module_path(repo, tracked)
+    go_dirs = {p.rsplit("/", 1)[0] if "/" in p else "" for p in index if p.endswith(".go")}
+
+    edges: dict[str, set[str]] = {}
+    unresolved = 0
+    for path in sorted(index):
+        language = language_for_path(path)
+        if language not in ("python", "go", "typescript", "tsx"):
+            continue
+        blob = gitio.blob_at(repo, "HEAD", path)
+        if blob is None:
+            continue
+        text = blob.decode("utf-8", "replace")
+        found: set[str] = set()
+
+        if language == "python":
+            found |= _python_edges(text, path, index)
+        elif language == "go":
+            for pattern in _IMPORT_RES["go"]:
+                for specifier in pattern.findall(text):
+                    directory = _go_targets(specifier, go_module, index)
+                    if directory is None or directory not in go_dirs:
+                        continue
+                    # A Go import names a package directory; the edge goes to
+                    # every file in it, since the importer cannot say which
+                    # one it meant.
+                    found |= {c for c in index if c.endswith(".go")
+                              and c.rsplit("/", 1)[0] == directory}
+        else:
+            for pattern in _IMPORT_RES["typescript"]:
+                for specifier in pattern.findall(text):
+                    target = _relative_targets(specifier, path, index)
+                    if target:
+                        found.add(target)
+                    elif specifier.startswith("."):
+                        unresolved += 1
+
+        found.discard(path)
+        if found:
+            edges.setdefault(path, set()).update(found)
+
+    reverse: dict[str, set[str]] = {}
+    for source, targets in edges.items():
+        for target in targets:
+            reverse.setdefault(target, set()).add(source)
+
+    return {
+        "tool": "forge",
+        "edges": {k: sorted(edges[k]) for k in sorted(edges)},
+        "reverse": {k: sorted(reverse[k]) for k in sorted(reverse)},
+        "cycles": _import_cycles(edges),
+        "files_with_imports": len(edges),
+        "unresolved_relative_imports": unresolved,
+    }
+
+
+def _import_cycles(edges: dict[str, set[str]]) -> list[list[str]]:
+    """Every import cycle, each reported once, rotated to a stable start.
+
+    Rotation matters more than it sounds: without it the same cycle is written
+    starting from whichever file the walk happened to reach first, and the
+    derived file stops being byte-identical between runs on different
+    filesystems.
+    """
+    colour: dict[str, int] = {}
+    path: list[str] = []
+    on_path: set[str] = set()
+    found: dict[frozenset[str], list[str]] = {}
+
+    def walk(node: str) -> None:
+        colour[node] = 1
+        path.append(node)
+        on_path.add(node)
+        for target in sorted(edges.get(node, ())):
+            if target in on_path:
+                cycle = path[path.index(target):]
+                start = cycle.index(min(cycle))
+                found.setdefault(frozenset(cycle), cycle[start:] + cycle[:start])
+            elif not colour.get(target):
+                walk(target)
+        path.pop()
+        on_path.discard(node)
+        colour[node] = 2
+
+    import sys as _sys
+    limit = _sys.getrecursionlimit()
+    _sys.setrecursionlimit(max(limit, 10000))
+    try:
+        for node in sorted(edges):
+            if not colour.get(node):
+                walk(node)
+    finally:
+        _sys.setrecursionlimit(limit)
+    return [found[key] for key in sorted(found, key=lambda k: sorted(k))]
+
+
+# --------------------------------------------------------------------------
 # Orchestration
 # --------------------------------------------------------------------------
 
@@ -510,6 +755,7 @@ def _build_trace(repo: Path) -> object:
 # they exist on disk, so it is regenerated after them.
 ARTIFACTS = [
     DerivedArtifact("inventory.json", "forge sync derived", "forge", build_inventory),
+    DerivedArtifact("deps.json", "forge sync derived", "forge", build_deps),
     DerivedArtifact("tests.json", "forge sync derived", "forge", build_tests),
     DerivedArtifact("backrefs.json", "forge sync derived", "forge", build_backrefs),
     DerivedArtifact("trace.json", "forge sync derived", "forge", _build_trace),

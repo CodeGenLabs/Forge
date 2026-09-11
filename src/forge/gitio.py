@@ -34,6 +34,9 @@ __all__ = [
     "rev_list",
     "rename_map",
     "resolve_path_at",
+    "changed_files",
+    "first_commit_touching",
+    "parent_of",
     "diff_is_whitespace_only",
     "is_repo",
 ]
@@ -261,6 +264,46 @@ def list_files_at(repo: Path, rev: str) -> list[str]:
     """Every tracked path at *rev*, POSIX-separated."""
     out = git(repo, "ls-tree", "-r", "--name-only", validate_rev(rev))
     return [line.strip() for line in out.splitlines() if line.strip()]
+
+
+def changed_files(repo: Path, base: str, *, head: str | None = None) -> list[str]:
+    """Paths that differ between *base* and the working tree (or *head*).
+
+    The working tree is included by default, and that is the point: `forge
+    impact` runs *while* a change is being written, so a diff that only saw
+    commits would report the blast radius of the last commit rather than of
+    the work in hand. Untracked files count too - a new module nobody has
+    added yet is exactly the kind of thing a component boundary claim is
+    about.
+    """
+    base = validate_rev(base)
+    paths: set[str] = set()
+
+    if head is not None:
+        out = git(repo, "diff", "--name-only", "--find-renames",
+                  base, validate_rev(head), check=False)
+    else:
+        out = git(repo, "diff", "--name-only", "--find-renames", base, check=False)
+    paths.update(line.strip() for line in out.splitlines() if line.strip())
+
+    if head is None:
+        untracked = git(repo, "ls-files", "--others", "--exclude-standard", check=False)
+        paths.update(line.strip() for line in untracked.splitlines() if line.strip())
+
+    return sorted(paths)
+
+
+def first_commit_touching(repo: Path, path: str) -> str | None:
+    """The commit that introduced *path*, or None if it is not committed yet."""
+    out = git(repo, "log", "--diff-filter=A", "--format=%H", "--follow",
+              "--", validate_repo_path(path), check=False)
+    lines = [line.strip() for line in out.splitlines() if line.strip()]
+    return lines[-1] if lines else None
+
+
+def parent_of(repo: Path, rev: str) -> str | None:
+    out = git(repo, "rev-parse", "--verify", f"{validate_rev(rev)}^", check=False).strip()
+    return out or None
 
 
 def grep_files_at(repo: Path, rev: str, needle: str) -> list[str]:

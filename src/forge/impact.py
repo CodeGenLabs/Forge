@@ -1,0 +1,391 @@
+"""The claim-touch rule: the harness's central enforcement.
+
+`claim_touch_set(D)` is the set of claims a diff `D` reaches
+(SYSTEM_KNOWLEDGE.md section 9.2):
+
+    { claim | any anchor resolves to a file in D }
+  u { claim | any CMP- path glob matches a file in D }
+  u { claim | any evidence artifact is in D }
+
+`impact.md` must account for **every** member under exactly one heading, and
+`forge check` blocks if any is unaccounted for. That turns "which documentation
+must change?" from a judgement call into a set operation, which is the piece I
+found nowhere in the corpus.
+
+Two consequences the implementation has to preserve, because they are the
+reason the rule works:
+
+- **`Unaffected` is cheap but not free.** It costs one honest sentence per
+  claim. An entry with an ID and no reason is not an account, so it is
+  rejected - otherwise the heading becomes a place to dump the whole set.
+- **Every claim taxes every change that touches its files.** That is the
+  pressure that keeps the store small, and it is why a store of forty good
+  claims is worth more than four hundred. Nothing here may quietly narrow the
+  set to make the tax cheaper.
+"""
+
+from __future__ import annotations
+
+import fnmatch
+import re
+from dataclasses import dataclass, field
+from pathlib import Path
+
+from . import derive, gitio, store
+from .anchor import AnchorError, parse_anchor
+from .change import Change
+from .store import Claim
+
+__all__ = [
+    "Impact",
+    "ClaimTouch",
+    "Account",
+    "HEADINGS",
+    "compute_impact",
+    "parse_account",
+    "check_claim_touch",
+]
+
+#: The five headings a claim may be accounted under, from WORKFLOW.md 3.4.
+#: A closed set, because an open one lets a claim be filed under a heading
+#: nobody checks.
+HEADINGS = ("Unaffected", "Updated", "New", "Superseded", "At risk")
+
+#: Headings that count as "this claim changes". A claim whose own definition
+#: file the diff edited must be under one of these: editing a claim while
+#: filing it as Unaffected is the exact move the rule exists to stop.
+CHANGING = ("Updated", "Superseded")
+
+_SECTION_RE = re.compile(r"^##\s+Claims\s+touched\s*$", re.M | re.I)
+_HEADING_RE = re.compile(r"^###\s+(?P<heading>.+?)\s*$", re.M)
+# Horizontal whitespace only between the ID and its reason. `\s*` would cross
+# the newline and swallow the next line as this entry's reason, which turns
+# "you gave no reason" into "you gave the following heading as a reason" - the
+# check silently stops firing.
+_ENTRY_RE = re.compile(
+    r"^[ \t]*[-*][ \t]*(?P<id>" + store.ANY_ID_PATTERN + r")[ \t]*(?P<rest>[^\n]*)$", re.M)
+_ADR_IN_TEXT_RE = re.compile(r"\b(ADR-\d{4})\b")
+_ANY_HEADING_RE = re.compile(r"^##\s+", re.M)
+
+
+@dataclass
+class ClaimTouch:
+    id: str
+    claim: Claim | None
+    reasons: list[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "kind": self.claim.kind if self.claim else "unknown",
+            "status": self.claim.status if self.claim else "",
+            "defined_in": self.claim.file if self.claim else None,
+            "reasons": sorted(self.reasons),
+        }
+
+
+@dataclass
+class Impact:
+    change: str
+    base: str
+    changed_files: list[str]
+    reverse_deps: list[str]
+    touched: dict[str, ClaimTouch]
+
+    @property
+    def blast_radius(self) -> list[str]:
+        return sorted(set(self.changed_files) | set(self.reverse_deps))
+
+    def to_dict(self) -> dict:
+        return {
+            "change": self.change,
+            "base": self.base,
+            "changed_files": self.changed_files,
+            "reverse_deps": self.reverse_deps,
+            "blast_radius": self.blast_radius,
+            "claims_touched": sorted(self.touched),
+            "claims": [self.touched[k].to_dict() for k in sorted(self.touched)],
+        }
+
+
+@dataclass
+class Account:
+    """What `impact.md` says, parsed. `by_id` maps an ID to its headings -
+    plural, because being under two is itself a fault worth naming."""
+    present: bool = False
+    by_id: dict[str, list[str]] = field(default_factory=dict)
+    reasons: dict[str, str] = field(default_factory=dict)
+    unknown_headings: list[str] = field(default_factory=list)
+    line_of: dict[str, int] = field(default_factory=dict)
+
+
+# ---------------------------------------------------------------------------
+# Computing the set
+# ---------------------------------------------------------------------------
+
+def resolve_base(repo: Path, item: Change, override: str | None = None) -> str:
+    """The commit the change started from.
+
+    The change directory is created before any work happens, so the commit
+    that introduced `.forge.yaml` is the boundary: everything after it is this
+    change. Before that commit exists - the normal case while the first
+    artifact is being written - the boundary is HEAD.
+    """
+    if override:
+        return gitio.rev_parse(repo, override)
+    marker = f"{item.relative}/.forge.yaml"
+    created = gitio.first_commit_touching(repo, marker)
+    if created:
+        return gitio.parent_of(repo, created) or created
+    return gitio.rev_parse(repo, "HEAD")
+
+
+def _is_component_glob(claim: Claim, value: str) -> bool:
+    """Component anchors are read as globs; other kinds are read as paths.
+
+    Only `CMP-` gets this, per section 9.2. Widening it to every kind would
+    make one careless `src/*` anchor on an invariant pull the whole tree into
+    every change's touch set, and a rule that always fires teaches people to
+    dismiss it.
+    """
+    return claim.kind == "component" or any(ch in value for ch in "*?[")
+
+
+def compute_impact(repo: Path, item: Change, *, base: str | None = None) -> Impact:
+    resolved_base = resolve_base(repo, item, base)
+    changed = [p for p in gitio.changed_files(repo, resolved_base)
+               if not p.startswith(f"{item.relative}/")]
+    # The change's own artifacts are excluded: `impact.md` naming itself as
+    # blast radius is noise, and every change would touch every claim defined
+    # in a file the change happens to store under `changes/`.
+
+    deps = ((derive.read_json(repo / derive.DERIVED_DIR / "deps.json") or {})
+            .get("data") or {})
+    reverse_index: dict[str, list[str]] = deps.get("reverse") or {}
+    reverse: set[str] = set()
+    for path in changed:
+        reverse.update(reverse_index.get(path, []))
+    reverse -= set(changed)
+
+    radius = set(changed) | reverse
+    claims = store.load_store(repo)
+    touched: dict[str, ClaimTouch] = {}
+
+    def note(claim: Claim, reason: str) -> None:
+        entry = touched.setdefault(claim.id, ClaimTouch(claim.id, claim))
+        if reason not in entry.reasons:
+            entry.reasons.append(reason)
+
+    for claim in claims:
+        if claim.is_candidate or claim.status == "retired":
+            # A candidate is not yet knowledge and a retired claim is history.
+            # Taxing a change for either would make both expensive to keep,
+            # which is the opposite of what the tiers are for.
+            continue
+
+        for raw in claim.anchors:
+            try:
+                path = parse_anchor(raw).path
+            except AnchorError:
+                continue
+            if _is_component_glob(claim, path):
+                hits = [f for f in radius if _glob_matches(f, path)]
+                if hits:
+                    note(claim, f"component boundary {path} matches {hits[0]}"
+                                + (f" (+{len(hits) - 1} more)" if len(hits) > 1 else ""))
+            elif path in radius:
+                note(claim, f"anchor {path}")
+            elif any(f == path or f.startswith(f"{path}/") for f in radius):
+                note(claim, f"anchor directory {path}")
+
+        for entry in claim.evidence:
+            kind, _, value = entry.partition(":")
+            target = value.split("::", 1)[0].strip()
+            if target and target in radius:
+                note(claim, f"evidence {kind.strip()} {target}")
+
+        if claim.file in radius:
+            note(claim, f"its own definition in {claim.file} was edited")
+
+    return Impact(
+        change=item.name,
+        base=resolved_base,
+        changed_files=sorted(changed),
+        reverse_deps=sorted(reverse),
+        touched=touched,
+    )
+
+
+def _glob_matches(path: str, pattern: str) -> bool:
+    if fnmatch.fnmatch(path, pattern):
+        return True
+    # `src/payments` as a component anchor means the subtree, the way anyone
+    # writing it would expect; fnmatch alone would not cross a separator.
+    prefix = pattern.rstrip("*").rstrip("/")
+    return bool(prefix) and (path == prefix or path.startswith(f"{prefix}/"))
+
+
+# ---------------------------------------------------------------------------
+# Reading the account
+# ---------------------------------------------------------------------------
+
+def parse_account(text: str) -> Account:
+    """Read the `## Claims touched` section of an `impact.md`."""
+    account = Account()
+    start = _SECTION_RE.search(text)
+    if start is None:
+        return account
+    account.present = True
+
+    rest = text[start.end():]
+    end = _ANY_HEADING_RE.search(rest)
+    section = rest[:end.start()] if end else rest
+    offset = text.count("\n", 0, start.end())
+
+    positions = [(m.start(), m.group("heading").strip()) for m in _HEADING_RE.finditer(section)]
+    for match in _ENTRY_RE.finditer(section):
+        heading = next((name for pos, name in reversed(positions) if pos < match.start()), None)
+        if heading is None:
+            continue
+        canonical = next((h for h in HEADINGS if h.lower() == heading.lower()), None)
+        if canonical is None:
+            if heading not in account.unknown_headings:
+                account.unknown_headings.append(heading)
+            continue
+        identifier = match.group("id")
+        account.by_id.setdefault(identifier, []).append(canonical)
+        account.reasons[identifier] = match.group("rest").strip()
+        account.line_of[identifier] = offset + section.count("\n", 0, match.start()) + 1
+    return account
+
+
+# ---------------------------------------------------------------------------
+# R5 / R6 - the check
+# ---------------------------------------------------------------------------
+
+def check_claim_touch(repo: Path, item: Change, impact: Impact,
+                      issue) -> list:
+    """R5 and R6. `issue` is the `Issue` constructor, injected to keep this
+    module free of a dependency on the CLI's reporting shape."""
+    relative = f"{item.relative}/impact.md"
+    target = repo / item.relative / "impact.md"
+    issues = []
+
+    if not target.is_file():
+        if not impact.touched:
+            return []
+        return [issue(
+            "ERROR", "trace.claim_touch_complete", relative,
+            f"this change reaches {len(impact.touched)} claim(s) and there is no "
+            f"impact.md accounting for them: {', '.join(sorted(impact.touched))}",
+            f"forge impact --change {item.number} writes the list; account for each "
+            f"under Unaffected, Updated, New, Superseded or At risk",
+        )]
+
+    text = target.read_text(encoding="utf-8", errors="replace")
+    account = parse_account(text)
+    if not account.present:
+        return [issue(
+            "ERROR", "trace.claim_touch_complete", relative,
+            "impact.md has no `## Claims touched` section",
+            "add `## Claims touched` with a `### Unaffected` / `### Updated` / "
+            "`### Superseded` breakdown",
+        )]
+
+    for heading in account.unknown_headings:
+        issues.append(issue(
+            "ERROR", "trace.claim_touch_complete", relative,
+            f"`### {heading}` is not one of the accounted headings",
+            f"use one of {', '.join(HEADINGS)} - a claim filed under a heading "
+            f"nothing checks is a claim nobody accounted for",
+        ))
+
+    decisions = store.load_decisions(repo)
+
+    for identifier in sorted(impact.touched):
+        entry = impact.touched[identifier]
+        headings = account.by_id.get(identifier)
+        if not headings:
+            issues.append(issue(
+                "ERROR", "trace.claim_touch_complete", relative,
+                f"{identifier} is in this change's touch set and impact.md does not "
+                f"mention it ({entry.reasons[0]})",
+                f"add `- {identifier} - <one sentence>` under the heading that is true; "
+                f"Unaffected is fine, and costs exactly that sentence",
+                claim=identifier,
+            ))
+            continue
+        if len(set(headings)) > 1:
+            issues.append(issue(
+                "ERROR", "trace.claim_touch_complete", relative,
+                f"{identifier} is accounted under {' and '.join(sorted(set(headings)))}; "
+                f"exactly one must be true",
+                "delete the entry that is not true",
+                line=account.line_of.get(identifier), claim=identifier,
+            ))
+        if not _reason_text(account.reasons.get(identifier, "")):
+            issues.append(issue(
+                "ERROR", "trace.claim_touch_complete", relative,
+                f"{identifier} is listed with no reason",
+                "one honest sentence. That price is the point: it is what keeps the "
+                "claim count low and the account meaningful",
+                line=account.line_of.get(identifier), claim=identifier,
+            ))
+
+        edited_itself = any("its own definition" in r for r in entry.reasons)
+        if edited_itself and not set(headings) & set(CHANGING):
+            issues.append(issue(
+                "ERROR", "trace.claim_touch_complete", relative,
+                f"{identifier}'s own definition was edited by this change but it is "
+                f"filed as {headings[0]}",
+                f"file it under Updated, or under Superseded with the ADR that "
+                f"replaced it",
+                line=account.line_of.get(identifier), claim=identifier,
+            ))
+
+    # R6: superseded needs an ADR that exists.
+    for identifier, headings in sorted(account.by_id.items()):
+        if "Superseded" not in headings:
+            continue
+        named = _ADR_IN_TEXT_RE.findall(account.reasons.get(identifier, ""))
+        if not named:
+            issues.append(issue(
+                "ERROR", "trace.superseded_has_adr", relative,
+                f"{identifier} is superseded without naming an ADR",
+                f"`- {identifier} -> ADR-nnnn - <what changed>`; superseding a claim "
+                f"is a decision, and a decision with no record is a preference",
+                line=account.line_of.get(identifier), claim=identifier,
+            ))
+            continue
+        for adr in named:
+            if adr not in decisions:
+                issues.append(issue(
+                    "ERROR", "trace.superseded_has_adr", relative,
+                    f"{identifier} names {adr}, which has no file in "
+                    f"{store.DECISIONS_DIR}/",
+                    f"write {store.DECISIONS_DIR}/{adr}-<slug>.md, or correct the reference",
+                    line=account.line_of.get(identifier), claim=identifier,
+                ))
+
+    # Over-accounting is not a fault, but it is a signal: either the anchors
+    # are wrong or the author is accounting for something the diff never
+    # reached. A warning, because being too careful must not block.
+    for identifier in sorted(account.by_id):
+        if identifier in impact.touched or identifier.startswith(("REQ-", "ADR-")):
+            continue
+        issues.append(issue(
+            "WARNING", "trace.claim_touch_extra", relative,
+            f"{identifier} is accounted for but is not in the computed touch set",
+            f"harmless, but check its anchors - if this change really reaches it, "
+            f"the anchors are pointing at the wrong files",
+            line=account.line_of.get(identifier), claim=identifier,
+        ))
+    return issues
+
+
+def _reason_text(rest: str) -> str:
+    """The prose after the ID, with the separators and any ADR arrow removed."""
+    text = rest.strip()
+    text = re.sub(r"\A(?:->|=>|→)\s*ADR-\d{4}", "", text).strip()
+    text = text.lstrip("-–—:> ").strip()
+    return text

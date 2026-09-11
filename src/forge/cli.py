@@ -17,7 +17,7 @@ import json
 import sys
 from pathlib import Path
 
-from . import change, derive, gitio, scaffold, schema, store, trace, validate
+from . import change, derive, gitio, impact, scaffold, schema, store, trace, validate
 from .anchor import AnchorError, Status, classify, parse_anchor
 from .fingerprint import available_languages, fingerprint_source
 from .validate import Issue
@@ -229,7 +229,31 @@ def _cmd_status(args: argparse.Namespace) -> int:
     return _EXIT_OK
 
 
-SCOPES = ("store", "derived", "trace")
+SCOPES = ("store", "derived", "trace", "change")
+
+
+def _check_change(repo: Path, reference: str | None) -> list[Issue]:
+    """R5 and R6 over one change, or over every open change."""
+    try:
+        items = ([change.find_change(repo, reference)] if reference
+                 else change.list_changes(repo))
+    except change.ChangeError as exc:
+        return [Issue("ERROR", "change.unknown", change.CHANGES_DIR, str(exc),
+                      "forge change list")]
+
+    issues: list[Issue] = []
+    for item in items:
+        try:
+            schema.load_schema(repo, item.workflow)
+        except schema.SchemaError as exc:
+            issues.append(Issue(
+                "ERROR", "change.workflow", f"{item.relative}/.forge.yaml", str(exc),
+                f"name a workflow the kernel can load; `workflow: feature` is the default",
+            ))
+            continue
+        computed = impact.compute_impact(repo, item)
+        issues.extend(impact.check_claim_touch(repo, item, computed, Issue))
+    return issues
 
 
 def _tier_is_built(repo: Path) -> bool:
@@ -302,6 +326,8 @@ def _cmd_check(args: argparse.Namespace) -> int:
         issues.extend(_check_trace(repo))
     if "store" in scopes:
         issues.extend(validate.check_store(repo))
+    if "change" in scopes:
+        issues.extend(_check_change(repo, args.change))
 
     errors = [i for i in issues if i.level == "ERROR"]
     warnings = [i for i in issues if i.level != "ERROR"]
@@ -326,8 +352,9 @@ def _cmd_check(args: argparse.Namespace) -> int:
         "store": "claim store (S1-S18)",
         "derived": "derived-tier freshness",
         "trace": "trace integrity",
+        "change": "the claim-touch account",
     }[scope] for scope in SCOPES if scope in scopes)
-    pending = "change DAG, requirement coverage and verification (M3)"
+    pending = "requirement coverage and verification (M3)"
     if issues:
         print(f"\n{len(errors)} error(s), {len(warnings)} warning(s). "
               f"Checked: {checked}.", file=sys.stderr)
@@ -572,6 +599,43 @@ def _cmd_change_track(args: argparse.Namespace) -> int:
     return _EXIT_OK
 
 
+def _cmd_impact(args: argparse.Namespace) -> int:
+    repo = args.repo.resolve()
+    if not gitio.is_repo(repo):
+        print(f"forge: {repo} is not a git repository", file=sys.stderr)
+        return _EXIT_USAGE
+    try:
+        item = change.find_change(repo, args.change)
+        computed = impact.compute_impact(repo, item, base=args.base)
+    except (change.ChangeError, gitio.GitError, gitio.InvalidRevision) as exc:
+        print(f"forge: {exc}", file=sys.stderr)
+        return _EXIT_USAGE
+
+    if args.json:
+        print(json.dumps(computed.to_dict(), indent=2))
+        return _EXIT_OK
+
+    print(f"{computed.change}   base {computed.base[:10]}")
+    print(f"\nBlast radius   {len(computed.changed_files)} changed, "
+          f"{len(computed.reverse_deps)} reached by import")
+    for path in computed.changed_files:
+        print(f"  changed   {path}")
+    for path in computed.reverse_deps:
+        print(f"  imports   {path}")
+
+    if not computed.touched:
+        print("\nClaims touched  none")
+        return _EXIT_OK
+    print(f"\nClaims touched  {len(computed.touched)} - every one needs a heading "
+          f"in impact.md")
+    for identifier in sorted(computed.touched):
+        entry = computed.touched[identifier]
+        print(f"  {identifier:20} {entry.reasons[0]}")
+        for extra in entry.reasons[1:]:
+            print(f"  {'':20} {extra}")
+    return _EXIT_OK
+
+
 def _cmd_doctor(args: argparse.Namespace) -> int:
     langs = available_languages()
     print(f"python           {sys.version.split()[0]}")
@@ -639,6 +703,7 @@ def main(argv: list[str] | None = None) -> int:
     check.add_argument("--repo", type=Path, default=Path.cwd())
     check.add_argument("--scope", action="append", choices=SCOPES,
                        help="limit to one scope; repeatable. Default: all of them")
+    check.add_argument("--change", help="limit the change scope to one change")
     check.add_argument("--json", action="store_true")
     check.set_defaults(func=_cmd_check)
 
@@ -715,6 +780,20 @@ def main(argv: list[str] | None = None) -> int:
                            help="what was discovered that made the change bigger")
     chg_track.add_argument("--repo", type=Path, default=Path.cwd())
     chg_track.set_defaults(func=_cmd_change_track)
+
+    imp = sub.add_parser(
+        "impact",
+        help="blast radius and the computed claim-touch set",
+        description="Every claim this change reaches must be accounted for in "
+                    "impact.md under exactly one heading. That is what makes "
+                    "'which documentation must change?' a set operation rather "
+                    "than a judgement call.",
+    )
+    imp.add_argument("--change", required=True)
+    imp.add_argument("--base", help="override the commit the change started from")
+    imp.add_argument("--repo", type=Path, default=Path.cwd())
+    imp.add_argument("--json", action="store_true")
+    imp.set_defaults(func=_cmd_impact)
 
     doctor = sub.add_parser("doctor", help="report the toolchain the kernel found")
     doctor.set_defaults(func=_cmd_doctor)

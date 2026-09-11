@@ -1,0 +1,131 @@
+{
+  "$schema": "forge/derived/v1",
+  "data": {
+    "cycles": [
+      [
+        "src/forge/derive.py",
+        "src/forge/trace.py"
+      ]
+    ],
+    "edges": {
+      "src/forge/anchor.py": [
+        "src/forge/__init__.py",
+        "src/forge/fingerprint.py",
+        "src/forge/gitio.py"
+      ],
+      "src/forge/change.py": [
+        "src/forge/schema.py"
+      ],
+      "src/forge/cli.py": [
+        "src/forge/__init__.py",
+        "src/forge/anchor.py",
+        "src/forge/change.py",
+        "src/forge/derive.py",
+        "src/forge/fingerprint.py",
+        "src/forge/gitio.py",
+        "src/forge/scaffold.py",
+        "src/forge/schema.py",
+        "src/forge/store.py",
+        "src/forge/trace.py",
+        "src/forge/validate.py"
+      ],
+      "src/forge/derive.py": [
+        "src/forge/__init__.py",
+        "src/forge/config.py",
+        "src/forge/fingerprint.py",
+        "src/forge/gitio.py",
+        "src/forge/trace.py"
+      ],
+      "src/forge/scaffold.py": [
+        "src/forge/__init__.py",
+        "src/forge/config.py",
+        "src/forge/schema.py",
+        "src/forge/store.py"
+      ],
+      "src/forge/trace.py": [
+        "src/forge/__init__.py",
+        "src/forge/derive.py",
+        "src/forge/gitio.py",
+        "src/forge/store.py"
+      ],
+      "src/forge/validate.py": [
+        "src/forge/__init__.py",
+        "src/forge/anchor.py",
+        "src/forge/config.py",
+        "src/forge/derive.py",
+        "src/forge/fingerprint.py",
+        "src/forge/gitio.py",
+        "src/forge/store.py",
+        "src/forge/trace.py"
+      ]
+    },
+    "files_with_imports": 7,
+    "reverse": {
+      "src/forge/__init__.py": [
+        "src/forge/anchor.py",
+        "src/forge/cli.py",
+        "src/forge/derive.py",
+        "src/forge/scaffold.py",
+        "src/forge/trace.py",
+        "src/forge/validate.py"
+      ],
+      "src/forge/anchor.py": [
+        "src/forge/cli.py",
+        "src/forge/validate.py"
+      ],
+      "src/forge/change.py": [
+        "src/forge/cli.py"
+      ],
+      "src/forge/config.py": [
+        "src/forge/derive.py",
+        "src/forge/scaffold.py",
+        "src/forge/validate.py"
+      ],
+      "src/forge/derive.py": [
+        "src/forge/cli.py",
+        "src/forge/trace.py",
+        "src/forge/validate.py"
+      ],
+      "src/forge/fingerprint.py": [
+        "src/forge/anchor.py",
+        "src/forge/cli.py",
+        "src/forge/derive.py",
+        "src/forge/validate.py"
+      ],
+      "src/forge/gitio.py": [
+        "src/forge/anchor.py",
+        "src/forge/cli.py",
+        "src/forge/derive.py",
+        "src/forge/trace.py",
+        "src/forge/validate.py"
+      ],
+      "src/forge/scaffold.py": [
+        "src/forge/cli.py"
+      ],
+      "src/forge/schema.py": [
+        "src/forge/change.py",
+        "src/forge/cli.py",
+        "src/forge/scaffold.py"
+      ],
+      "src/forge/store.py": [
+        "src/forge/cli.py",
+        "src/forge/scaffold.py",
+        "src/forge/trace.py",
+        "src/forge/validate.py"
+      ],
+      "src/forge/trace.py": [
+        "src/forge/cli.py",
+        "src/forge/derive.py",
+        "src/forge/validate.py"
+      ],
+      "src/forge/validate.py": [
+        "src/forge/cli.py"
+      ]
+    },
+    "tool": "forge",
+    "unresolved_relative_imports": 0
+  },
+  "generated_from_commit": "4e6227130fbb6b5c0d107d62889f2822c07bf1ea",
+  "generator": "forge sync derived",
+  "tool": "forge"
+}
