@@ -1,0 +1,172 @@
+"""Per-claim, not per-file: which claims a diff actually touched.
+
+Every test here comes from one incident. The first real change taken through
+the lifecycle appended a single new claim to `docs/system/pitfalls.md`, and the
+claim-touch rule then demanded that the three unrelated claims already in that
+file be re-filed as `Updated`. The only ways through were to write `Updated`
+about claims nobody updated, or to split every claim into its own file - which
+is the rubber-stamping OPEN_QUESTIONS.md Q3 asks about, arriving by the front
+door on the very first change.
+"""
+
+from __future__ import annotations
+
+from datetime import date
+
+import pytest
+
+from forge import change, gitio, impact
+
+TODAY = date(2026, 9, 11)
+
+PITFALLS = """\
+# Pitfalls
+
+### PIT-one - the first trap
+
+```claim
+kind:     pitfall
+status:   asserted
+truth-source: code
+anchors:  ["src/a.py"]
+reviewed: 2026-09-01
+```
+
+Prose about the first trap, long enough to read like a claim.
+
+### PIT-two - the second trap
+
+```claim
+kind:     pitfall
+status:   asserted
+truth-source: code
+anchors:  ["src/b.py"]
+reviewed: 2026-09-01
+```
+
+Prose about the second trap, long enough to read like a claim.
+"""
+
+NEW_CLAIM = """
+### PIT-three - the trap this change learned
+
+```claim
+kind:     pitfall
+status:   asserted
+truth-source: code
+anchors:  ["src/c.py"]
+reviewed: 2026-09-11
+```
+
+Prose about the third trap, long enough to read like a claim.
+"""
+
+
+@pytest.fixture
+def shared_file(repo):
+    """Two claims sharing one file, and a change open against them."""
+    from forge.cli import main
+
+    repo.write("src/a.py", "def a():\n    return 1\n")
+    repo.write("src/b.py", "def b():\n    return 2\n")
+    repo.write("src/c.py", "def c():\n    return 3\n")
+    main(["init", "--repo", str(repo.root)])
+    repo.write("docs/system/pitfalls.md", PITFALLS)
+    repo.commit("two claims in one file")
+    change.new_change(repo.root, "learn something", today=TODAY)
+    repo.commit("open a change")
+    return repo
+
+
+def touched(repo) -> dict:
+    item = change.find_change(repo.root, "1")
+    return {t.id: t for t in
+            impact.compute_impact(repo.root, item).touched.values()}
+
+
+# ---------------------------------------------------------------------------
+# The incident
+# ---------------------------------------------------------------------------
+
+def test_appending_a_claim_does_not_touch_its_neighbours(shared_file):
+    """The whole point. Adding PIT-three edits pitfalls.md, but PIT-one and
+    PIT-two keep their definitions, so the account owes nothing about them."""
+    text = (shared_file.root / "docs/system/pitfalls.md").read_text(encoding="utf-8")
+    shared_file.write("docs/system/pitfalls.md", text + NEW_CLAIM)
+
+    hits = touched(shared_file)
+    assert "PIT-three" in hits
+    assert "PIT-one" not in hits
+    assert "PIT-two" not in hits
+
+
+def test_editing_a_claim_body_touches_that_claim(shared_file):
+    """The rule still has to fire when it should: the mechanism is narrowed,
+    not removed."""
+    text = (shared_file.root / "docs/system/pitfalls.md").read_text(encoding="utf-8")
+    shared_file.write("docs/system/pitfalls.md",
+                      text.replace("Prose about the second trap",
+                                   "Completely different prose about the second trap"))
+
+    hits = touched(shared_file)
+    assert "PIT-two" in hits
+    assert any("own definition" in r for r in hits["PIT-two"].reasons)
+    assert "PIT-one" not in hits
+
+
+def test_editing_a_claim_fence_touches_that_claim(shared_file):
+    text = (shared_file.root / "docs/system/pitfalls.md").read_text(encoding="utf-8")
+    shared_file.write("docs/system/pitfalls.md",
+                      text.replace("reviewed: 2026-09-01\n```\n\nProse about the first",
+                                   "reviewed: 2026-09-11\n```\n\nProse about the first"))
+
+    hits = touched(shared_file)
+    assert "PIT-one" in hits
+    assert "PIT-two" not in hits
+
+
+def test_a_new_claim_may_be_filed_under_new(shared_file):
+    """`New` counts as an account of a definition edit. Without it the rule
+    rejects every change that records a piece of knowledge, which is the single
+    most common thing a change should do."""
+    assert "New" in impact.CHANGING
+
+
+# ---------------------------------------------------------------------------
+# The primitive underneath
+# ---------------------------------------------------------------------------
+
+def test_changed_line_ranges_reports_only_the_edited_lines(repo):
+    repo.write("f.txt", "\n".join(f"line {i}" for i in range(1, 21)) + "\n")
+    base = repo.commit("twenty lines")
+    lines = (repo.root / "f.txt").read_text(encoding="utf-8").split("\n")
+    lines[9] = "line ten, edited"
+    repo.write("f.txt", "\n".join(lines))
+
+    ranges = gitio.changed_line_ranges(repo.root, base, "f.txt")
+    assert ranges == [(10, 10)]
+
+
+def test_changed_line_ranges_reports_an_added_file_whole(repo):
+    """A file with no baseline has no hunks. Reporting nothing there would
+    quietly answer "you changed none of it"."""
+    repo.write("seed.txt", "x\n")
+    base = repo.commit("a baseline that does not contain the new file")
+    repo.write("added.txt", "one\ntwo\nthree\n")
+
+    ranges = gitio.changed_line_ranges(repo.root, base, "added.txt")
+    assert ranges == [(1, 4)]
+
+
+def test_changed_line_ranges_is_empty_for_an_untouched_file(repo):
+    repo.write("f.txt", "unchanged\n")
+    base = repo.commit("one file")
+    assert gitio.changed_line_ranges(repo.root, base, "f.txt") == []
+
+
+def test_overlap_falls_back_to_the_heading_line_alone(shared_file):
+    """A claim with no recorded end_line falls back to its heading, never to
+    the whole file - that would restore the behaviour this replaces, in the
+    case where the parser already knows something is wrong."""
+    assert impact._overlaps([(5, 5)], 5, 0) is True
+    assert impact._overlaps([(6, 9)], 5, 0) is False

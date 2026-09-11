@@ -25,6 +25,9 @@ derive:
 # verification condition is better than one proven by a command
 # nobody chose.
 commands:
+  # This suite takes longer than the kernel's 900s default, so `tests`
+  # reported `unavailable` on every run - correctly, but uselessly.
+  timeout: 2400
   # Not the bare `pytest` that `forge bootstrap seal` detected from the
   # manifest: `forge verify` runs this line through the shell, and a bare
   # console script is only on PATH when the virtualenv is activated. Every

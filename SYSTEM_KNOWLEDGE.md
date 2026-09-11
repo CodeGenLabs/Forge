@@ -683,6 +683,23 @@ claim_touch_set(D) = { claim | any anchor of claim resolves to a file in D }
 file was edited in the diff but the claim does not appear under `Updated` or `Superseded`, and if a claim
 appears under `Superseded` without an existing ADR.
 
+> **Corrected while running the first real change through the lifecycle (2026-09-11).** Two errors, both
+> in the sentence above, and both of which made the rule unusable rather than merely strict.
+>
+> 1. **"a claim *file* was edited" is the wrong granularity.** Claims share files by design — the whole
+>    store is five or six markdown files. Appending one new claim to `pitfalls.md` marked all three
+>    existing claims in it as having had their definitions edited, and the rule then demanded each be
+>    re-filed as `Updated`. The only ways through were to write `Updated` about claims nobody updated, or
+>    to split every claim into its own file. That is exactly the rubber-stamping
+>    [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) Q3 asks about, arriving by the front door on the first change
+>    anyone made. The test is now whether the diff's changed line ranges intersect the claim's own
+>    `[line, end_line]` — information the parser has recorded since M0 for precisely this purpose.
+> 2. **`New` was missing from the permitted headings.** A claim the change introduces has, trivially, had
+>    its definition edited, so demanding `Updated` or `Superseded` rejected every change that records a
+>    new piece of knowledge — the single most common thing a change should do, and the reason the store
+>    exists. `New` now counts, which is what [WORKFLOW.md](WORKFLOW.md) §3.4's own worked example always
+>    assumed.
+
 Consequences worth stating plainly:
 
 - The agent cannot quietly change behaviour that an invariant constrains, because the invariant is in the

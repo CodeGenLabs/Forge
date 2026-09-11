@@ -27,6 +27,7 @@ to prevent.
 from __future__ import annotations
 
 import json
+import shutil as _shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -35,7 +36,14 @@ from . import derive, gitio, impact, spec, validate
 from .change import Change
 from .config import load_config
 
-__all__ = ["VERIFICATION_FILE", "verify", "read_verification", "CONDITIONS"]
+__all__ = ["VERIFICATION_FILE", "verify", "read_verification", "CONDITIONS",
+           "resolve_command", "DEFAULT_TIMEOUT"]
+
+#: Seconds a single `commands.*` line may run before the condition is
+#: recorded `unavailable`. Overridable per project (`commands.timeout`)
+#: and per run (`--timeout`): this repository's own suite exceeds the
+#: old hardcoded 900, so `tests` could never pass on it.
+DEFAULT_TIMEOUT = 900
 
 VERIFICATION_FILE = "verification.json"
 
@@ -79,13 +87,63 @@ def _commands(repo: Path) -> dict[str, str]:
     return {str(k): str(v) for k, v in section.items() if v}
 
 
+def resolve_command(repo: Path, line: str) -> str | None:
+    """Why *line* cannot be run, or None if it can.
+
+    `forge bootstrap seal` detects `pytest` from a manifest, and a bare console
+    script is only on PATH while the project's virtualenv is activated. Run
+    through the shell without it, the command does not exist and the condition
+    reports `fail` - a verification that says the suite failed when the suite
+    was never started, which is the one thing this report must never do.
+
+    Only the first token is resolved, and only when it looks like a program
+    rather than a path or a shell construct. Anything containing a separator,
+    a quote or an operator is handed to the shell untouched: the shell is
+    better at shell than this function is.
+    """
+    head = line.strip().split()[:1]
+    if not head:
+        return "the command is empty"
+    token = head[0]
+    # `=` is here for the `FOO=1 cmd` prefix: an env-var assignment is a shell
+    # construct whose first token is not a program at all, and resolving it
+    # would report the assignment itself as a missing binary.
+    if any(ch in token for ch in "/\\\"'$%(){}<>|&;="):
+        return None
+    if _shutil.which(token):
+        return None
+    for relative in (f".venv/Scripts/{token}.exe", f".venv/bin/{token}",
+                     f"venv/Scripts/{token}.exe", f"venv/bin/{token}"):
+        if (repo / relative).is_file():
+            return (f"{token!r} is not on PATH, but {relative} exists - write "
+                    f"that path in the command, spelled for this platform's shell")
+    return f"{token!r} is not on PATH"
+
+
 def _run(repo: Path, name: str, line: str, timeout: int) -> dict:
+    unresolvable = resolve_command(repo, line)
+    if unresolvable:
+        # `unavailable`, not `fail`. The project declared a command this
+        # machine cannot run; that is a fact about the setup, and calling it a
+        # failing build is how a report gets disbelieved and then ignored.
+        return {**_unavailable(
+            unresolvable,
+            "correct `commands` in .forge/config.yaml, or activate the "
+            "environment the command needs",
+        ), "cmd": line}
     try:
         completed = subprocess.run(
             line, cwd=repo, shell=True, capture_output=True, timeout=timeout,
         )
     except subprocess.TimeoutExpired:
-        return {"status": "fail", "cmd": line, "error": f"timed out after {timeout}s"}
+        # Also `unavailable`: a command that ran out of time did not fail, and
+        # recording "we do not know" as "it failed" throws away the one
+        # distinction the rest of this module is careful to keep.
+        return {**_unavailable(
+            f"timed out after {timeout}s",
+            "raise `commands.timeout` in .forge/config.yaml, pass --timeout, "
+            "or make the command faster",
+        ), "cmd": line}
     except OSError as exc:
         return {"status": "fail", "cmd": line, "error": str(exc)}
     tail = completed.stderr.decode("utf-8", "replace").strip().splitlines()
@@ -127,12 +185,20 @@ def _deltas(repo: Path, item: Change) -> list[spec.Delta]:
 
 
 def verify(repo: Path, item: Change, *, waived: tuple[str, ...] = (),
-           timeout: int = 900, run_commands: bool = True) -> dict:
+           timeout: int | None = None, run_commands: bool = True) -> dict:
     """Produce the verification report. Writes nothing; the caller decides."""
     from .validate import Issue
 
     gates: dict[str, dict] = {}
     commands = _commands(repo)
+    if timeout is None:
+        # `commands.timeout` sits beside the commands it bounds, because
+        # how long a suite takes is a property of the project, not of the
+        # kernel that starts it.
+        try:
+            timeout = max(1, int(commands.get('timeout', DEFAULT_TIMEOUT)))
+        except (TypeError, ValueError):
+            timeout = DEFAULT_TIMEOUT
 
     # 1. build / typecheck / lint / tests
     for name in ("build", "typecheck", "lint", "tests"):

@@ -33,6 +33,7 @@ __all__ = [
     "CHANGES_DIR",
     "ARCHIVE_DIR",
     "META_FILE",
+    "TEMPLATE_MARKER",
     "ArtifactState",
     "list_changes",
     "find_change",
@@ -43,6 +44,13 @@ __all__ = [
 CHANGES_DIR = "changes"
 ARCHIVE_DIR = "changes/archive"
 META_FILE = ".forge.yaml"
+
+#: A scaffolded artifact carries this line until its author deletes it. An
+#: artifact's state is read from the filesystem, so without a marker the act of
+#: writing a template would mark the artifact complete - the tool would answer
+#: "done" for a file nobody has written a word of, which is worse than having
+#: no template at all.
+TEMPLATE_MARKER = "<!-- forge:template -->"
 
 _DIR_RE = re.compile(r"\A(?P<number>\d{4})-(?P<slug>[a-z0-9][a-z0-9-]*)\Z")
 _TASK_RE = re.compile(r"^\s*[-*]\s*\[(?P<mark>[ xX])\]\s*(?P<text>.+?)\s*$", re.M)
@@ -146,6 +154,15 @@ class Change:
             matches = [target] if target.is_file() else []
         return [p.relative_to(self.repo).as_posix() for p in matches]
 
+    def is_template(self, relative: str) -> bool:
+        """Whether a scaffolded file is still carrying its marker."""
+        target = self.repo / relative
+        try:
+            return TEMPLATE_MARKER in target.read_text(
+                encoding="utf-8", errors="replace")[:4096]
+        except OSError:
+            return False
+
     def state(self, schema: Schema) -> list[ArtifactState]:
         """Every artifact in the schema, with its state on this change's track."""
         track = self.track
@@ -155,14 +172,19 @@ class Change:
         for artifact in schema.artifacts:
             requirement = artifact.requirement_for(track)
             files = self.files_for(artifact)
-            if files:
+            # An untouched template is a file, not an artifact. Counting it
+            # would let `forge change new` scaffold a change straight into
+            # "complete" and let every gate downstream run against boilerplate.
+            blank = [f for f in files if self.is_template(f)]
+            written = [f for f in files if f not in blank]
+            if written:
                 complete.add(artifact.id)
 
             if requirement == ABSENT:
                 states.append(ArtifactState(artifact, NOT_ON_TRACK, files=files))
                 continue
-            if files:
-                states.append(ArtifactState(artifact, COMPLETE, files=files))
+            if written:
+                states.append(ArtifactState(artifact, COMPLETE, files=written))
                 continue
 
             skip_reason = (self.skipped(artifact.skip_key)
@@ -182,6 +204,9 @@ class Change:
             waiting = [r for r in schema.requires_on(artifact, track) if r not in complete]
             states.append(ArtifactState(
                 artifact, BLOCKED if waiting else MISSING, waiting_on=waiting,
+                files=blank,
+                reason=("scaffolded, not yet written - delete the "
+                        f"`{TEMPLATE_MARKER}` line once it is" if blank else ""),
             ))
         return states
 
@@ -196,13 +221,34 @@ class Change:
     # -- tasks -------------------------------------------------------------
 
     def tasks(self) -> list[tuple[bool, str]]:
-        """`- [x] text` lines from tasks.md. Done-ness is the checkbox."""
+        """`- [x] text` items from tasks.md. Done-ness is the checkbox.
+
+        An item is a bullet, not a line. Markdown authors wrap long tasks, and
+        matching per line drops every continuation - which made a `REQ-` id
+        written on the second line invisible, so
+        `trace.requirement_task_coverage` blocked with a page of errors that
+        were all wrong. See `PIT-bullet-continuation-lines`: the same defect
+        was found and fixed in `bootstrap.py#_bullets` and not written down,
+        so it was written again here.
+        """
         target = self.root / "tasks.md"
         if not target.is_file():
             return []
         text = target.read_text(encoding="utf-8", errors="replace")
-        return [(m.group("mark").lower() == "x", m.group("text"))
-                for m in _TASK_RE.finditer(text)]
+
+        items: list[tuple[bool, str]] = []
+        for line in text.split("\n"):
+            match = _TASK_RE.match(line)
+            if match:
+                items.append((match.group("mark").lower() == "x",
+                              match.group("text")))
+            elif items and line.strip() and line[:1] in " \t":
+                # Indented, non-blank, and following an item: a wrapped line.
+                # The indent requirement is what keeps an unindented paragraph
+                # after the list from being swallowed into the last task.
+                done, prior = items[-1]
+                items[-1] = (done, f"{prior} {line.strip()}")
+        return items
 
     # -- writing -----------------------------------------------------------
 

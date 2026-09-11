@@ -133,6 +133,49 @@ def _permanent_requirements(repo: Path) -> dict[str, tuple[str, int, str]]:
     return out
 
 
+def _delta_requirements(repo: Path) -> dict[str, tuple[str, int, str]]:
+    """`REQ-*` promised by the spec deltas of changes that are still open.
+
+    Without these, a change is reported as carrying dangling references from
+    the moment it writes its spec until the moment it is archived - which is
+    the whole time anybody is working on it, and makes `forge status` read as
+    a broken store during normal use. The comment above `_permanent_requirements`
+    records that this same surprise was fixed once, for folded requirements;
+    it was not fixed for unfolded ones.
+
+    A delta's requirement is a *promise*, not yet a permanent definition, so it
+    is marked `provisional` and the archive fold is what makes it permanent.
+    """
+    from .change import CHANGES_DIR
+    from .spec import capability_of, delta_files, parse_delta
+
+    root = repo / CHANGES_DIR
+    if not root.is_dir():
+        return {}
+    out: dict[str, tuple[str, int, str]] = {}
+    for change_dir in sorted(p for p in root.iterdir() if p.is_dir()):
+        if change_dir.name == "archive":
+            continue
+        relative = change_dir.relative_to(repo).as_posix()
+        for path in delta_files(repo, relative):
+            text = (repo / path).read_text(encoding="utf-8", errors="replace")
+            try:
+                delta = parse_delta(text, path, capability_of(path, relative))
+            except ValueError:
+                # A delta that does not parse is `spec.grammar`'s finding to
+                # report, not a reason for the index to refuse to build.
+                continue
+            for verb, group in delta.sections.items():
+                if verb == "REMOVED":
+                    # A delta that removes a requirement does not define it.
+                    continue
+                for requirement in group:
+                    target = requirement.renamed_to or requirement.id
+                    out.setdefault(target, (path, requirement.line,
+                                            requirement.title))
+    return out
+
+
 def build_trace(repo: Path) -> dict:
     """Compute the index from claims, ADRs, specs, changes and the derived tier."""
     claims = store.load_store(repo)
@@ -170,6 +213,18 @@ def build_trace(repo: Path) -> dict:
         entry["kind"] = "requirement"
         entry["title"] = title
         entry["defined_in"] = f"{path}:{line}"
+
+    # Open changes define theirs provisionally. A permanent spec always wins:
+    # once a change is folded, the requirement's home is the spec, and a stale
+    # delta left behind must not move it back.
+    for identifier, (path, line, title) in _delta_requirements(repo).items():
+        if identifier in by_id and by_id[identifier]["defined_in"]:
+            continue
+        entry = by_id.setdefault(identifier, _empty_entry(identifier))
+        entry["kind"] = "requirement"
+        entry["title"] = title
+        entry["defined_in"] = f"{path}:{line}"
+        entry["provisional"] = True
 
     for identifier, decision in decisions.items():
         entry = by_id.setdefault(identifier, _empty_entry(identifier))
@@ -235,6 +290,8 @@ def _empty_entry(identifier: str) -> dict:
         "title": None,
         "defined_in": None,      # None means "referenced but never defined"
         "candidate": False,
+        #: True for a requirement an open change promises but has not folded.
+        "provisional": False,
         "anchors": [],
         "anchor_paths": [],
         "evidence": [],

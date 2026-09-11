@@ -27,8 +27,9 @@ claim-touch rule caught all three. It also refused to archive. The mechanism wor
 **The verdict can never be `pass` on this repository**, for three independent reasons
 found only by running it. They are items R1, R3 and R5 below.
 
-The run produced sixteen findings. Ten are defects in the kernel, three are gaps in the
-design, and three are friction. The ones that change this roadmap's order:
+The run produced sixteen findings, and repairing them surfaced a seventeenth. Eleven are
+defects in the kernel, three are gaps in the design, and three are friction. The ones
+that change this roadmap's order:
 
 | # | Finding | Where |
 |---|---|---|
@@ -43,6 +44,7 @@ design, and three are friction. The ones that change this roadmap's order:
 | F8 | The one gate at `implement:task:post` says "Owed by: M4". M4 shipped and did not bring it | [gates.py:58](../src/forge/gates.py:58) |
 | F1 | `forge change show 1` is positional; every other change-scoped command takes `--change`. `change show` prints the flag form in its own "Next:" line | [cli.py](../src/forge/cli.py) |
 | F16 | The trace index takes `REQ-` **definitions** only from `docs/system/specs/**`, so every open change with new requirements reports them as dangling references on `forge status` until it is archived. An in-progress change makes the status screen look broken | [trace.py:168](../src/forge/trace.py:168) |
+| F17 | `CHANGING = ("Updated", "Superseded")` omits `New`, so a change that **adds** a claim can never satisfy the claim-touch rule - and adding a claim is the single most common knowledge action there is. Found while fixing F15; [WORKFLOW.md](../WORKFLOW.md) §3.4's own worked example files a new invariant under `New` | [impact.py:57](../src/forge/impact.py:57) |
 
 F5 is the one to read twice. A defect was found, fixed, and never written down, so the
 same line-based match was written again three days later in a different file. It is now
@@ -53,13 +55,26 @@ stated in one incident.
 
 ## 2. R1-R3: make the harness able to finish
 
-Nothing else matters until a change can reach a verdict. Today it cannot.
+Nothing else matters until a change can reach a verdict.
 
-### R1 - Per-claim edit detection **(P0)**
+> **Done 2026-09-11**, in one pass rather than through the lifecycle, because every item
+> below blocks the lifecycle itself: R1, R3, and the small repairs F5, F2 and F16.
+> Fixing them surfaced **F17** — `CHANGING` omitted `New`, so the claim-touch rule
+> rejected every change that recorded a new claim, which is the single most common thing
+> a change should do. Both errors are recorded in
+> [SYSTEM_KNOWLEDGE.md](../SYSTEM_KNOWLEDGE.md) §9.2 where the original was wrong.
+> What remains open here is **R2**, and R5 below.
+
+### R1 - Per-claim edit detection **(P0, done)**
 
 Fix F15. Use `Claim.line` and `Claim.end_line` against the diff's hunk line ranges
 instead of `claim.file in radius`. `gitio` needs one new call returning changed line
 ranges per path.
+
+Shipped as `gitio.changed_line_ranges` and `impact._overlaps`. A claim with no recorded
+`end_line` falls back to its heading line alone, never to the whole file: falling back to
+the file would quietly restore the behaviour this replaces, in exactly the case where the
+parser already knows something is wrong.
 
 Why first: this is the failure mode [OPEN_QUESTIONS.md Q3](../OPEN_QUESTIONS.md) names -
 `Unaffected` accounting degrading into rubber-stamping - and it arrived on the first
@@ -77,18 +92,21 @@ soften the `impact:post` instance to advisory with honest wording: on track C it
 forecast, and its current advice ("the anchors are pointing at the wrong files") is
 wrong for every claim by construction.
 
-### R3 - A verification that can distinguish "unknown" from "failed" **(P0)**
+### R3 - A verification that can distinguish "unknown" from "failed" **(P0, done)**
 
-Fix F14 and F10/F13.
+Fix F14 and F10/F13. Shipped:
 
-- `commands.timeout` in config, and a `--timeout` flag.
-- A timed-out command records `status: unknown`, not `fail` - `verify.py` already
-  distinguishes `unavailable` from `pending` for precisely this kind of honesty.
-- Resolve a bare console script against the project's own interpreter before falling
-  back to the shell, so `pytest` detected by bootstrap actually runs.
-- `forge doctor` should check that every `commands.*` line resolves, and say so.
+- `commands.timeout` in config and a `--timeout` flag, over a `DEFAULT_TIMEOUT` of 900.
+- A timed-out or unresolvable command records `unavailable`, not `fail`. `unavailable`
+  already meant "the project owes this" and blocks the verdict without claiming the suite
+  ran and lost, which is the one thing this report must never say.
+- `verify.resolve_command` checks the first token before the shell sees it, and names the
+  project's own `.venv` binary in the message when it finds one. Anything containing a
+  separator, quote, operator or `=` is handed to the shell untouched.
 
-Then re-run change 0001 and see whether the verdict moves.
+Still open: `forge doctor` should check that every `commands.*` line resolves, and say so.
+That is where a new project should meet this problem, rather than twenty minutes into its
+first verification.
 
 ---
 
@@ -181,19 +199,27 @@ recommends this and nothing implements it).
 
 ## 6. R10-R12: the smaller repairs
 
-- **R10 - Artifact templates (P2).** Fix F2: either emit the declared templates on
-  `forge change new`, or delete `template:` from the schema. A field that is parsed,
-  validated and never read is a promise the loader keeps and the tool breaks.
+- **R10 - Artifact templates (P2, done).** Fix F2. `forge instructions <artifact> --change
+  N --write` scaffolds the declared template; `--write NAME` names the file for an
+  artifact generating a glob, because `spec/**/*.md` is a shape and guessing the
+  capability would produce `spec/spec.md` on every change. Each template opens with
+  `<!-- forge:template -->`, and an artifact still carrying that line is **not** complete -
+  otherwise scaffolding a change would walk it straight to "done" and every gate
+  downstream would run against boilerplate. `verification.json` deliberately has no
+  template: it is generated, and a template for it would be a place to write a result by
+  hand.
 - **R11 - CLI consistency (P3).** Fix F1: `forge change show --change 1`, keeping the
   positional form as an alias.
 - **R12 - Honest debt labels (P3).** Fix F8: `task.scope_and_covers` is owed by nobody
   now that M4 has shipped. Either schedule it or say it is unscheduled.
-- **R13 - Open deltas define their requirements (P2).** Fix F16: index `REQ-` definitions
-  from open changes' spec deltas as well as from the permanent specs, marked as
-  provisional. The comment at [trace.py:166](../src/forge/trace.py:166) already records
-  that this exact surprise - dangling references at the end of a correct workflow - was
-  fixed once for folded requirements; it was not fixed for unfolded ones, so the first
-  thing a user sees while a change is open is a store that looks broken.
+- **R13 - Open deltas define their requirements (P2, done).** Fix F16. `trace` now indexes
+  `REQ-` from open changes' spec deltas, marked `provisional`; a permanent spec always
+  wins, so a stale delta cannot move a folded requirement back. `REMOVED` defines nothing,
+  and the archive is not a definition.
+- **R14 - A task is a bullet, not a line (P1, done).** Fix F5, and the reason
+  `PIT-bullet-continuation-lines` exists. `Change.tasks()` joins indented continuation
+  lines; the indent requirement is what stops a closing paragraph being swallowed into the
+  last task.
 
 ---
 
@@ -234,6 +260,9 @@ testing the parts. What they could not test was a change reaching the end.
 
 ## Order, in one line
 
-R1, R2, R3 (a change can finish) → R4 (the ledger, and the README stops overclaiming) →
-R5, R6 (an existing repository survives contact) → R8 (the other agents) → everything
-else, measured.
+~~R1, R3~~, R2 (a change can finish) → **R4 (the ledger)** → R5, R6 (an existing
+repository survives contact) → R8 (the other agents) → everything else, measured.
+
+The immediate next step is the second dogfood run: `forge init` and a full track C change
+on a repository that is not this one, which is the only thing that can say whether the
+repairs above actually cleared the path.

@@ -52,9 +52,15 @@ __all__ = [
 HEADINGS = ("Unaffected", "Updated", "New", "Superseded", "At risk")
 
 #: Headings that count as "this claim changes". A claim whose own definition
-#: file the diff edited must be under one of these: editing a claim while
-#: filing it as Unaffected is the exact move the rule exists to stop.
-CHANGING = ("Updated", "Superseded")
+#: the diff edited must be under one of these: editing a claim while filing it
+#: as Unaffected is the exact move the rule exists to stop.
+#:
+#: `New` belongs here. A claim this change introduces has, trivially, had its
+#: definition edited - the diff is where it came from - and without `New` the
+#: rule rejects every change that records a piece of knowledge, which is the
+#: single most common thing a change should do. Leaving it out made adding one
+#: pitfall claim unsatisfiable by any account that was also true.
+CHANGING = ("Updated", "New", "Superseded")
 
 _SECTION_RE = re.compile(r"^##\s+Claims\s+touched\s*$", re.M | re.I)
 _HEADING_RE = re.compile(r"^###\s+(?P<heading>.+?)\s*$", re.M)
@@ -140,6 +146,18 @@ def resolve_base(repo: Path, item: Change, override: str | None = None) -> str:
     return gitio.rev_parse(repo, "HEAD")
 
 
+def _overlaps(ranges: list[tuple[int, int]], start: int, end: int) -> bool:
+    """Whether any changed range intersects the claim's own [start, end] lines.
+
+    A claim with no recorded ``end_line`` (an unparseable fence, say) falls
+    back to its heading line alone. Falling back to "the whole file" instead
+    would quietly restore the file-level behaviour this replaces, in exactly
+    the case where the parser already knows something is wrong.
+    """
+    last = end if end >= start else start
+    return any(hi >= start and lo <= last for lo, hi in ranges)
+
+
 def _is_component_glob(claim: Claim, value: str) -> bool:
     """Component anchors are read as globs; other kinds are read as paths.
 
@@ -170,6 +188,10 @@ def compute_impact(repo: Path, item: Change, *, base: str | None = None) -> Impa
     radius = set(changed) | reverse
     claims = store.load_store(repo)
     touched: dict[str, ClaimTouch] = {}
+    # Memoised per file: several claims share one claim file, and asking git
+    # for the same file's hunks once per claim is the difference between one
+    # subprocess and forty.
+    edited_ranges: dict[str, list[tuple[int, int]]] = {}
 
     def note(claim: Claim, reason: str) -> None:
         entry = touched.setdefault(claim.id, ClaimTouch(claim.id, claim))
@@ -204,8 +226,19 @@ def compute_impact(repo: Path, item: Change, *, base: str | None = None) -> Impa
             if target and target in radius:
                 note(claim, f"evidence {kind.strip()} {target}")
 
+        # File-level would be wrong here, and wrong in the direction that
+        # matters: appending one new claim to a shared file would mark every
+        # other claim in it as having had its definition edited, and the rule
+        # then demands each be re-filed as `Updated`. The only ways through
+        # are to write `Updated` about a claim nobody updated, or to split
+        # every claim into its own file - which is the rubber-stamping
+        # OPEN_QUESTIONS.md Q3 asks about, arriving by the front door.
         if claim.file in radius:
-            note(claim, f"its own definition in {claim.file} was edited")
+            if claim.file not in edited_ranges:
+                edited_ranges[claim.file] = gitio.changed_line_ranges(
+                    repo, resolved_base, claim.file)
+            if _overlaps(edited_ranges[claim.file], claim.line, claim.end_line):
+                note(claim, f"its own definition in {claim.file} was edited")
 
     return Impact(
         change=item.name,

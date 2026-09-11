@@ -352,6 +352,51 @@ def diff_is_whitespace_only(repo: Path, base: str, head: str, path: str) -> bool
     return ignoring == ""
 
 
+_HUNK_RE = re.compile(r"^@@ -\d+(?:,\d+)? \+(?P<start>\d+)(?:,(?P<count>\d+))? @@")
+
+
+def changed_line_ranges(repo: Path, base: str, path: str,
+                        *, head: str | None = None) -> list[tuple[int, int]]:
+    """Inclusive 1-based line ranges of *path* that differ from *base*.
+
+    Line numbers are in the **head** file, because every caller asks the same
+    question - which of the things currently written here did this change
+    touch - and that question is about the file as it stands now.
+
+    An untracked or newly added file has no baseline to diff against, so the
+    whole file is reported changed: ``[(1, <line count>)]``. Returning nothing
+    there would quietly answer "you changed none of it".
+
+    A pure deletion hunk (``@@ -10,3 +9,0 @@``) records a count of zero. It is
+    reported as the single line it collapsed to, so that a claim whose body was
+    deleted still intersects something; dropping zero-width hunks would make
+    "the diff removed this claim's definition" invisible.
+    """
+    base = validate_rev(base)
+    path = validate_repo_path(path)
+
+    args = ["diff", "-U0", "--no-color", "--find-renames", base]
+    if head is not None:
+        args.append(validate_rev(head))
+    out = git(repo, *args, "--", path, check=False)
+
+    ranges: list[tuple[int, int]] = []
+    for line in out.splitlines():
+        match = _HUNK_RE.match(line)
+        if not match:
+            continue
+        start = int(match.group("start"))
+        count = int(match.group("count") or 1)
+        ranges.append((start, start + count - 1) if count else (start, start))
+
+    if not ranges and not exists_at(repo, base, path):
+        target = repo / path
+        if target.is_file():
+            total = target.read_bytes().count(b"\n") + 1
+            return [(1, total)]
+    return ranges
+
+
 def is_repo(path: Path) -> bool:
     completed = subprocess.run(
         ["git", "-C", str(path), "rev-parse", "--git-dir"],

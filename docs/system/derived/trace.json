@@ -15,6 +15,7 @@
         "id": "ADR-0001",
         "justifies": [],
         "kind": "decision",
+        "provisional": false,
         "referenced_by_adr": [],
         "references": [
           "CON-anchor",
@@ -51,6 +52,7 @@
         "id": "CON-anchor",
         "justifies": [],
         "kind": "concept",
+        "provisional": false,
         "referenced_by_adr": [
           "ADR-0001"
         ],
@@ -80,6 +82,7 @@
         "id": "CON-claim",
         "justifies": [],
         "kind": "concept",
+        "provisional": false,
         "referenced_by_adr": [
           "ADR-0001"
         ],
@@ -107,6 +110,7 @@
         "id": "CON-derived-tier",
         "justifies": [],
         "kind": "concept",
+        "provisional": false,
         "referenced_by_adr": [
           "ADR-0001"
         ],
@@ -136,6 +140,7 @@
         "id": "INV-derived-bytes-stable",
         "justifies": [],
         "kind": "invariant",
+        "provisional": false,
         "referenced_by_adr": [
           "ADR-0001"
         ],
@@ -167,6 +172,7 @@
         "id": "INV-regeneration-is-a-no-op",
         "justifies": [],
         "kind": "invariant",
+        "provisional": false,
         "referenced_by_adr": [
           "ADR-0001"
         ],
@@ -196,6 +202,7 @@
         "id": "PIT-bullet-continuation-lines",
         "justifies": [],
         "kind": "pitfall",
+        "provisional": false,
         "referenced_by_adr": [],
         "references": [],
         "since": null,
@@ -223,6 +230,7 @@
         "id": "PIT-derived-self-reference",
         "justifies": [],
         "kind": "pitfall",
+        "provisional": false,
         "referenced_by_adr": [
           "ADR-0001"
         ],
@@ -252,6 +260,7 @@
         "id": "PIT-markdown-bullet-is-not-a-diff",
         "justifies": [],
         "kind": "pitfall",
+        "provisional": false,
         "referenced_by_adr": [
           "ADR-0001"
         ],
@@ -281,6 +290,7 @@
         "id": "PIT-regex-across-newlines",
         "justifies": [],
         "kind": "pitfall",
+        "provisional": false,
         "referenced_by_adr": [
           "ADR-0001"
         ],
@@ -299,20 +309,21 @@
         "changes": [
           "0001-drift-reads-the-claim-store"
         ],
-        "defined_in": null,
+        "defined_in": "changes/0001-drift-reads-the-claim-store/spec/drift.md:44",
         "evidence": [],
         "governed_by": [],
         "governs": [],
         "id": "REQ-drift-changed-only",
         "justifies": [],
-        "kind": null,
+        "kind": "requirement",
+        "provisional": true,
         "referenced_by_adr": [],
         "references": [],
         "since": null,
         "status": null,
         "supersedes": null,
         "tests": [],
-        "title": null
+        "title": "Drift can be narrowed to the current diff"
       },
       "REQ-drift-never-rewrites": {
         "anchor_paths": [],
@@ -322,20 +333,21 @@
         "changes": [
           "0001-drift-reads-the-claim-store"
         ],
-        "defined_in": null,
+        "defined_in": "changes/0001-drift-reads-the-claim-store/spec/drift.md:63",
         "evidence": [],
         "governed_by": [],
         "governs": [],
         "id": "REQ-drift-never-rewrites",
         "justifies": [],
-        "kind": null,
+        "kind": "requirement",
+        "provisional": true,
         "referenced_by_adr": [],
         "references": [],
         "since": null,
         "status": null,
         "supersedes": null,
         "tests": [],
-        "title": null
+        "title": "A drift scan never edits a claim"
       },
       "REQ-drift-store-scan": {
         "anchor_paths": [],
@@ -345,30 +357,27 @@
         "changes": [
           "0001-drift-reads-the-claim-store"
         ],
-        "defined_in": null,
+        "defined_in": "changes/0001-drift-reads-the-claim-store/spec/drift.md:11",
         "evidence": [],
         "governed_by": [],
         "governs": [],
         "id": "REQ-drift-store-scan",
         "justifies": [],
-        "kind": null,
+        "kind": "requirement",
+        "provisional": true,
         "referenced_by_adr": [],
         "references": [],
         "since": null,
         "status": null,
         "supersedes": null,
         "tests": [],
-        "title": null
+        "title": "Drift can be asked of the whole claim store"
       }
     },
     "summary": {
       "candidates": 2,
       "claims": 7,
-      "dangling_references": [
-        "REQ-drift-changed-only",
-        "REQ-drift-never-rewrites",
-        "REQ-drift-store-scan"
-      ],
+      "dangling_references": [],
       "decisions": 1,
       "ids_indexed": 13,
       "invariants_without_tests": [],
@@ -376,7 +385,7 @@
       "tests_total": 523
     }
   },
-  "generated_from_commit": "b57444084191c4977e05e823af952d27150005a6",
+  "generated_from_commit": "4501de0f00a19206c65691772ea4c68c7290aef2",
   "generator": "forge sync derived",
   "tool": "forge"
 }

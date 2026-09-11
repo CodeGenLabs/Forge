@@ -678,6 +678,11 @@ def _cmd_change_show(args: argparse.Namespace) -> int:
             detail = f"  skipped: {state.reason}"
         elif state.state == change.NOT_ON_TRACK:
             detail = f"  not on track {item.track}"
+        if state.state == change.MISSING and state.reason:
+            # A scaffolded-but-unwritten artifact looks identical to an absent
+            # one on this screen otherwise, and the difference is exactly what
+            # the author needs to know.
+            detail = f"  {state.reason}"
         print(f"  {marks[state.state]} {state.id:14}{detail}")
 
     tasks = item.tasks()
@@ -916,7 +921,7 @@ def _cmd_verify(args: argparse.Namespace) -> int:
         return item if isinstance(item, int) else _EXIT_USAGE
 
     report = verify.verify(repo, item, waived=tuple(args.waive or ()),
-                           run_commands=not args.no_run)
+                           run_commands=not args.no_run, timeout=args.timeout)
     target = verify.write_verification(repo, item, report)
 
     if args.json:
@@ -1008,6 +1013,51 @@ def _cmd_archive(args: argparse.Namespace) -> int:
     return _EXIT_OK
 
 
+def _scaffold_artifact(repo: Path, item, resolved: dict, name: str) -> str | None | int:
+    """Write one artifact's template if it is absent. Returns the path, or None."""
+    generates = resolved.get("generates") or ""
+    if not generates:
+        print(f"forge: {resolved['artifact']} generates nothing to scaffold",
+              file=sys.stderr)
+        return _EXIT_USAGE
+
+    if any(ch in generates for ch in "*?["):
+        # `spec/**/*.md` names a shape, not a file. The capability name is the
+        # author's to choose, and guessing it would produce `spec/spec.md` on
+        # every change - a name that tells a later reader nothing.
+        if not name:
+            print(f"forge: {resolved['artifact']} generates {generates}; pass "
+                  f"--write NAME to say which file", file=sys.stderr)
+            return _EXIT_USAGE
+        stem = change.slugify(name)
+        if not stem:
+            print(f"forge: {name!r} is not a usable file name", file=sys.stderr)
+            return _EXIT_USAGE
+        relative = f"{generates.split('*', 1)[0].rstrip('/')}/{stem}.md"
+    else:
+        relative = generates
+        stem = ""
+
+    # `generates` is already repository-relative, so it is resolved against the
+    # repo and not against the change directory. Joining it to `item.root`
+    # produced `changes/0002-x/changes/0002-x/proposal.md` - the same mistake
+    # the `${change}` substitution made in `instructions.py`.
+    target = repo / relative
+    if target.exists():
+        print(f"forge: {relative} already exists; not overwriting", file=sys.stderr)
+        return None
+
+    body = scaffold.change_template(resolved["artifact"], item.slug.replace("-", " "),
+                                    stem=stem)
+    if body is None:
+        print(f"forge: {resolved['artifact']} has no template - it is generated",
+              file=sys.stderr)
+        return _EXIT_USAGE
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(body, encoding="utf-8", newline="\n")
+    return relative
+
+
 def _cmd_instructions(args: argparse.Namespace) -> int:
     repo = args.repo.resolve()
     if not gitio.is_repo(repo):
@@ -1022,11 +1072,19 @@ def _cmd_instructions(args: argparse.Namespace) -> int:
         print(f"forge: {exc}", file=sys.stderr)
         return _EXIT_USAGE
 
+    written = None
+    if args.write is not None:
+        written = _scaffold_artifact(repo, item, resolved, args.write)
+        if isinstance(written, int):
+            return written
+
     if args.json:
-        print(json.dumps(resolved, indent=2, sort_keys=True))
+        print(json.dumps({**resolved, "written": written}, indent=2, sort_keys=True))
         return _EXIT_OK
 
     print(f"{resolved['artifact']}  ->  {resolved['generates'] or '(generated)'}")
+    if written:
+        print(f"  wrote     {written}  (delete the template marker once written)")
     print(f"  track {resolved['track']}, {resolved['required']}")
     if resolved["blocked_by"]:
         print(f"  blocked by: {', '.join(resolved['blocked_by'])}")
@@ -1418,6 +1476,9 @@ def build_parser() -> argparse.ArgumentParser:
                      help="skip build/test commands and record them as unproven")
     ver.add_argument("--repo", type=Path, default=Path.cwd())
     ver.add_argument("--json", action="store_true")
+    ver.add_argument("--timeout", type=int, default=None,
+                     help="seconds per command; default `commands.timeout` "
+                          f"in .forge/config.yaml, else {verify.DEFAULT_TIMEOUT}")
     ver.set_defaults(func=_cmd_verify)
 
     arch = sub.add_parser(
@@ -1445,6 +1506,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     instr.add_argument("artifact")
     instr.add_argument("--change", required=True)
+    instr.add_argument(
+        "--write", nargs="?", const="", metavar="NAME",
+        help="also scaffold the artifact file from its template, if absent. "
+             "NAME names the file for an artifact that generates a glob "
+             "(`--write payments` writes spec/payments.md)")
     instr.add_argument("--repo", type=Path, default=Path.cwd())
     instr.add_argument("--json", action="store_true")
     instr.set_defaults(func=_cmd_instructions)
