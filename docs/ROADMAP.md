@@ -27,8 +27,8 @@ claim-touch rule caught all three. It also refused to archive. The mechanism wor
 **The verdict can never be `pass` on this repository**, for three independent reasons
 found only by running it. They are items R1, R3 and R5 below.
 
-The run produced fifteen findings. Nine are defects in the kernel, three are gaps in
-the design, and three are friction. The ones that change this roadmap's order:
+The run produced sixteen findings. Ten are defects in the kernel, three are gaps in the
+design, and three are friction. The ones that change this roadmap's order:
 
 | # | Finding | Where |
 |---|---|---|
@@ -42,6 +42,7 @@ the design, and three are friction. The ones that change this roadmap's order:
 | F6 | `classify` compares committed revisions, so `--changed` selects by the working diff and still classifies against HEAD. A file edited and uncommitted is reported fresh | [anchor.py](../src/forge/anchor.py) |
 | F8 | The one gate at `implement:task:post` says "Owed by: M4". M4 shipped and did not bring it | [gates.py:58](../src/forge/gates.py:58) |
 | F1 | `forge change show 1` is positional; every other change-scoped command takes `--change`. `change show` prints the flag form in its own "Next:" line | [cli.py](../src/forge/cli.py) |
+| F16 | The trace index takes `REQ-` **definitions** only from `docs/system/specs/**`, so every open change with new requirements reports them as dangling references on `forge status` until it is archived. An in-progress change makes the status screen look broken | [trace.py:168](../src/forge/trace.py:168) |
 
 F5 is the one to read twice. A defect was found, fixed, and never written down, so the
 same line-based match was written again three days later in a different file. It is now
@@ -187,6 +188,12 @@ recommends this and nothing implements it).
   positional form as an alias.
 - **R12 - Honest debt labels (P3).** Fix F8: `task.scope_and_covers` is owed by nobody
   now that M4 has shipped. Either schedule it or say it is unscheduled.
+- **R13 - Open deltas define their requirements (P2).** Fix F16: index `REQ-` definitions
+  from open changes' spec deltas as well as from the permanent specs, marked as
+  provisional. The comment at [trace.py:166](../src/forge/trace.py:166) already records
+  that this exact surprise - dangling references at the end of a correct workflow - was
+  fixed once for folded requirements; it was not fixed for unfolded ones, so the first
+  thing a user sees while a change is open is a store that looks broken.
 
 ---
 
