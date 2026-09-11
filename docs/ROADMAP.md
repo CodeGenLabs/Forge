@@ -85,12 +85,22 @@ gate still prints `pass`.
 **Stop condition:** if hunk-range mapping proves unreliable across renames, fall back to
 "the claim's heading line is inside a changed hunk" and say so - do not keep file-level.
 
-### R2 - Move the claim-touch gate to where the diff exists **(P0)**
+### R2 - Move the claim-touch gate to where the diff exists **(P0, done)**
 
-Fix F3. Declare `trace.claim_touch_complete` at `sync:pre` as well as `impact:post`, and
-soften the `impact:post` instance to advisory with honest wording: on track C it is a
-forecast, and its current advice ("the anchors are pointing at the wrong files") is
-wrong for every claim by construction.
+Fix F3. `trace.claim_touch_complete` is now declared twice: advisory at `impact:post`,
+blocking at `sync:pre`. Eleven gates at nine points, and the count went up by adding a
+decision point rather than a check.
+
+By `sync:pre` the code exists, so the computed set is the real one - which is where
+[MVP.md](../MVP.md) §5 criterion 5 is enforced, or nowhere. At `impact:post` on track C
+the diff holds the change's artifacts and no code, so blocking there means blocking on a
+forecast; it still reports everything it finds, because `blocking` decides the exit code
+and never whether the reader is told.
+
+The wrong advice is fixed too, and split three ways: a claim under `Nearby` is told
+nothing is owed, an account written against an empty diff is told it is a forecast that
+`sync:pre` will check, and only a genuinely unreachable claim is told its anchors may
+point at the wrong place. One message for three situations was wrong for two of them.
 
 ### R3 - A verification that can distinguish "unknown" from "failed" **(P0, done)**
 

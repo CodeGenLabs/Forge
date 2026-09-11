@@ -1,6 +1,6 @@
 """Declarative gates: `(point, check, blocking)` triples, run by name.
 
-GSD's model, kept and shrunk. The number is a budget, not an accident: ten
+GSD's model, kept and shrunk. The number is a budget, not an accident: eleven
 gates at nine points, against GSD's fourteen at `plan:pre` alone. Every gate
 has to be justifiable in one sentence, and gates that never fire get deleted.
 
@@ -37,6 +37,10 @@ __all__ = ["Gate", "GateResult", "DEFAULT_GATES", "POINTS", "load_gates", "run_g
 # points" and then lists ten at nine. The list is the specification; the count
 # was a sentence written before it. Rather than invent two gates to reach
 # twelve, the list is implemented as written.*
+#
+# *Eleven at nine since R2: `trace.claim_touch_complete` is declared twice, at
+# two points that want different answers from it. The count went up by adding
+# a decision point rather than a check.*
 _DEFAULT_GATES_YAML = """\
 - point: investigate:pre
   check: derived.freshness
@@ -45,9 +49,16 @@ _DEFAULT_GATES_YAML = """\
 - point: spec:post
   check: store.spec_grammar
   blocking: true
+# Advisory here, blocking at `sync:pre`. On track C the DAG orders `impact`
+# before `implement`, so at this point the diff holds the change's artifacts
+# and no code: the account is a forecast, and blocking on a forecast means
+# blocking on an empty set. Measured - it passed an `impact.md` that `forge
+# verify` failed twenty minutes later, and the six warnings it printed advised
+# checking anchors that were correct.
 - point: impact:post
   check: trace.claim_touch_complete
-  blocking: true
+  blocking: false
+  onError: skip
 - point: analyze:post
   check: trace.requirement_task_coverage
   blocking: true
@@ -65,6 +76,14 @@ _DEFAULT_GATES_YAML = """\
   blocking: true
 - point: sync:pre
   check: store.valid
+  blocking: true
+# The same check again, and this time it decides. By `sync:pre` the code
+# exists, so the computed touch set is the real one and the account either
+# covers it or does not. MVP.md's definition-of-done criterion 5 - a claim
+# edited without being accounted for, and the harness refuses - is enforced
+# here or nowhere.
+- point: sync:pre
+  check: trace.claim_touch_complete
   blocking: true
 - point: converge:post
   check: repo.clean

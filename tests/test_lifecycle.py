@@ -167,8 +167,19 @@ def test_the_default_table_matches_the_architecture_document(repo):
         ("verify:post", "verify.definition_of_done"),
         ("verify:post", "drift.rules_conformance"),
         ("sync:pre", "store.valid"),
+        # The claim-touch check, declared a second time. `impact:post` runs it
+        # before the code exists and only reports; this one decides.
+        ("sync:pre", "trace.claim_touch_complete"),
         ("converge:post", "repo.clean"),
     ]
+
+
+def test_the_claim_touch_check_is_advisory_early_and_blocking_late(repo):
+    """Blocking on a forecast means blocking on an empty set: at `impact:post`
+    the track-C diff holds the change's artifacts and no code."""
+    by_point = {(g.point, g.check): g for g in gates.load_gates(repo.root)}
+    assert by_point[("impact:post", "trace.claim_touch_complete")].blocking is False
+    assert by_point[("sync:pre", "trace.claim_touch_complete")].blocking is True
 
 
 def test_a_project_can_replace_the_table(project):
@@ -242,11 +253,28 @@ def test_spec_post_accepts_a_named_skip(project):
     assert not run(project, "spec:post")[0].blocks
 
 
-def test_impact_post_blocks_until_every_claim_is_accounted_for(project):
-    project.write("src/pay.py", PAY + "\n\ndef void():\n    return None\n")
-    assert run(project, "impact:post")[0].blocks
+def touch_gate(repo, point: str):
+    return next(r for r in run(repo, point)
+                if r.gate.check == "trace.claim_touch_complete")
+
+
+def test_sync_pre_blocks_until_every_claim_is_accounted_for(project):
+    """Moved here from `impact:post`, which on track C runs before any code
+    exists and so checks an account against an empty diff."""
+    project.write("src/pay.py", PAY.replace("return captured - settled",
+                                            "return max(0, captured - settled)"))
+    assert touch_gate(project, "sync:pre").blocks
     write(project, "impact.md", ACCOUNT)
-    assert not run(project, "impact:post")[0].blocks
+    assert not touch_gate(project, "sync:pre").blocks
+
+
+def test_impact_post_reports_the_same_finding_without_blocking(project):
+    """`blocking` decides the exit code, never whether the reader is told."""
+    project.write("src/pay.py", PAY.replace("return captured - settled",
+                                            "return max(0, captured - settled)"))
+    result = touch_gate(project, "impact:post")
+    assert result.blocks is False
+    assert result.errors
 
 
 def test_analyze_post_blocks_until_tasks_discharge_the_requirements(project):
@@ -483,9 +511,12 @@ def test_the_acceptance_case(project, capsys):
     project.write("src/pay.py", PAY + "\n\ndef refund(c, s, n):\n"
                                       "    if n > c - s:\n        raise ValueError\n"
                                       "    return n\n")
-    assert run(project, "impact:post")[0].blocks
+    # Reported at `impact:post`, decided at `sync:pre`: the account is a
+    # forecast until the code exists.
+    assert touch_gate(project, "impact:post").errors
+    assert touch_gate(project, "sync:pre").blocks
     write(project, "impact.md", ACCOUNT)
-    assert not run(project, "impact:post")[0].blocks
+    assert not touch_gate(project, "sync:pre").blocks
 
     assert run(project, "analyze:post")[0].blocks
     write(project, "tasks.md", TASKS)

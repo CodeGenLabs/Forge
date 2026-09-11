@@ -508,12 +508,24 @@ def check_claim_touch(repo: Path, item: Change, impact: Impact,
     for identifier in sorted(account.by_id):
         if identifier in impact.touched or identifier.startswith(("REQ-", "ADR-")):
             continue
+        # Three different situations, and the old single message gave advice
+        # that was wrong for two of them. It said "the anchors are pointing at
+        # the wrong files" - which, at `impact:post` on track C, was wrong for
+        # every claim by construction, because the diff is empty there.
+        if identifier in impact.nearby:
+            fix = ("nothing owed - the diff came close to this claim without "
+                   "reaching it. Keeping the sentence is fine if you read it")
+        elif not impact.changed_files:
+            fix = ("the diff is empty at this point, so nothing is in the set "
+                   "yet. This account is a forecast and will be checked again "
+                   "at `sync:pre`, when the code exists")
+        else:
+            fix = ("harmless, but check its anchors - if this change really "
+                   "reaches it, they are pointing at the wrong place")
         issues.append(issue(
             "WARNING", "trace.claim_touch_extra", relative,
             f"{identifier} is accounted for but is not in the computed touch set",
-            f"harmless, but check its anchors - if this change really reaches it, "
-            f"the anchors are pointing at the wrong files",
-            line=account.line_of.get(identifier), claim=identifier,
+            fix, line=account.line_of.get(identifier), claim=identifier,
         ))
     return issues
 

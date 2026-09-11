@@ -230,7 +230,8 @@ repository. Regeneration is a no-op. `derived/` builds on Windows and Linux with
 >    depend on whether `depcruise` happens to be installed. A check that silently weakens when a
 >    tool is missing is worse than a narrower one that always runs. `derive.dep_tool` stays in the
 >    config shape for a graph this scan cannot see.
-> 2. **Ten gates at nine points, not twelve at ten.** ARCHITECTURE.md §3.3 says twelve and then
+> 2. **Ten gates at nine points, not twelve at ten** (eleven since R2, which declares
+>    `trace.claim_touch_complete` at two points). ARCHITECTURE.md §3.3 says twelve and then
 >    lists ten; the list is the specification and the count was a sentence written before it.
 > 3. **`task.scope_and_covers` and `drift.rules_conformance` are not implemented**, and report
 >    `unproven` rather than passing. They need per-task execution records (M4) and the rule tier.

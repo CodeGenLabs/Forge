@@ -13,6 +13,7 @@ paid for claims the diff touched.
 from __future__ import annotations
 
 from datetime import date
+from pathlib import Path
 
 import pytest
 
@@ -292,3 +293,70 @@ def test_a_new_file_touches_every_claim_anchored_into_it(symbols):
     symbols.write("src/pkg/fresh.py", "def alpha():\n    return 1\n")
 
     assert "CON-beta" in touched_of(symbols).touched
+
+
+# ---------------------------------------------------------------------------
+# Where the gate decides
+# ---------------------------------------------------------------------------
+
+def test_the_claim_touch_gate_is_advisory_before_the_code_exists():
+    """On track C the DAG puts `impact` before `implement`, so at `impact:post`
+    the diff holds the change's artifacts and no code. Blocking there means
+    blocking on a forecast, and it passed an account that `forge verify` failed
+    twenty minutes later."""
+    from forge import gates
+
+    at_impact = [g for g in gates.load_gates(Path("."))
+                 if g.point == "impact:post" and g.check == "trace.claim_touch_complete"]
+    assert at_impact and at_impact[0].blocking is False
+
+
+def test_the_claim_touch_gate_blocks_once_the_code_exists():
+    """MVP.md's definition-of-done criterion 5 - a claim edited without being
+    accounted for, and the harness refuses - is enforced here or nowhere."""
+    from forge import gates
+
+    at_sync = [g for g in gates.load_gates(Path("."))
+               if g.point == "sync:pre" and g.check == "trace.claim_touch_complete"]
+    assert at_sync and at_sync[0].blocking is True
+
+
+def test_an_unaccounted_claim_blocks_at_sync_pre(symbols):
+    from forge import gates
+
+    symbols.write("src/pkg/mod.py", MODULE.replace("return 1", "return 11"))
+    results = gates.run_gate(symbols.root, "sync:pre",
+                             change.find_change(symbols.root, "1"))
+    touch = [r for r in results if r.gate.check == "trace.claim_touch_complete"]
+    assert touch and touch[0].blocks is True
+
+
+def test_the_same_claim_only_warns_at_impact_post(symbols):
+    from forge import gates
+
+    symbols.write("src/pkg/mod.py", MODULE.replace("return 1", "return 11"))
+    results = gates.run_gate(symbols.root, "impact:post",
+                             change.find_change(symbols.root, "1"))
+    touch = [r for r in results if r.gate.check == "trace.claim_touch_complete"]
+    assert touch and touch[0].blocks is False
+    assert touch[0].errors, "it must still report what it found"
+
+
+def test_the_advice_for_an_extra_claim_depends_on_why_it_is_extra(symbols):
+    """One message for three situations gave advice that was wrong for two."""
+    from forge.validate import Issue
+
+    symbols.write("src/pkg/mod.py", MODULE.replace("return 1", "return 11"))
+    symbols.write(
+        "changes/0001-change-alpha/impact.md",
+        "# Impact\n\n## Blast radius\n- src/pkg/mod.py\n\n"
+        "## Claims touched\n\n### Unaffected\n"
+        "- CON-alpha - the return value changed, the purpose did not\n"
+        "- CON-beta - untouched, and accounted for anyway\n")
+
+    item = change.find_change(symbols.root, "1")
+    found = impact.check_claim_touch(
+        symbols.root, item, touched_of(symbols), Issue)
+    extra = [i for i in found if i.code == "trace.claim_touch_extra"]
+    assert [i.claim for i in extra] == ["CON-beta"]
+    assert "came close" in extra[0].fix
