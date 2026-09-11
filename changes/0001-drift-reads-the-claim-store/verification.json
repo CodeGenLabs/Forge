@@ -1,12 +1,9 @@
 {
   "base": "cd62b56febdddc708655859a1e785ce27903a0d0",
   "change": "0001-drift-reads-the-claim-store",
-  "commit": "cd62b56febdddc708655859a1e785ce27903a0d0",
+  "commit": "e4cb0ba9fd1eaf5023c5770f5c064517075fa2ac",
   "failing": [
-    "claim_touch",
-    "derived_fresh",
-    "requirement_cover",
-    "tests"
+    "requirement_cover"
   ],
   "gates": {
     "build": {
@@ -20,7 +17,7 @@
       "status": "pass"
     },
     "claim_touch": {
-      "status": "fail",
+      "status": "pass",
       "unaccounted": []
     },
     "debt": {
@@ -29,11 +26,9 @@
       "status": "pending"
     },
     "derived_fresh": {
-      "commits_behind": 13,
-      "dirty": [
-        "trace.json"
-      ],
-      "status": "fail"
+      "commits_behind": 16,
+      "dirty": [],
+      "status": "pass"
     },
     "drift": {
       "fix": "until the ledger exists, run `forge drift` on the touch set by hand",
@@ -62,8 +57,8 @@
     },
     "tests": {
       "cmd": ".venv\\Scripts\\python.exe -m pytest -q",
-      "error": "timed out after 900s",
-      "status": "fail"
+      "exit": 0,
+      "status": "pass"
     },
     "typecheck": {
       "fix": "declare it, or accept that this condition is unproven - guessing the command is how a report goes green for a suite that never ran",
