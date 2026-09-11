@@ -1345,6 +1345,212 @@
         ],
         "untagged": 19
       },
+      "tests/test_spec.py": {
+        "language": "python",
+        "tests": [
+          {
+            "covers": [],
+            "line": 77,
+            "name": "test_the_four_verbs_are_parsed"
+          },
+          {
+            "covers": [],
+            "line": 89,
+            "name": "test_the_capability_comes_from_the_path"
+          },
+          {
+            "covers": [],
+            "line": 95,
+            "name": "test_an_empty_delta_is_recognised"
+          },
+          {
+            "covers": [],
+            "line": 105,
+            "name": "test_a_well_formed_delta_passes"
+          },
+          {
+            "covers": [],
+            "line": 108,
+            "name": "test_a_requirement_with_no_scenario_is_rejected"
+          },
+          {
+            "covers": [],
+            "line": 113,
+            "name": "test_a_scenario_with_the_wrong_hash_count_is_rejected"
+          },
+          {
+            "covers": [],
+            "line": 120,
+            "name": "test_a_requirement_with_no_normative_verb_is_rejected"
+          },
+          {
+            "covers": [],
+            "line": 125,
+            "name": "test_a_requirement_with_no_title_is_rejected"
+          },
+          {
+            "covers": [],
+            "line": 132,
+            "name": "test_a_duplicated_requirement_id_is_rejected"
+          },
+          {
+            "covers": [],
+            "line": 138,
+            "name": "test_a_removed_requirement_needs_a_reason_and_a_migration"
+          },
+          {
+            "covers": [],
+            "line": 144,
+            "name": "test_a_removed_requirement_with_both_passes"
+          },
+          {
+            "covers": [],
+            "line": 151,
+            "name": "test_a_rename_needs_a_new_id"
+          },
+          {
+            "covers": [],
+            "line": 156,
+            "name": "test_a_rename_to_itself_is_rejected"
+          },
+          {
+            "covers": [],
+            "line": 161,
+            "name": "test_an_unresolved_clarification_is_rejected"
+          },
+          {
+            "covers": [],
+            "line": 166,
+            "name": "test_an_invented_section_is_rejected_not_ignored"
+          },
+          {
+            "covers": [],
+            "line": 173,
+            "name": "test_a_new_capability_needs_a_purpose"
+          },
+          {
+            "covers": [],
+            "line": 180,
+            "name": "test_an_existing_capability_needs_no_purpose"
+          },
+          {
+            "covers": [],
+            "line": 192,
+            "name": "test_a_modified_block_that_is_a_diff_fragment_is_rejected"
+          },
+          {
+            "covers": [],
+            "line": 199,
+            "name": "test_markdown_bullets_are_not_diff_markers"
+          },
+          {
+            "covers": [],
+            "line": 205,
+            "name": "test_a_stub_modified_block_is_rejected"
+          },
+          {
+            "covers": [],
+            "line": 216,
+            "name": "test_zero_deltas_is_rejected"
+          },
+          {
+            "covers": [],
+            "line": 222,
+            "name": "test_skip_spec_with_a_reason_is_accepted"
+          },
+          {
+            "covers": [],
+            "line": 228,
+            "name": "test_skip_spec_without_a_reason_is_rejected"
+          },
+          {
+            "covers": [],
+            "line": 235,
+            "name": "test_a_non_empty_delta_needs_no_skip"
+          },
+          {
+            "covers": [],
+            "line": 249,
+            "name": "test_added_creates_the_permanent_spec"
+          },
+          {
+            "covers": [],
+            "line": 256,
+            "name": "test_the_fold_is_deterministic"
+          },
+          {
+            "covers": [],
+            "line": 262,
+            "name": "test_modified_replaces_the_whole_requirement"
+          },
+          {
+            "covers": [],
+            "line": 272,
+            "name": "test_removed_deletes_it"
+          },
+          {
+            "covers": [],
+            "line": 281,
+            "name": "test_renamed_keeps_the_body_and_the_position"
+          },
+          {
+            "covers": [],
+            "line": 290,
+            "name": "test_adding_an_existing_id_refuses_rather_than_guessing"
+          },
+          {
+            "covers": [],
+            "line": 296,
+            "name": "test_modifying_an_absent_id_refuses"
+          },
+          {
+            "covers": [],
+            "line": 301,
+            "name": "test_removing_an_absent_id_refuses"
+          },
+          {
+            "covers": [],
+            "line": 308,
+            "name": "test_renaming_onto_an_existing_id_refuses"
+          },
+          {
+            "covers": [],
+            "line": 316,
+            "name": "test_folding_twice_is_a_no_op_for_the_second_run"
+          },
+          {
+            "covers": [],
+            "line": 326,
+            "name": "test_spec_fold_writes_the_permanent_spec"
+          },
+          {
+            "covers": [],
+            "line": 333,
+            "name": "test_spec_fold_dry_run_writes_nothing"
+          },
+          {
+            "covers": [],
+            "line": 341,
+            "name": "test_spec_fold_refuses_on_a_grammar_error_and_writes_nothing"
+          },
+          {
+            "covers": [],
+            "line": 348,
+            "name": "test_spec_fold_refuses_a_conflict_and_writes_nothing"
+          },
+          {
+            "covers": [],
+            "line": 360,
+            "name": "test_check_scope_change_runs_the_grammar"
+          },
+          {
+            "covers": [],
+            "line": 366,
+            "name": "test_check_scope_change_does_not_demand_a_spec_that_does_not_exist_yet"
+          }
+        ],
+        "untagged": 40
+      },
       "tests/test_trace.py": {
         "language": "python",
         "tests": [
@@ -1759,9 +1965,9 @@
       }
     },
     "tagged_tests": 0,
-    "total_tests": 334
+    "total_tests": 374
   },
-  "generated_from_commit": "d94b0d645310a12397f0df4de76d20c60bfc0135",
+  "generated_from_commit": "77a2ef1d068da483b90604ce0024452b488a97dd",
   "generator": "forge sync derived",
   "tool": "forge"
 }

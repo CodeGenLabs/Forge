@@ -26,6 +26,7 @@
         "src/forge/impact.py",
         "src/forge/scaffold.py",
         "src/forge/schema.py",
+        "src/forge/spec.py",
         "src/forge/store.py",
         "src/forge/trace.py",
         "src/forge/validate.py"
@@ -124,6 +125,9 @@
         "src/forge/cli.py",
         "src/forge/scaffold.py"
       ],
+      "src/forge/spec.py": [
+        "src/forge/cli.py"
+      ],
       "src/forge/store.py": [
         "src/forge/cli.py",
         "src/forge/impact.py",
@@ -143,7 +147,7 @@
     "tool": "forge",
     "unresolved_relative_imports": 0
   },
-  "generated_from_commit": "d94b0d645310a12397f0df4de76d20c60bfc0135",
+  "generated_from_commit": "77a2ef1d068da483b90604ce0024452b488a97dd",
   "generator": "forge sync derived",
   "tool": "forge"
 }
