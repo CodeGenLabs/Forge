@@ -4,11 +4,12 @@ A personal software-engineering harness that makes an AI coding agent behave lik
 engineer: investigate before modifying, specify before implementing, and — the part nobody has solved —
 keep accurate, verifiable knowledge of an existing system.
 
-**Status: design complete; implementation through milestone M3 of six.** What exists today is the
+**Status: design complete; implementation through milestone M4 of six.** What exists today is the
 anchor engine — the deterministic staleness detector the whole design rests on — the measurement that
 gates the rest of the build, the derived tier and traceability index, the claim store with all eighteen
-of its checks, and the change lifecycle: the artifact DAG, the claim-touch rule, the spec delta grammar
-and its fold, ten declarative gates, and `forge verify`. No skills and no bootstrap yet.
+of its checks, the change lifecycle (artifact DAG, claim-touch rule, spec delta grammar and fold, ten
+declarative gates, `forge verify`), and the six skills with their pressure-test scenarios. No bootstrap
+yet.
 
 ```bash
 pip install -e ".[grammars,dev]"
@@ -17,7 +18,8 @@ forge init                            # scaffold .forge/ and docs/system/
 forge claim new invariant             # a template; --append writes it to the right file
 forge sync derived
 forge status
-forge check                           # --scope store|derived|trace|change, --json
+forge check                           # --scope store|derived|trace|change|skills, --json
+forge skill list                      # the six procedures; `forge init` copies them out
 ```
 
 A change, start to finish:
@@ -107,7 +109,7 @@ budgets, BMAD's admission criterion and deletion grounds.
 | **M2 — derived tier & trace index** | **done** | `derive`, `store`, `trace`; `forge sync derived`, `forge trace`, `forge status`, `forge check` |
 | **M0 — claim store & validation** | **done** | `validate`, `scaffold`; all 18 store checks, `forge init`, `forge claim new/show`, `forge check --scope` |
 | **M3 — change DAG, gates, one workflow** | **done** | `schema`, `change`, `impact`, `spec`, `gates`, `verify`, `instructions`; `deps.json`; the claim-touch rule; `forge change`, `forge impact`, `forge gate`, `forge verify`, `forge archive` |
-| M4 — skills | not started | |
+| **M4 — skills** | **done** | `skills`; six SKILL.md files as package data, the five rules enforced by `forge check --scope skills`, 20 scenarios, `tools/pressure_test.py` |
 | M5 — bootstrap | not started | |
 
 M1 came first because it carried the stop condition: if anchors were too noisy on real history, the

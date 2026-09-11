@@ -33,6 +33,12 @@ forge = "forge.cli:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+# The skills ship with the kernel. They are the only part of the harness a
+# model reads, so a project that installs forge and never runs `forge init`
+# still gets them - `forge skill list` falls back to this set.
+[tool.setuptools.package-data]
+forge = ["_skills/*/SKILL.md"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"

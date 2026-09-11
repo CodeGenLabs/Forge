@@ -20,7 +20,7 @@ from __future__ import annotations
 import datetime as _dt
 from pathlib import Path
 
-from . import schema, store
+from . import schema, skills, store
 from .config import CONFIG_PATH
 
 __all__ = ["claim_template", "adr_template", "init_files", "scaffold", "KIND_FILE"]
@@ -267,6 +267,14 @@ def init_files(today: _dt.date | None = None) -> dict[str, str]:
     }
     for name, body in _STORE_FILES.items():
         files[f"{store.STORE_DIR}/{name}"] = body
+    # The skills are copied out rather than left packaged, for the same reason
+    # the workflow schema is: a procedure you cannot see is one you cannot
+    # adapt, and the whole point of skills being markdown is that a project
+    # edits them. A project that deletes the copy falls back to the shipped
+    # set, so this is an opt-in fork rather than a commitment.
+    for path in sorted(skills.PACKAGED_SKILLS.glob("*/SKILL.md")):
+        files[f"{skills.SKILLS_DIR}/{path.parent.name}/SKILL.md"] = \
+            path.read_text(encoding="utf-8")
     return files
 
 

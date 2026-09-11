@@ -288,6 +288,48 @@ claim `@sha` advances; the spec delta folds; `forge status` is clean.
 
 ### M4 — Skills (~2 days)
 
+> **Status: done, 2026-09-11.** Six skills ship, all six obey the five rules mechanically
+> (`forge check --scope skills`), each has three or four scenarios, and a track-B change runs
+> end to end through the commands the skills prescribe
+> (`tests/test_skills.py::test_a_track_b_change_runs_end_to_end_through_the_skills`).
+>
+> **The acceptance criterion is met in one half and not the other, and the split is the honest
+> part.** "Each skill's pressure test shows a failing baseline and a passing run" needs an agent run
+> twice per scenario, and the kernel never calls a model — a test whose result depends on sampling
+> would make that untrue of the suite as a whole. So:
+>
+> - the **deterministic half runs in CI**: the five rules, every scenario parses, and every scenario
+>   names the kernel signal that catches its failure — and that signal has to be one the kernel
+>   actually emits;
+> - the **model half is `tools/pressure_test.py`**, run on demand. Without `--agent` it prints what
+>   it would run and says plainly that it ran nothing, because a runner that silently does nothing
+>   is how a pressure suite comes to be believed without being run.
+>
+> `tests/skills/PRESSURE.md` records which is which.
+>
+> Four deviations, each with its reason:
+>
+> 1. **`caught-by` was added to the scenario format.** Every scenario names the signal that catches
+>    its failure, or `none`. That ties each claim a skill makes to a mechanism, and `none` marks the
+>    claims resting on the prompt alone — 8 of 20 here, and a test fails if they ever become the
+>    majority. Without it, "this skill prevents X" is unfalsifiable in exactly the way the project
+>    exists to object to.
+> 2. **The skills ship as package data, not as scaffold text.** `src/forge/_skills/` is canonical;
+>    `forge init` copies them out so a project can edit them, and a project with no copy falls back
+>    to the shipped set. An unedited copy inherits its scenarios from upstream — otherwise `forge
+>    init` produces six warnings nobody can act on, which is how a warning class gets ignored.
+> 3. **The linter is a check scope, not a `forge skill check` command.** `forge check --scope
+>    skills` puts it where every other check already is.
+> 4. **No `announce` enforcement beyond the section's presence.** Whether the line is actually
+>    printed at runtime is not observable from the repository.
+>
+> One thing building it corrected: **`requires-kernel` entries are read against the live parser.** A
+> hand-maintained list of command names would be a second source of truth that drifts the first time
+> a command is added, so `known_subcommands()` reads them off argparse — and a separate test walks
+> every `forge …` line the skills tell a reader to run and checks the command exists. A skill is a
+> procedure someone follows literally; a step naming a command the kernel does not have is a dead
+> end found at the worst possible moment.
+
 **Six skills for the MVP** (three of the nine postponed):
 
 | Skill | Notes |

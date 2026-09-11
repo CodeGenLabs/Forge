@@ -417,7 +417,12 @@ Rules for every skill, each with a reason:
 - **No compulsion language.** No all-caps, no "you have no choice". If it needs that, it needs a gate.
 - **Pressure-tested.** Each skill ships with scenarios in `tests/skills/<name>/` that fail without the
   skill and pass with it (Superpowers' `writing-skills` methodology, adopted wholesale — it is the only
-  reason to believe a prompt does anything).
+  reason to believe a prompt does anything). *Extended by implementation, 2026-09-11: each scenario
+  also names the kernel signal that catches its failure, or `none`. Without that field "this skill
+  prevents X" is unfalsifiable, and `none` marks the claims resting on the prompt alone — the set that
+  grows quietly if nobody counts it. The model-in-the-loop half of the run is `tools/pressure_test.py`
+  and is not in CI, because the kernel never calls a model; `tests/skills/PRESSURE.md` says which half
+  is which.*
 - **Announce on entry.** One line, so the transcript records which procedure ran.
 
 ### 4.3 Workflow model

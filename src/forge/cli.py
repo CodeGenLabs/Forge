@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 
 from . import (change, derive, gates, gitio, impact, instructions, scaffold, schema,
-               spec, store, trace, validate, verify)
+               skills, spec, store, trace, validate, verify)
 from .anchor import AnchorError, Status, classify, parse_anchor
 from .fingerprint import available_languages, fingerprint_source
 from .validate import Issue
@@ -232,7 +232,7 @@ def _cmd_status(args: argparse.Namespace) -> int:
     return _EXIT_OK
 
 
-SCOPES = ("store", "derived", "trace", "change")
+SCOPES = ("store", "derived", "trace", "change", "skills")
 
 
 def _check_change(repo: Path, reference: str | None) -> list[Issue]:
@@ -347,6 +347,9 @@ def _cmd_check(args: argparse.Namespace) -> int:
         issues.extend(validate.check_store(repo))
     if "change" in scopes:
         issues.extend(_check_change(repo, args.change))
+    if "skills" in scopes:
+        issues.extend(skills.check_skills(repo, Issue, known_subcommands()))
+        issues.extend(skills.check_scenarios(repo, Issue))
 
     errors = [i for i in issues if i.level == "ERROR"]
     warnings = [i for i in issues if i.level != "ERROR"]
@@ -372,6 +375,7 @@ def _cmd_check(args: argparse.Namespace) -> int:
         "derived": "derived-tier freshness",
         "trace": "trace integrity",
         "change": "the claim-touch account",
+        "skills": "the skill rules",
     }[scope] for scope in SCOPES if scope in scopes)
     pending = "the gates, which are point-in-time: `forge gate <point>`"
     if issues:
@@ -944,6 +948,46 @@ def _cmd_instructions(args: argparse.Namespace) -> int:
     return _EXIT_OK
 
 
+def known_subcommands() -> set[str]:
+    """Every `forge <word>` the CLI accepts, read off the parser itself.
+
+    The skill linter checks that a `requires-kernel` entry names a real
+    command, and a hand-maintained list of command names would be a second
+    source of truth that drifts the first time one is added.
+    """
+    for action in build_parser()._actions:  # noqa: SLF001 - argparse has no public API
+        if isinstance(action, argparse._SubParsersAction):  # noqa: SLF001
+            return set(action.choices)
+    return set()
+
+
+def _cmd_skill_list(args: argparse.Namespace) -> int:
+    repo = args.repo.resolve()
+    found = skills.load_skills(repo)
+    if args.json:
+        print(json.dumps([s.to_dict() for s in found], indent=2))
+        return _EXIT_OK
+    if not found:
+        print(f"no skills in {skills.SKILLS_DIR}/")
+        return _EXIT_OK
+    for skill in found:
+        print(f"{skill.name:20} {skill.phase or '-':12} {skill.lines:4} lines")
+        if skill.description:
+            print(f"{'':20} {' '.join(skill.description.split())}")
+    return _EXIT_OK
+
+
+def _cmd_skill_show(args: argparse.Namespace) -> int:
+    repo = args.repo.resolve()
+    found = [s for s in skills.load_skills(repo) if s.name == args.name]
+    if not found:
+        known = ", ".join(s.name for s in skills.load_skills(repo)) or "none"
+        print(f"forge: no skill named {args.name!r}; found: {known}", file=sys.stderr)
+        return _EXIT_USAGE
+    print((repo / found[0].path).read_text(encoding="utf-8"), end="")
+    return _EXIT_OK
+
+
 def _cmd_doctor(args: argparse.Namespace) -> int:
     langs = available_languages()
     print(f"python           {sys.version.split()[0]}")
@@ -957,7 +1001,7 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
     return _EXIT_OK
 
 
-def main(argv: list[str] | None = None) -> int:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="forge",
         description="Anchored system knowledge with deterministic staleness detection.",
@@ -1176,10 +1220,25 @@ def main(argv: list[str] | None = None) -> int:
     instr.add_argument("--json", action="store_true")
     instr.set_defaults(func=_cmd_instructions)
 
+    skl = sub.add_parser("skill", help="list, read and check the skills")
+    skl_sub = skl.add_subparsers(dest="skill_command", required=True)
+    skl_list = skl_sub.add_parser("list", help="the skills this project ships")
+    skl_list.add_argument("--repo", type=Path, default=Path.cwd())
+    skl_list.add_argument("--json", action="store_true")
+    skl_list.set_defaults(func=_cmd_skill_list)
+    skl_show = skl_sub.add_parser("show", help="print one skill")
+    skl_show.add_argument("name")
+    skl_show.add_argument("--repo", type=Path, default=Path.cwd())
+    skl_show.set_defaults(func=_cmd_skill_show)
+
     doctor = sub.add_parser("doctor", help="report the toolchain the kernel found")
     doctor.set_defaults(func=_cmd_doctor)
 
-    args = parser.parse_args(argv)
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
     return args.func(args)
 
 
