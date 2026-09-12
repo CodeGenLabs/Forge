@@ -584,3 +584,13 @@ reason the `restates:` line is: state the fact, let the human judge.
 
 **Still open, and now the only thing above it:** whether a stale report, when it does fire,
 changes what anybody does. Nothing measured here touches that.
+
+
+## Handed over, 2026-09-12
+
+The agent that wrote R1-R11 ran out of budget here. [HANDOVER.md](HANDOVER.md) carries the
+remaining work - W1 whether a stale report changes anything, W2 the inverse agent
+experiment with its trap already chosen by the Q1b census, W3 the corvus patch - plus the
+ground rules and the specific ways this project has already gone wrong. It requires one
+output, `docs/measurements/handover-report.md`, whose first section is fixed so the review
+is cheap.
