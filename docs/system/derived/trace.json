@@ -283,7 +283,7 @@
           "src/forge/impact.py"
         ],
         "anchors": [
-          "src/forge/impact.py@79b07211f8"
+          "src/forge/impact.py@00ac35f233"
         ],
         "back_references": [],
         "candidate": false,
@@ -394,7 +394,7 @@
       "tests_total": 706
     }
   },
-  "generated_from_commit": "c6f062221ccfef0e273011e182a0ea6e16ae12d4",
+  "generated_from_commit": "2c3d56a2ad307ec829f09c31e4e361830b54693b",
   "generator": "forge sync derived",
   "tool": "forge"
 }
