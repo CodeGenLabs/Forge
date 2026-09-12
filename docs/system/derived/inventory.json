@@ -7,8 +7,8 @@
         "lines": 468
       },
       "markdown": {
-        "files": 73,
-        "lines": 13418
+        "files": 74,
+        "lines": 13521
       },
       "other": {
         "files": 2,
@@ -30,8 +30,8 @@
     "entry_points": [
       "src/forge/cli.py"
     ],
-    "files_considered": 139,
-    "files_tracked": 139,
+    "files_considered": 140,
+    "files_tracked": 140,
     "stack": {
       "python": {
         "lockfile": null,
@@ -106,7 +106,7 @@
       "tools/pressure_test.py"
     ]
   },
-  "generated_from_commit": "a1d92749435f190287b68a73be65c972e1e846b9",
+  "generated_from_commit": "37a6c39f621b2d6c83b5702988d2be6c370c004f",
   "generator": "forge sync derived",
   "tool": "forge"
 }
