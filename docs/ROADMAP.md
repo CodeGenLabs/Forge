@@ -297,6 +297,34 @@ repository survives contact) → R8 (the other agents) → everything else, meas
 > true, the code was right, and the anchor was simply too coarse - which will be the
 > commonest signal there is. `forge drift confirm` is the answer and is deliberately not
 > a fifth verdict; the argument is in [SYSTEM_KNOWLEDGE.md](../SYSTEM_KNOWLEDGE.md) §6.
+
+---
+
+## Run 3, and the first complete lifecycle (2026-09-12)
+
+`corvus-db-studio` - 620 files, 19 TypeScript packages, 90 real commits - recorded in
+[docs/measurements/run3-monorepo-lifecycle.md](measurements/run3-monorepo-lifecycle.md).
+
+**`forge init` -> bootstrap -> a real track C change -> `verdict: pass` -> `forge
+archive` without `--force` -> the spec delta folded to the right path.** Run 1 could
+not reach a verdict; run 2 reached one only after a probe and archived only under
+`--force`.
+
+Three defects that neither earlier repository could have exposed:
+
+- **H1** - `sync derived` took 93 seconds here and under a second on `requests`, all of
+  it process creation. Now 1.4s, byte-identical output. My first fix was wrong in an
+  instructive way: it traded one subprocess per blob for one per cache lookup.
+- **H3** - workspace package imports were dropped entirely, so the import graph was
+  wrong on every monorepo. 671 edges -> 900, and `0 cycles` became a finding rather
+  than an artefact.
+- **H9** - a claim's prose swallowed the next `##` section, which corrupted `end_line` -
+  and `end_line` is what R1's per-claim edit detection uses. Editing a section *below* a
+  claim reported that claim as edited. This also corrects run 2's G12, which blamed
+  `seal` for a parser defect.
+
+Still open and unmeasured: whether `Nearby` is actually read. Run 3's change touched no
+claims at all, so the split three rounds of narrowing produced was never exercised.
 >
 > **Symbol-level narrowing is done too** (2026-09-11), with G19 and G20. A symbol anchor
 > is touched when the diff's hunks intersect that symbol's own line span; a file anchor

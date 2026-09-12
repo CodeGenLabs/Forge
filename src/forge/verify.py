@@ -27,6 +27,7 @@ to prevent.
 from __future__ import annotations
 
 import json
+import re
 import shutil as _shutil
 import subprocess
 from dataclasses import dataclass
@@ -171,15 +172,51 @@ def _run(repo: Path, name: str, line: str, timeout: int) -> dict:
         ), "cmd": line}
     except OSError as exc:
         return {"status": "fail", "cmd": line, "error": str(exc)}
-    tail = completed.stderr.decode("utf-8", "replace").strip().splitlines()
-    return {
+    out = {
         "status": "pass" if completed.returncode == 0 else "fail",
         "cmd": line,
         "exit": completed.returncode,
-        # The last few lines only. A verification report is read by a person
-        # deciding whether to sync; a full build log in it guarantees nobody
-        # reads either.
-        **({"tail": tail[-5:]} if completed.returncode != 0 and tail else {}),
+    }
+    if completed.returncode != 0:
+        out.update(_failure_lines(completed))
+    return out
+
+
+#: Lines that name what failed, rather than lines that happen to be last.
+#: Measured on a monorepo: `tests` failed and the recorded tail was five lines
+#: of an indented code fragment with no test name and no file in it, so the
+#: only way to learn what broke was to re-run the suite by hand.
+_INTERESTING_RE = re.compile(
+    r"(?i)\b(fail(ed|ure|s)?|error|assert\w*|expected|✕|×|✗|not ok|panic|"
+    r"traceback|exception|\.test\.|\.spec\.|test_)\b|^\s*(FAIL|ERR)")
+
+#: Terminal colour, which a JSON report does not render and a reader does not
+#: want. Stripped rather than kept: `\x1b[31m` around every useful word makes
+#: the file unreadable in exactly the situation it is read.
+_ANSI_RE = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
+
+
+def _failure_lines(completed: subprocess.CompletedProcess) -> dict:
+    """What a person deciding whether to sync needs, and no build log.
+
+    Both streams: a test runner usually reports to stdout and a compiler to
+    stderr, and recording only one of them is how a report says a command
+    failed and declines to say how.
+    """
+    text = "\n".join(
+        _ANSI_RE.sub("", stream.decode("utf-8", "replace"))
+        for stream in (completed.stdout, completed.stderr) if stream
+    )
+    lines = [ln.rstrip() for ln in text.splitlines() if ln.strip()]
+    if not lines:
+        return {}
+    named = [ln for ln in lines if _INTERESTING_RE.search(ln)]
+    return {
+        # The lines that say what broke, capped so the report stays readable.
+        "failures": named[:12] if named else [],
+        # Kept as well, because a command can fail with nothing recognisable in
+        # its output and an empty `failures` would then read as "no reason".
+        "tail": lines[-5:],
     }
 
 

@@ -1045,6 +1045,11 @@ def _cmd_verify(args: argparse.Namespace) -> int:
         for name, gate in report["gates"].items():
             detail = gate.get("reason") or gate.get("cmd") or ""
             print(f"  {gate['status']:12} {name:18} {detail}")
+            # A failing command that says only "fail" sends the reader off to
+            # re-run it by hand, which is what happened the first time a
+            # monorepo's suite went red here.
+            for found in (gate.get("failures") or gate.get("tail") or [])[:6]:
+                print(f"  {'':12} {'':18} {found[:160]}")
         print(f"\nverdict: {report['verdict']}")
         if report["verdict"] != "pass":
             # Said plainly, because "one of eight" is the whole point and a
