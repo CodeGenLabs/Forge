@@ -15,7 +15,7 @@ from datetime import date
 
 import pytest
 
-from forge import change, gitio, impact
+from forge import change, gitio, impact, store
 
 TODAY = date(2026, 9, 11)
 
@@ -170,3 +170,77 @@ def test_overlap_falls_back_to_the_heading_line_alone(shared_file):
     case where the parser already knows something is wrong."""
     assert impact._overlaps([(5, 5)], 5, 0) is True
     assert impact._overlaps([(6, 9)], 5, 0) is False
+
+
+# ---------------------------------------------------------------------------
+# A claim's prose ends where its section does
+# ---------------------------------------------------------------------------
+
+WITH_TRAILING_SECTION = """\
+# Domain
+
+### CON-one - the first concept
+
+```claim
+kind:     concept
+status:   asserted
+truth-source: decision
+anchors:  ["src/a.py"]
+reviewed: 2026-09-01
+```
+
+Prose belonging to CON-one, long enough to read like a real claim.
+
+## Uncertain
+
+- Whether the retry budget is per request or per session. Nobody could say.
+- Whether the cache is allowed to serve a stale row during a migration.
+"""
+
+
+def test_a_trailing_section_is_not_part_of_the_last_claim(repo):
+    """It was. Thirty lines of open questions were absorbed into the last
+    claim's prose, counted against the always-loaded budget as claim text, and
+    pushed its `end_line` past its real end."""
+    claims = store.parse_claims(WITH_TRAILING_SECTION, "docs/system/domain.md")
+    (claim,) = claims
+    assert "## Uncertain" not in claim.prose
+    assert "retry budget" not in claim.prose
+    assert claim.prose.strip().endswith("like a real claim.")
+
+
+def test_the_end_line_stops_at_the_section_break(repo):
+    """`end_line` decides whether a diff edited this claim's own definition, so
+    an overshoot demands an account for a change to an unrelated section."""
+    (claim,) = store.parse_claims(WITH_TRAILING_SECTION, "docs/system/domain.md")
+    lines = WITH_TRAILING_SECTION.split("\n")
+    assert lines[claim.end_line - 1].strip().endswith("like a real claim.")
+
+
+def test_editing_a_trailing_section_does_not_touch_the_claim(shared_file):
+    """The end-to-end consequence, on the rule that cares."""
+    target = shared_file.root / "docs/system/pitfalls.md"
+    target.write_text(
+        target.read_text(encoding="utf-8")
+        + "\n## Uncertain\n\n- One open question nobody has answered.\n",
+        encoding="utf-8", newline="\n")
+    shared_file.commit("add an Uncertain section")
+
+    text = target.read_text(encoding="utf-8")
+    target.write_text(text.replace("One open question nobody has answered.",
+                                   "A different open question entirely."),
+                      encoding="utf-8", newline="\n")
+    assert "PIT-two" not in touched(shared_file)
+
+
+def test_a_claim_before_another_claim_is_unaffected(repo):
+    """The narrowing must not break the ordinary case."""
+    text = WITH_TRAILING_SECTION.replace(
+        "## Uncertain",
+        "### CON-two - the second concept\n\n```claim\n"
+        "kind:     concept\nstatus:   asserted\ntruth-source: decision\n"
+        'anchors:  ["src/b.py"]\nreviewed: 2026-09-01\n```\n\nProse for two.\n\n## Uncertain')
+    claims = store.parse_claims(text, "docs/system/domain.md")
+    assert [c.id for c in claims] == ["CON-one", "CON-two"]
+    assert "Prose for two." in claims[1].prose
+    assert "## Uncertain" not in claims[1].prose

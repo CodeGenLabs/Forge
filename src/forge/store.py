@@ -101,6 +101,15 @@ _HEADING_RE = re.compile(
 _FENCE_RE = re.compile(r"^```claim\s*$(?P<body>.*?)^```\s*$", re.M | re.S)
 _ADR_FILE_RE = re.compile(r"^(?P<id>ADR-\d{4})-[A-Za-z0-9._-]+\.md$")
 
+# A claim's prose also ends at the next section of its document, not only at
+# the next claim. Without this, a trailing `## Uncertain` was absorbed into the
+# last claim in the file: its prose grew by thirty lines of open questions, the
+# always-loaded budget counted them as claim text, and - worse - its `end_line`
+# ran past its real end. `end_line` is what decides whether a diff edited this
+# claim's own definition, so editing an unrelated section below it reported the
+# claim as edited and demanded an account for it.
+_SECTION_BREAK_RE = re.compile(r"^#{1,2}\s+\S", re.M)
+
 
 @dataclass
 class ClaimRef:
@@ -202,6 +211,10 @@ def parse_claims(text: str, path: str) -> list[Claim]:
         identifier = heading.group("id")
         start = heading.end()
         end = headings[index + 1].start() if index + 1 < len(headings) else len(text)
+        # ...or at the document's next `#`/`##` section, whichever comes first.
+        section_break = _SECTION_BREAK_RE.search(text, start, end)
+        if section_break is not None:
+            end = section_break.start()
         section = text[start:end]
 
         # `end` is where the *next* heading begins, so the section's last line

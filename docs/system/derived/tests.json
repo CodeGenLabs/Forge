@@ -261,231 +261,261 @@
           },
           {
             "covers": [],
-            "line": 123,
+            "line": 127,
             "name": "test_derive_names_what_it_could_not_learn"
           },
           {
             "covers": [],
-            "line": 135,
+            "line": 139,
             "name": "test_derive_is_re_runnable"
           },
           {
             "covers": [],
-            "line": 140,
+            "line": 144,
             "name": "test_dot_directories_are_not_modules"
           },
           {
             "covers": [],
-            "line": 146,
+            "line": 150,
             "name": "test_build_metadata_is_not_a_module"
           },
           {
             "covers": [],
-            "line": 158,
+            "line": 162,
             "name": "test_commands_come_from_manifests"
           },
           {
             "covers": [],
-            "line": 161,
+            "line": 165,
             "name": "test_nothing_is_guessed_from_a_file_merely_existing"
           },
           {
             "covers": [],
-            "line": 169,
+            "line": 173,
             "name": "test_a_node_project_uses_its_own_runner"
           },
           {
             "covers": [],
-            "line": 179,
+            "line": 183,
             "name": "test_a_go_project"
           },
           {
             "covers": [],
-            "line": 190,
+            "line": 194,
             "name": "test_a_well_formed_candidate_set_passes"
           },
           {
             "covers": [],
-            "line": 193,
+            "line": 197,
             "name": "test_an_unanchored_candidate_is_rejected_even_for_a_concept"
           },
           {
             "covers": [],
-            "line": 203,
+            "line": 207,
             "name": "test_a_candidate_without_confidence_is_rejected"
           },
           {
             "covers": [],
-            "line": 210,
+            "line": 214,
             "name": "test_an_invented_rationale_is_rejected"
           },
           {
             "covers": [],
-            "line": 223,
+            "line": 227,
             "name": "test_a_rationale_with_evidence_is_accepted"
           },
           {
             "covers": [],
-            "line": 233,
+            "line": 237,
             "name": "test_rationale_unknown_is_accepted"
           },
           {
             "covers": [],
-            "line": 243,
+            "line": 247,
             "name": "test_an_invariant_with_no_evidence_is_rejected"
           },
           {
             "covers": [],
-            "line": 266,
+            "line": 270,
             "name": "test_ratified_claims_are_not_subject_to_candidate_rules"
           },
           {
             "covers": [],
-            "line": 284,
+            "line": 288,
             "name": "test_the_sheet_orders_pitfalls_and_concepts_first"
           },
           {
             "covers": [],
-            "line": 290,
+            "line": 294,
             "name": "test_every_verdict_starts_at_reject"
           },
           {
             "covers": [],
-            "line": 297,
+            "line": 301,
             "name": "test_recorded_verdicts_survive_a_regeneration"
           },
           {
             "covers": [],
-            "line": 306,
+            "line": 310,
             "name": "test_the_uncertain_questions_are_collected"
           },
           {
             "covers": [],
-            "line": 315,
+            "line": 319,
             "name": "test_a_wrapped_question_is_not_truncated"
           },
           {
             "covers": [],
-            "line": 322,
+            "line": 326,
             "name": "test_batches_are_at_most_eight"
           },
           {
             "covers": [],
-            "line": 343,
+            "line": 347,
             "name": "test_seal_writes_ratified_claims_with_anchors_stamped_at_head"
           },
           {
             "covers": [],
-            "line": 354,
+            "line": 358,
             "name": "test_a_ratified_candidate_leaves_the_candidates_tier"
           },
           {
             "covers": [],
-            "line": 365,
+            "line": 369,
             "name": "test_unratified_candidates_stay_readable"
           },
           {
             "covers": [],
-            "line": 371,
+            "line": 375,
             "name": "test_the_default_is_reject_even_with_no_sheet"
           },
           {
             "covers": [],
-            "line": 378,
+            "line": 382,
             "name": "test_edit_counts_as_ratify"
           },
           {
             "covers": [],
-            "line": 385,
+            "line": 389,
             "name": "test_defer_is_neither"
           },
           {
             "covers": [],
-            "line": 393,
+            "line": 397,
             "name": "test_an_unreadable_verdict_is_treated_as_reject"
           },
           {
             "covers": [],
-            "line": 401,
+            "line": 405,
             "name": "test_the_cap_holds"
           },
           {
             "covers": [],
-            "line": 410,
+            "line": 414,
             "name": "test_the_adr_records_what_was_not_ratified"
           },
           {
             "covers": [],
-            "line": 426,
+            "line": 430,
             "name": "test_sealing_twice_does_not_duplicate_the_baseline"
           },
           {
             "covers": [],
-            "line": 435,
+            "line": 439,
             "name": "test_seal_writes_the_detected_commands"
           },
           {
             "covers": [],
-            "line": 441,
+            "line": 445,
             "name": "test_seal_never_overwrites_chosen_commands"
           },
           {
             "covers": [],
-            "line": 450,
+            "line": 454,
             "name": "test_seal_leaves_an_existing_overview_alone"
           },
           {
             "covers": [],
-            "line": 457,
+            "line": 461,
             "name": "test_the_generated_overview_admits_what_it_cannot_know"
           },
           {
             "covers": [],
-            "line": 473,
+            "line": 477,
             "name": "test_a_sealed_baseline_passes_forge_check"
           },
           {
             "covers": [],
-            "line": 492,
+            "line": 496,
             "name": "test_an_adr_citation_rescues_a_claim_from_the_orphan_check"
           },
           {
             "covers": [],
-            "line": 506,
+            "line": 510,
             "name": "test_a_document_section_reference_is_not_a_pinned_version"
           },
           {
             "covers": [],
-            "line": 530,
+            "line": 534,
             "name": "test_seal_refuses_a_ratified_candidate_that_fails_its_rules"
           },
           {
             "covers": [],
-            "line": 540,
+            "line": 544,
             "name": "test_seal_ignores_rule_failures_on_candidates_nobody_ratified"
           },
           {
             "covers": [],
-            "line": 550,
+            "line": 554,
             "name": "test_seal_dry_run_writes_nothing"
           },
           {
             "covers": [],
-            "line": 561,
+            "line": 565,
             "name": "test_derive_json"
           },
           {
             "covers": [],
-            "line": 568,
+            "line": 572,
             "name": "test_check_scope_candidates"
           },
           {
             "covers": [],
-            "line": 576,
+            "line": 580,
             "name": "test_the_measurement_is_recorded"
+          },
+          {
+            "covers": [],
+            "line": 597,
+            "name": "test_a_prose_directory_is_not_a_module"
+          },
+          {
+            "covers": [],
+            "line": 607,
+            "name": "test_a_container_directory_expands_one_level"
+          },
+          {
+            "covers": [],
+            "line": 618,
+            "name": "test_a_directory_with_code_of_its_own_stays_whole"
+          },
+          {
+            "covers": [],
+            "line": 625,
+            "name": "test_a_src_layout_still_names_the_package"
+          },
+          {
+            "covers": [],
+            "line": 632,
+            "name": "test_a_flat_file_is_not_a_module"
+          },
+          {
+            "covers": [],
+            "line": 637,
+            "name": "test_a_dot_directory_is_never_a_module"
           }
         ],
-        "untagged": 47
+        "untagged": 53
       },
       "tests/test_change.py": {
         "language": "python",
@@ -3229,9 +3259,9 @@
       }
     },
     "tagged_tests": 0,
-    "total_tests": 616
+    "total_tests": 622
   },
-  "generated_from_commit": "49bb5e30af20d2199a1a29846f3ed4dac9f70c00",
+  "generated_from_commit": "b141ff1e02deba88c9360c21f5f68ae12a561e6e",
   "generator": "forge sync derived",
   "tool": "forge"
 }

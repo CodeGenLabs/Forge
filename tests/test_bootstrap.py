@@ -28,6 +28,11 @@ def test_refund_is_bounded():
     assert True
 '''
 
+# `CMP-pay`'s prose used to be a single line and passed `store.prose_present`
+# only by absorbing the `## Uncertain` section below it - the parser ran a
+# claim to the next `### <ID>` and stopped nowhere else. Now that a claim ends
+# at the next section too, the check sees what is really there, so the fixture
+# says what a component claim is supposed to say.
 CANDIDATES = """\
 # Candidates
 
@@ -70,7 +75,9 @@ confidence: low
 reviewed: 2026-09-01
 ```
 
-Contains capture and refundable.
+Contains capture and refundable. Owns every decision about how much money may
+move and when, and rejects an overdraw at its boundary rather than clamping -
+a clamp silently under-refunds a customer.
 
 ## Uncertain
 
