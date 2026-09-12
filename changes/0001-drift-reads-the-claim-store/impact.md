@@ -25,22 +25,20 @@ anchor paths the forecast intersects, accounted for by hand.
 
 ### Unaffected
 
-> The three `PIT-` claims below are reported by the kernel as having had "their own
-> definition edited", because this change appends one new claim to the end of
-> `docs/system/pitfalls.md` and that test is file-level (`impact.py:207`). Their
-> definitions were not touched. They stay here, under the heading that is true, and
-> the change stays blocked rather than being unblocked by writing `Updated` about
-> claims nobody updated. Filing a claim under a heading to satisfy a checker is the
-> exact rubber-stamping OPEN_QUESTIONS.md Q3 asks about.
+> This note used to cover three `PIT-` claims and now covers none of them. It said
+> they were reported as having "their own definition edited" only because this change
+> appends a new claim to the end of `docs/system/pitfalls.md` and that test is
+> file-level - a false positive, refused rather than rubber-stamped, with the change
+> left blocked. **Two of the three have since been edited for real**, by Q1c, and have
+> moved to `Updated`. The note is kept because the reasoning was right when it was
+> written and because it is worth seeing a refusal survive long enough to be overtaken
+> by the thing it refused to pretend had happened.
 
 - CON-claim - the change reads `Claim` objects through the existing loader and adds no
   field, so the shape this claim describes is untouched.
 - INV-regeneration-is-a-no-op - retired, and anchored to `derive.py#write_json`, which
   this change does not reach; a drift scan writes nothing, so the derived tier is not
   involved at all.
-- PIT-derived-self-reference - about a census counting its own output; a drift scan
-  produces no file, so it cannot count itself.
-- PIT-markdown-bullet-is-not-a-diff - no diff parsing is added by this change.
 
 ### Updated
 
@@ -54,6 +52,15 @@ anchor paths the forecast intersects, accounted for by hand.
   claim edit, the claim-touch rule said so, and the rule was right - which is the first
   time in this project the ledger and the account have argued with each other and the
   account lost.
+
+- PIT-derived-self-reference - the rule it states is untouched: a drift scan produces
+  no file, so it still cannot count itself. The definition gained an `evidence:` block
+  naming the two tests that already enforced it, under the rule Q1c added - a claim
+  that names no enforcer is a claim nothing catches when it breaks, and this one had
+  two and said neither. A claim edit is a claim edit; the account says so.
+- PIT-markdown-bullet-is-not-a-diff - same edit, same reason, naming
+  `test_markdown_bullets_are_not_diff_markers`. No diff parsing is added by this
+  change and the rule is unchanged.
 
 ### New
 
