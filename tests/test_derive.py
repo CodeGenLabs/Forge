@@ -321,3 +321,91 @@ def test_no_config_is_not_an_error(project):
 
     config = load_config(project.root)
     assert config.source is None and config.error is None
+
+
+# --------------------------------------------------------------------------
+# AST-confirmed comment harvesting (R5 / F11)
+# --------------------------------------------------------------------------
+
+def test_covers_in_string_literals_are_ignored(project):
+    """String literals in fixtures must not be harvested as active coverage tags."""
+    project.write("tests/test_fixture.py", '''\
+TESTS = """\\
+# @covers INV-fake-fixture
+def test_fake():
+    assert True
+"""
+
+# @covers REQ-real
+def test_real():
+    assert True
+''')
+    project.commit("fixture strings vs real comments")
+    data = derive.build_tests(project.root)
+    entry = data["files"]["tests/test_fixture.py"]
+    covers_map = {t["name"]: t["covers"] for t in entry["tests"]}
+    assert covers_map.get("test_real") == ["REQ-real"]
+    assert "INV-fake-fixture" not in data["covers_index"]
+    assert data["covers_index"].get("REQ-real") == ["tests/test_fixture.py::test_real"]
+
+
+def test_backrefs_in_string_literals_are_ignored(project):
+    """forge:<ID> strings inside code string literals must not be indexed."""
+    project.write("src/demo/rules.py", '''\
+# forge:ARC-real
+RULE_TEMPLATE = "forge:ARC-fake-string"
+
+def check():
+    s = "forge:ARC-also-fake"
+    return True
+''')
+    project.commit("code backrefs")
+    data = derive.build_backrefs(project.root)
+    assert "ARC-real" in data["by_id"]
+    assert "ARC-fake-string" not in data["by_id"]
+    assert "ARC-also-fake" not in data["by_id"]
+
+
+def test_typescript_comments_vs_literals(project):
+    """TypeScript/TSX comments are confirmed via AST, ignoring string literals."""
+    project.write("tests/service.test.ts", '''\
+const FIXTURE = `
+// @covers REQ-ts-fake
+test("fake", () => {});
+`;
+
+/*
+ * @covers REQ-ts-real
+ */
+test("real", () => {
+    const s = "// @covers REQ-ts-fake-inline";
+});
+''')
+    project.commit("ts comments vs literals")
+    data = derive.build_tests(project.root)
+    assert "REQ-ts-real" in data["covers_index"]
+    assert "REQ-ts-fake" not in data["covers_index"]
+    assert "REQ-ts-fake-inline" not in data["covers_index"]
+
+
+def test_go_comments_vs_literals(project):
+    """Go comments are confirmed via AST, ignoring raw string literals."""
+    project.write("pkg_test.go", '''\
+package demo
+
+const fixture = `
+// @covers REQ-go-fake
+func TestFake(t *testing.T) {}
+`
+
+// @covers REQ-go-real
+func TestReal(t *testing.T) {
+    s := "// @covers REQ-go-fake-inline"
+}
+''')
+    project.commit("go comments vs literals")
+    data = derive.build_tests(project.root)
+    assert "REQ-go-real" in data["covers_index"]
+    assert "REQ-go-fake" not in data["covers_index"]
+    assert "REQ-go-fake-inline" not in data["covers_index"]
+

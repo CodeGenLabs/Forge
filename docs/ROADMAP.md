@@ -140,18 +140,20 @@ everything the design advertises around them:
 Until this lands, [README.md](../README.md) advertises a mechanism that is not there. The
 README should say so today, regardless of when R4 happens.
 
-### R5 - Decide the `@covers` / `exclude_id_scan` collision **(P1)**
+### R5 - Decide the `@covers` / `exclude_id_scan` collision **(P1, done 2026-09-12)**
 
 Fix F11. This repository's test suite is built out of the strings the scanner looks for -
-366 ID mentions, including literal `@covers INV-7` inside fixtures - so the exclusion is
-necessary and makes `requirement_cover` permanently unsatisfiable. The M5 postscript found
+366 ID mentions, including literal `@covers INV-7` inside fixtures - so the exclusion was
+necessary and made `requirement_cover` permanently unsatisfiable. The M5 postscript found
 the same collision for `INV-` claims; it generalises to requirements.
 
-Options, in preference order: a distinguishable tag form that a fixture would not
-naturally contain; harvesting only from comments the AST confirms (not string literals);
-or per-directory exclusion with `tests/fixtures/` conventions. Whichever is chosen, say
-in the config template that a project excluding its tests is giving up requirement
-coverage, which nothing says today.
+**Resolved (Option 2):** `build_tests` and `build_backrefs` now harvest `@covers` and
+`forge:<ID>` exclusively from AST-confirmed comments (using Python stdlib `tokenize` and
+Tree-sitter cursor traversal for TypeScript/Go), safely ignoring string literals and test
+fixtures. This allowed `tests/*` and `tools/*` to be removed from `exclude_id_scan` in
+`.forge/config.yaml`, restoring requirement and invariant coverage to this repository.
+The config template in `src/forge/scaffold.py` now explicitly documents that excluding a
+test directory surrenders requirement coverage.
 
 ---
 

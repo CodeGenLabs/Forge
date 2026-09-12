@@ -20,15 +20,17 @@ environment (no paths outside the repo, no locale, no clock).
 
 from __future__ import annotations
 
+import io
 import json
 import re
+import tokenize
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
 from . import gitio
 from .config import Config, load_config
-from .fingerprint import language_for_path
+from .fingerprint import language_for_path, _load_grammar
 
 __all__ = [
     "SCHEMA",
@@ -432,6 +434,70 @@ def _covers_in(text: str) -> list[str]:
     return sorted(ids)
 
 
+def _comments_by_line(blob: bytes, language: str | None) -> dict[int, list[str]] | None:
+    """Extract comment lines from source code.
+
+    If a grammar or tokenizer exists for `language`, extracts genuine comment
+    tokens/nodes and excludes string literals (F11). Returns a mapping of
+    0-based line index to list of comment strings on that line, or None if no
+    parser is available.
+    """
+    if not language:
+        return None
+    if language == "python":
+        comments: dict[int, list[str]] = {}
+        try:
+            for tok in tokenize.tokenize(io.BytesIO(blob).readline):
+                if tok.type == tokenize.COMMENT:
+                    comments.setdefault(tok.start[0] - 1, []).append(tok.string)
+            return comments
+        except tokenize.TokenError:
+            pass
+        except Exception:
+            pass
+
+    grammar = _load_grammar(language)
+    if grammar is None:
+        return None
+    try:
+        from tree_sitter import Parser
+    except ImportError:  # pragma: no cover
+        return None
+    try:
+        parser = Parser(grammar.language)
+        tree = parser.parse(blob)
+        cursor = tree.walk()
+        comments = {}
+        depth = 0
+        visited_children = False
+        while True:
+            if not visited_children:
+                current = cursor.node
+                if "comment" in current.type:
+                    start_row = current.start_point.row
+                    text = current.text.decode("utf-8", "replace")
+                    lines = text.split("\n")
+                    for i, line_text in enumerate(lines):
+                        comments.setdefault(start_row + i, []).append(line_text)
+                    visited_children = True
+                elif cursor.goto_first_child():
+                    depth += 1
+                    continue
+                else:
+                    visited_children = True
+            elif cursor.goto_next_sibling():
+                visited_children = False
+            elif depth == 0:
+                break
+            else:
+                cursor.goto_parent()
+                depth -= 1
+                visited_children = True
+        return comments
+    except Exception:
+        return None
+
+
 def build_tests(repo: Path) -> dict:
     """Test files, the tests they declare, and the IDs each one covers.
 
@@ -463,12 +529,22 @@ def build_tests(repo: Path) -> dict:
 
         # Tag positions first, so each declaration can look backwards for the
         # nearest one that is not already claimed by a closer declaration.
+        # Comments confirmed by the AST avoid string literals in test fixtures (F11).
         tags: dict[int, list[str]] = {}
         if harvest_ids:
-            for index, line in enumerate(lines):
-                covered = _covers_in(line)
-                if covered:
-                    tags[index] = covered
+            comments = _comments_by_line(blob, language)
+            if comments is not None:
+                for index, c_texts in comments.items():
+                    covered: list[str] = []
+                    for c_text in c_texts:
+                        covered.extend(_covers_in(c_text))
+                    if covered:
+                        tags[index] = sorted(set(covered))
+            else:
+                for index, line in enumerate(lines):
+                    covered = _covers_in(line)
+                    if covered:
+                        tags[index] = covered
 
         declarations: list[dict] = []
         for pattern in _TEST_DECL_RES.get(language, []):
@@ -480,13 +556,15 @@ def build_tests(repo: Path) -> dict:
         for position, declaration in enumerate(declarations):
             index = declaration["line"] - 1
             previous_line = declarations[position - 1]["line"] - 1 if position else -1
-            covered: list[str] = list(tags.get(index, []))
+            covered = list(tags.get(index, []))
+            # Also support @covers embedded in test declaration name (e.g. JS/TS test titles)
+            covered.extend(_covers_in(declaration["name"]))
             # Walk backwards to the previous declaration, no further.
             cursor = index - 1
             while cursor > previous_line and not covered:
                 covered = list(tags.get(cursor, []))
                 cursor -= 1
-            declaration["covers"] = sorted(covered)
+            declaration["covers"] = sorted(set(covered))
             for identifier in declaration["covers"]:
                 by_id.setdefault(identifier, []).append(f"{path}::{declaration['name']}")
 
@@ -543,10 +621,18 @@ def build_backrefs(repo: Path) -> dict:
         blob = blobs.get(path)
         if blob is None or b"forge:" not in blob:
             continue
-        text = blob.decode("utf-8", "replace")
-        for index, line in enumerate(text.split("\n")):
-            for identifier in _BACKREF_RE.findall(line):
-                by_id.setdefault(identifier, []).append(f"{path}:{index + 1}")
+        language = language_for_path(path)
+        comments = _comments_by_line(blob, language)
+        if comments is not None:
+            for index, c_texts in comments.items():
+                for c_text in c_texts:
+                    for identifier in _BACKREF_RE.findall(c_text):
+                        by_id.setdefault(identifier, []).append(f"{path}:{index + 1}")
+        else:
+            text = blob.decode("utf-8", "replace")
+            for index, line in enumerate(text.split("\n")):
+                for identifier in _BACKREF_RE.findall(line):
+                    by_id.setdefault(identifier, []).append(f"{path}:{index + 1}")
     return {"by_id": {k: sorted(set(by_id[k])) for k in sorted(by_id)}}
 
 

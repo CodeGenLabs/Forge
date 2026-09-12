@@ -204,6 +204,8 @@ derive:
   # Paths whose ID-looking strings are data rather than declarations - test
   # fixtures, mostly. These still count in the inventory; only the `@covers`
   # and `forge:<ID>` harvest skips them.
+  # Note: Excluding a test directory means @covers tags in those tests will
+  # not be harvested, so requirement and invariant coverage cannot be satisfied.
   exclude_id_scan: []
 
 budgets:

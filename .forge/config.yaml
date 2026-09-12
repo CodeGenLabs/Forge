@@ -8,17 +8,13 @@ derive:
   # count in the inventory and the test totals; only `@covers` and `forge:<ID>`
   # harvesting skips them.
   #
-  # This repository is the pathological case for its own scanner: the test
-  # suite is built out of exactly the strings the scanner looks for, and the
-  # measurement tools embed example IDs in their documentation. Indexing those
-  # produced eight dangling references against an empty store.
-  #
-  # A normal project would NOT list its tests here - `@covers` belongs in tests
-  # and is the entire point of the tag. This entry is a property of building
-  # the tool, not advice about using it.
-  exclude_id_scan:
-    - "tests/*"
-    - "tools/*"
+  # AST comment confirmation (R5) now ensures that ID-looking strings inside
+  # test fixture string literals are safely ignored. Tests no longer need to be
+  # excluded here, allowing real `@covers` tags to be harvested.
+  # Note: Excluding a test directory from ID scan means @covers tags in those
+  # tests will not be harvested, so requirement and invariant coverage cannot
+  # be satisfied from them.
+  exclude_id_scan: []
 
 # Detected by `forge bootstrap seal` from this project's manifests.
 # Nothing here was guessed from a file merely existing: an unproven
