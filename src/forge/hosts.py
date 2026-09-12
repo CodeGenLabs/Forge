@@ -124,12 +124,15 @@ def export(repo: Path, host: str) -> tuple[str, list[str]]:
         # reads them" - sourcing from the local copy would copy it onto itself
         # and report `unchanged` on the exact repository whose copy was stale,
         # which is where this was found.
+        target_dir = target.target
+        if host == "antigravity" and (repo / ".agents").is_dir() and not (repo / ".agent").is_dir():
+            target_dir = ".agents/skills"
         written: list[str] = []
         for skill in found:
             source = skills.PACKAGED_SKILLS / skill.name / "SKILL.md"
             if not source.is_file():
                 continue
-            destination = repo / target.target / skill.name / "SKILL.md"
+            destination = repo / target_dir / skill.name / "SKILL.md"
             body = source.read_text(encoding="utf-8")
             if destination.is_file() and destination.read_text(encoding="utf-8") == body:
                 continue

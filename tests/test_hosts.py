@@ -147,6 +147,16 @@ def test_antigravity_host_copies_skills(project):
         assert dest.is_file()
 
 
+def test_antigravity_host_prefers_existing_agents_dir(project):
+    (project.root / ".agents").mkdir()
+    outcome, written = hosts.export(project.root, "antigravity")
+    assert outcome == "copied"
+    assert any(p.startswith(".agents/skills/") for p in written)
+    for skill in skills.load_skills(project.root):
+        dest = project.root / ".agents/skills" / skill.name / "SKILL.md"
+        assert dest.is_file()
+
+
 def test_codex_host_is_alias_for_agents_md(project):
     outcome, written = hosts.export(project.root, "codex")
     assert outcome == "written"
