@@ -1768,35 +1768,40 @@
           {
             "covers": [],
             "line": 148,
+            "name": "test_antigravity_host_prefers_existing_agents_dir"
+          },
+          {
+            "covers": [],
+            "line": 158,
             "name": "test_codex_host_is_alias_for_agents_md"
           },
           {
             "covers": [],
-            "line": 156,
+            "line": 166,
             "name": "test_forge_install_cli"
           },
           {
             "covers": [],
-            "line": 170,
+            "line": 180,
             "name": "test_an_unedited_copy_reads_as_a_copy"
           },
           {
             "covers": [],
-            "line": 174,
+            "line": 184,
             "name": "test_an_edited_copy_reads_as_stale"
           },
           {
             "covers": [],
-            "line": 183,
+            "line": 193,
             "name": "test_line_endings_alone_are_not_a_difference"
           },
           {
             "covers": [],
-            "line": 194,
+            "line": 204,
             "name": "test_this_repository_owns_its_skills"
           }
         ],
-        "untagged": 17
+        "untagged": 18
       },
       "tests/test_impact.py": {
         "language": "python",
@@ -3814,9 +3819,9 @@
       }
     },
     "tagged_tests": 0,
-    "total_tests": 727
+    "total_tests": 728
   },
-  "generated_from_commit": "8de6ac3f4a3f053346813dffaab45553a896c295",
+  "generated_from_commit": "21e85d5e4302db6b1a9b5886aa45c97027909480",
   "generator": "forge sync derived",
   "tool": "forge"
 }
