@@ -307,6 +307,33 @@ def test_every_verdict_starts_at_reject(project):
     assert "that is the posture, not a" in sheet
 
 
+def test_a_candidate_derived_from_a_document_says_so(project):
+    """Q1's finding, made visible where the verdict is decided.
+
+    Three agents pointed at the store and three pointed only at the code
+    avoided the same trap at the same rate, and the second arm found the rules
+    document unaided - because the claim had been derived from it. The scan
+    knows which candidates are restatements; the reviewer should be told.
+    """
+    text = (project.root / "docs/system/candidates/scan.md").read_text(encoding="utf-8")
+    text = text.replace(
+        "accumulated across a settlement batch once had to be reconciled by hand.",
+        "accumulated across a settlement batch once had to be reconciled by hand,\n"
+        "because the ledger will not take a fraction.\n\n"
+        "evidence-from: docs/rules/money.md section 4; tests/test_pay.py")
+    (project.root / "docs/system/candidates/scan.md").write_text(text, encoding="utf-8")
+
+    claims = {c.id: c for c in store.load_store(project.root)}
+    assert bootstrap.restates(claims["PIT-float-money"]) == ["docs/rules/money.md"]
+    assert bootstrap.restates(claims["CON-capture"]) == []
+
+    main(["bootstrap", "review", "--repo", str(project.root)])
+    sheet = (project.root / bootstrap.REVIEW_FILE).read_text(encoding="utf-8")
+    assert "restates: docs/rules/money.md - would a reader find that anyway?" in sheet
+    # And only for the candidate that has a document behind it.
+    assert sheet.count(chr(32)*6 + "restates:") == 1
+
+
 def test_recorded_verdicts_survive_a_regeneration(project):
     main(["bootstrap", "review", "--repo", str(project.root)])
     set_verdict(project, "PIT-float-money", "ratify")

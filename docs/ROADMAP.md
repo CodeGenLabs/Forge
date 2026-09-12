@@ -448,3 +448,49 @@ them.
 > repository's own open change the split is 3 touched, 1 nearby. `forge doctor` now
 > takes `--repo` and checks that every declared command resolves, which closes the
 > item R3 left open.
+
+---
+
+## R9 - Q1, and the finding that cost the store something **(done, 2026-09-12)**
+
+Every run before this one made the harness bigger. This one asked whether the largest
+piece of it earns its place, and got a **null result** -
+[the measurement](measurements/q1-does-the-store-help.md), plan and rubric committed
+before the first agent ran. Six agents, one trap, one repository: three pointed at the
+claim store, three pointed only at the code. **All six avoided it.** The arm with the
+store averaged 18 tool calls against 13.
+
+The reason is the useful part. The trap already had four written homes in that
+repository - a rules table, a review checklist and two specs - and the agents found
+them. **A claim derived from a document competes with that document for the same
+reader, and the reader usually finds the document.**
+
+That points straight back at H13's sibling, [run 3](measurements/run3-monorepo-lifecycle.md)'s
+H7, where "rules the project already wrote down" was *added* as the bootstrap's first
+source because a monorepo stating its three most important rules in `AGENTS.md` had been
+scanned without them being read. Both are right, and together they say something neither
+says alone: **the source that produces the best candidates also produces the most
+redundant ones.** Making bootstrap better at finding rules made it better at copying
+them.
+
+Two changes, both in authoring rather than in mechanism, because the mechanism was not
+what failed:
+
+- The `bootstrap` skill now asks one question before a candidate drawn from a document
+  is written: **what does the claim add that its source does not?** An anchor is a real
+  answer - prose does not know when the code under it moved. Reach is the other -
+  knowledge recorded nowhere near the work. A shorter restatement is neither, and the
+  cap is better spent elsewhere.
+- `forge bootstrap review` prints a `restates:` line under any candidate whose evidence
+  names a document in the repository, and the sheet asks the reviewer plainly whether a
+  reader would find that document anyway. Deliberately **not** a check: firing on any
+  doc-backed evidence would flag good claims - the claim under test named a conformance
+  test too, and was redundant regardless - so it is a judgement, and judgement belongs
+  in pass 3 with a human in front of it.
+
+**What this does not say, and the next experiment.** The measurement never exercised the
+two things a store does that prose cannot - **staleness** and **reach**. It ran on a
+repository with an unusually good rules tree, on a trap chosen by the person scoring it,
+at n=6. The honest inverse is a trap recorded *only* in the store, in a repository with
+no rules document. If the store loses there, that is an answer about the design; this
+one is an answer about authoring.

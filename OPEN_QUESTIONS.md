@@ -9,7 +9,29 @@ Priority: **P0** = must be answered before the MVP is written · **P1** = must b
 
 ---
 
-## Q1 — Does any of this actually improve outcomes? **P0 (for honesty), P1 (for measurement)**
+## Q1 — Does any of this actually improve outcomes? **PARTLY ANSWERED 2026-09-12 — one null result, recorded**
+
+> **First evidence.** [docs/measurements/q1-does-the-store-help.md](docs/measurements/q1-does-the-store-help.md)
+> ran option **B** in miniature: six agents, one trap, one repository, rubric and null
+> condition committed before a single agent started. Three were pointed at the claim
+> store; three were pointed only at the code. **All six avoided the trap**, and the arm
+> with the store spent 40% more tool calls getting there.
+>
+> The store did not lose on its merits - it lost because the trap already had four
+> written homes in that repository (a rules table, a review checklist, two specs) and
+> the agents found them. The finding that generalises is about *authoring*, not about
+> the mechanism: **a claim derived from a document competes with that document, and the
+> reader usually finds the document.** That is now in the `bootstrap` skill as the
+> question to answer before writing a candidate - what does the claim add that its
+> source does not - and in the review sheet as a `restates:` line, so the human
+> ratifying it is told.
+>
+> **Still open, and this is most of the question.** The measurement says nothing about
+> the two things the store does that prose cannot: **anchors going stale when the code
+> moves**, and **reach** - knowledge recorded nowhere near the work. Neither was
+> exercised. The honest next experiment is the inverse of this one: a trap whose record
+> exists *only* in the store, in a repository with no rules document. Option **C**
+> (`forge stats`) is unstarted and still waits on ~10 real changes.
 
 **Why it matters.** It is the question the whole proposal rests on, and the corpus provides no evidence
 either way. None of the six projects ships an evaluation of its own methodology. The only hard numbers

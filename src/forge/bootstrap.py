@@ -406,6 +406,40 @@ def _bullets(section: str) -> list[str]:
     return items
 
 
+_PROSE_SUFFIXES = (".md", ".rst", ".txt", ".adoc")
+_DOC_PATH_RE = re.compile(r"""[\w./\-]+\.(?:md|rst|txt|adoc)""", re.I)
+
+
+def restates(claim: store.Claim) -> list[str]:
+    """Prose documents this candidate's evidence points at.
+
+    Not a defect and not a check - a fact the scan already knows, handed to
+    the reviewer because Q1 showed it is the fact that decides the verdict.
+
+    A claim derived from a rules document competes with that document for the
+    same reader, and the reader usually finds the document. Measured in
+    docs/measurements/q1-does-the-store-help.md: three agents pointed at the
+    store and three pointed only at the code avoided the same trap at the same
+    rate, and every agent in the second arm located the rules file unaided and
+    cited the very section the claim had been derived from.
+
+    A check cannot carry this. Firing on any doc-backed evidence would flag
+    good claims - the claim under test named a conformance test as well, and
+    was redundant anyway - so the rule is a judgement, and judgement belongs
+    in pass 3 with a human in front of it.
+    """
+    seen: list[str] = []
+    sources = list(claim.evidence)
+    for match in _EVIDENCE_RE.finditer(claim.prose):
+        sources.append(match.group("text"))
+    for source in sources:
+        for hit in _DOC_PATH_RE.findall(source):
+            path = hit.lstrip("./")
+            if path.lower().endswith(_PROSE_SUFFIXES) and path not in seen:
+                seen.append(path)
+    return seen
+
+
 def _ordered_candidates(repo: Path) -> list[store.Claim]:
     def key(claim: store.Claim) -> tuple:
         rank = KIND_ORDER.index(claim.kind) if claim.kind in KIND_ORDER \
@@ -435,6 +469,14 @@ def build_review(repo: Path, *, cap: int = DEFAULT_CAP,
         "",
         f"Cap in force: {cap} ratified claims from this bootstrap.",
         "",
+        "A `restates:` line means the candidate was derived from a document",
+        "already in this repository. That is not a defect - it is usually where",
+        "the best candidates come from - but it is the fact most worth weighing:",
+        "an agent that finds the document gets the knowledge without the claim,",
+        "and then the claim is a second copy to keep in step with the first. Ask",
+        "what the claim adds that its source does not. An anchor that goes stale",
+        "when the code moves is a real answer; a shorter restatement is not.",
+        "",
     ]
 
     if not candidates:
@@ -454,6 +496,10 @@ def build_review(repo: Path, *, cap: int = DEFAULT_CAP,
                          f"{claim.title or 'untitled'}{note}")
             lines.append(f"      anchors: {', '.join(claim.anchors) or 'none'}")
             lines.append(f"      defined: {claim.file}:{claim.line}")
+            restated = restates(claim)
+            if restated:
+                lines.append(f"      restates: {', '.join(restated)} - would a "
+                             "reader find that anyway?")
         lines.append("")
 
     if questions:

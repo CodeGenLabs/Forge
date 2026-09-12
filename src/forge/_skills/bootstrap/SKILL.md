@@ -66,6 +66,25 @@ something, stated in their own words, and it is the cheapest evidence there is.
 A conformance test that exists to stop one mistake - `no-mock-in-bundle.test.ts`
 - is the same thing with the evidence attached.
 
+**Then ask where the knowledge already lives.** A rule the project wrote down
+is the best source for a candidate and the worst reason to keep one: an agent
+that finds the document gets the knowledge without the claim. Measured -
+`docs/measurements/q1-does-the-store-help.md` - three agents pointed at a
+claim store and three pointed only at the code avoided the same trap at the
+same rate, and every agent in the second arm found the rules file unaided and
+cited the exact section the claim had been derived from.
+
+So for each candidate drawn from a document, answer one question before
+writing it: **what does the claim add that its source does not?** Two answers
+are good ones. An **anchor** is real added value - prose does not know when
+the code under it moved, and that is the one thing a claim does that a rules
+document cannot. **Reach** is the other - knowledge whose record is nowhere
+near the work, where a reader editing that file would never think to look.
+
+If the answer is neither - if the claim is a shorter restatement of a section
+an agent reads anyway - do not write it. Put the pointer in `OVERVIEW.md`
+instead and spend the cap on something with no written home.
+
 Each topic file ends with a `## Uncertain` section naming what the agent could
 not determine. That section is the most valuable output of the pass - it is
 where the scan says where to look, instead of quietly filling the gap.
@@ -108,6 +127,13 @@ claim, its anchors, and the evidence it was inferred from, then ask for one
 of `ratify`, `edit`, `reject` or `defer`. Interleave the uncertain questions
 where they bear on a candidate - a question that settles one is worth more
 than the candidate.
+
+A candidate whose evidence names a document in this repository carries a
+`restates:` line. It is not a defect - it is where good candidates come from -
+but it is the fact most worth weighing, and the sheet asks the question
+plainly: would a reader find that document anyway? If yes and the claim adds
+no anchor the document lacks, `reject` is the right verdict and the store is
+better for it.
 
 Two things not to do:
 
