@@ -208,11 +208,18 @@ command.
   - `forge`: `.forge/skills` (`copy`)
 - Verified with unit tests in `tests/test_hosts.py` for each host and CLI command.
 
-### R9 - Distribution **(P2)**
+### R9 - Distribution **(P2, done 2026-09-12)**
 
 Publish to PyPI so `pipx install forge-harness` works; pin the kernel version in
-`.forge/config.yaml` so a repository can detect skew ([Q11](../OPEN_QUESTIONS.md)
-recommends this and nothing implements it).
+`.forge/config.yaml` so a repository can detect skew ([Q11](../OPEN_QUESTIONS.md)).
+
+**Shipped:**
+- `kernel_version` field added to `.forge/config.yaml`, `src/forge/config.py`, and scaffold template in `src/forge/scaffold.py`.
+- Zero-dependency version skew detection (`detect_kernel_skew` in `src/forge/config.py`) supporting exact (`"0.0.1"`), minimum (`">=0.0.1"`), and compatible (`"~=0.0.1"`, `"^0.0.1"`) version specs.
+- `forge check` emits `WARNING store.kernel_skew` when running kernel does not satisfy repository pin.
+- `forge doctor` reports running `kernel` version and `kernel_pin` skew/match status.
+- Added `readme = "README.md"` to `pyproject.toml` and verified distribution build.
+- Unit tests added in `tests/test_config.py`.
 
 ---
 
@@ -227,10 +234,12 @@ recommends this and nothing implements it).
   downstream would run against boilerplate. `verification.json` deliberately has no
   template: it is generated, and a template for it would be a place to write a result by
   hand.
-- **R11 - CLI consistency (P3).** Fix F1: `forge change show --change 1`, keeping the
-  positional form as an alias.
-- **R12 - Honest debt labels (P3).** Fix F8: `task.scope_and_covers` is owed by nobody
-  now that M4 has shipped. Either schedule it or say it is unscheduled.
+- **R11 - CLI consistency (P3, done).** Fix F1: `forge change show --change 1`, keeping the
+  positional form as an alias (shipped in `src/forge/cli.py:_named_change`, tested in
+  `tests/test_lifecycle_repairs.py`).
+- **R12 - Honest debt labels (P3, done).** Fix F8: `task.scope_and_covers` is owed by nobody
+  now that M4 has shipped. Either schedule it or say it is unscheduled (shipped as
+  "unscheduled" in `src/forge/gates.py:PENDING`, tested in `tests/test_lifecycle_repairs.py`).
 - **R13 - Open deltas define their requirements (P2, done).** Fix F16. `trace` now indexes
   `REQ-` from open changes' spec deltas, marked `provisional`; a permanent spec always
   wins, so a stale delta cannot move a folded requirement back. `REMOVED` defines nothing,
