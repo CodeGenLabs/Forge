@@ -40,5 +40,8 @@ proposed_verdict: confirm
 proposed_reasoning: 'Evidence test (tests/test_impact.py::test_the_reason_never_swallows_the_next_line)
   passed (exit 0). The property still holds despite code movement. Proposed confirm: safe
   to restamp with `forge drift confirm <id>`.'
-status: open
+status: resolved
+verdict: confirmed
+resolved: '2026-09-12'
+evidence: re-confirmed at 00ac35f233; anchors restamped, prose unchanged
 ```
