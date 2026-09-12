@@ -1505,6 +1505,77 @@
         ],
         "untagged": 15
       },
+      "tests/test_hosts.py": {
+        "language": "python",
+        "tests": [
+          {
+            "covers": [],
+            "line": 33,
+            "name": "test_every_shipped_skill_is_host_neutral"
+          },
+          {
+            "covers": [],
+            "line": 53,
+            "name": "test_the_rule_catches_a_host_feature"
+          },
+          {
+            "covers": [],
+            "line": 63,
+            "name": "test_the_rule_leaves_ordinary_prose_alone"
+          },
+          {
+            "covers": [],
+            "line": 72,
+            "name": "test_a_pointer_manifest_names_every_skill"
+          },
+          {
+            "covers": [],
+            "line": 80,
+            "name": "test_it_merges_into_a_file_the_project_already_owns"
+          },
+          {
+            "covers": [],
+            "line": 93,
+            "name": "test_re_exporting_replaces_the_section_and_nothing_else"
+          },
+          {
+            "covers": [],
+            "line": 105,
+            "name": "test_a_copy_host_writes_the_kernels_skills"
+          },
+          {
+            "covers": [],
+            "line": 111,
+            "name": "test_a_copy_host_refreshes_a_stale_local_skill"
+          },
+          {
+            "covers": [],
+            "line": 125,
+            "name": "test_an_unknown_host_is_refused"
+          },
+          {
+            "covers": [],
+            "line": 135,
+            "name": "test_an_unedited_copy_reads_as_a_copy"
+          },
+          {
+            "covers": [],
+            "line": 139,
+            "name": "test_an_edited_copy_reads_as_stale"
+          },
+          {
+            "covers": [],
+            "line": 148,
+            "name": "test_line_endings_alone_are_not_a_difference"
+          },
+          {
+            "covers": [],
+            "line": 159,
+            "name": "test_this_repository_owns_its_skills"
+          }
+        ],
+        "untagged": 13
+      },
       "tests/test_impact.py": {
         "language": "python",
         "tests": [
@@ -3481,9 +3552,9 @@
       }
     },
     "tagged_tests": 0,
-    "total_tests": 664
+    "total_tests": 677
   },
-  "generated_from_commit": "4b4af65546ea2045b4bcd6b934b8ecaf4f32092d",
+  "generated_from_commit": "1765a2e789b85c3e8df9fc0120b8b31e7a5e22ed",
   "generator": "forge sync derived",
   "tool": "forge"
 }
