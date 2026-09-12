@@ -286,6 +286,13 @@ def _cmd_sync(args: argparse.Namespace) -> int:
     if not gitio.is_repo(repo):
         print(f"forge: {repo} is not a git repository", file=sys.stderr)
         return _EXIT_USAGE
+    # Read this *before* generating: the tier is derived from HEAD, so a sync
+    # run with tracked content still uncommitted describes a state the author
+    # has already moved past, and `forge check` says so on the very next run.
+    # The advice below has always been there; twice it was printed after the
+    # damage rather than before it, so now the condition is named.
+    pending = [p for p in gitio.uncommitted_files(repo)
+               if not p.startswith(f"{derive.DERIVED_DIR}/")]
     changed = derive.derive_all(repo, only=args.only or None)
     for name, was_changed in changed.items():
         print(f"{'updated' if was_changed else 'unchanged'}  {derive.DERIVED_DIR}/{name}")
@@ -297,6 +304,11 @@ def _cmd_sync(args: argparse.Namespace) -> int:
         # from the staleness count, so the steady state stays clean.
         print("\nCommit these on their own, after the code commit they describe:")
         print(f"  git add {derive.DERIVED_DIR} && git commit -m 'chore: sync derived tier'")
+    if pending:
+        shown = ", ".join(pending[:3]) + (" ..." if len(pending) > 3 else "")
+        print(f"\nWarning: {len(pending)} tracked file(s) differ from HEAD ({shown}).")
+        print("This tier describes HEAD, not them. Commit those first and re-run,")
+        print("or the next `forge check` will call the tier stale.")
     return _EXIT_OK
 
 

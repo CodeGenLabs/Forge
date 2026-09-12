@@ -363,6 +363,28 @@ def staged_files(repo: Path) -> list[str]:
     return sorted({line.strip() for line in out.splitlines() if line.strip()})
 
 
+def uncommitted_files(repo: Path) -> list[str]:
+    """Tracked paths that differ from HEAD, staged or not.
+
+    `staged_files` answers a pre-commit hook's question. This answers a
+    different one: is HEAD the thing the caller means? The derived tier is
+    generated from HEAD, so a sync run while tracked content is still
+    uncommitted describes a state the author has already moved past.
+    """
+    out = git(repo, "status", "--porcelain", "--untracked-files=no", check=False)
+    paths: set[str] = set()
+    for line in out.splitlines():
+        if len(line) < 4:
+            continue
+        path = line[3:].strip()
+        # A rename reads "R  old -> new"; the destination is the live path.
+        if " -> " in path:
+            path = path.split(" -> ", 1)[1]
+        if path:
+            paths.add(path.strip('"'))
+    return sorted(paths)
+
+
 def list_files_at(repo: Path, rev: str) -> list[str]:
     """Every tracked path at *rev*, POSIX-separated."""
     rev = validate_rev(rev)

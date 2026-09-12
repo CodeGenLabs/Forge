@@ -153,6 +153,34 @@ def test_sync_then_check_is_clean(stored, capsys):
     assert "Not yet checked" in out
 
 
+def test_sync_warns_when_the_content_commit_has_not_happened_yet(stored, capsys):
+    """The tier is generated from HEAD, so syncing with tracked content still
+    uncommitted produces a tier that is stale the moment it is written.
+
+    The advice to commit the tier separately was always printed; it did not say
+    that HEAD was not yet what the author meant, and the order was got wrong
+    twice on this repository before the condition was named.
+    """
+    stored.write("src/pay.py", "def capture(x):\n    return x + 1\n")
+    assert main(["sync", "derived", "--repo", str(stored.root)]) == 0
+    out = capsys.readouterr().out
+    assert "1 tracked file(s) differ from HEAD" in out
+    assert "src/pay.py" in out
+
+    stored.commit("the content commit that should have come first")
+    main(["sync", "derived", "--repo", str(stored.root)])
+    assert "differ from HEAD" not in capsys.readouterr().out
+
+
+def test_sync_does_not_count_the_tier_it_just_wrote(stored, capsys):
+    """`docs/system/derived/` is uncommitted by construction after a sync that
+    changed anything - warning about it would fire on every clean run."""
+    main(["sync", "derived", "--repo", str(stored.root)])
+    capsys.readouterr()
+    main(["sync", "derived", "--repo", str(stored.root)])
+    assert "differ from HEAD" not in capsys.readouterr().out
+
+
 def test_check_reports_a_hand_edited_derived_file(stored, capsys):
     main(["sync", "derived", "--repo", str(stored.root)])
     capsys.readouterr()
