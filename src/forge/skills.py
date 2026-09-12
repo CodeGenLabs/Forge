@@ -82,6 +82,13 @@ _COMPULSION_PHRASES = (
     re.compile(r"\bthis is (?:critical|mandatory|non-negotiable)\b", re.I),
 )
 
+#: Host features a skill must not depend on. Named products and the mechanisms
+#: only some hosts have; `agent` and `model` are deliberately absent, because a
+#: skill is written for an agent and saying so is not a dependency.
+_HOST_SPECIFIC_RE = re.compile(
+    r"(?i)\b(sub-?agents?|claude|anthropic|cursor|copilot|codex|windsurf|"
+    r"aider|slash commands?|MCP servers?|the Task tool)\b")
+
 _ANNOUNCE_RE = re.compile(r"^##\s+Announce\b", re.M | re.I)
 
 
@@ -254,14 +261,32 @@ def check_skills(repo: Path, issue, known_commands: set[str] | None = None) -> l
                       "paraphrase, and a rule with volume does not",
                       code="skill.compulsion")
 
-        # 4. announce on entry
+        # 4. host-neutral
+        #
+        # OPEN_QUESTIONS.md Q12 decided one host for v1, "structured so a
+        # second is cheap", and named the single consequence that makes it
+        # cheap: a skill must never depend on a host-specific feature. That
+        # held for six of the seven skills and not for `bootstrap`, which told
+        # the reader to fan out across subagents - a mechanism where it meant
+        # an outcome, and one a host without subagents cannot follow.
+        #
+        # A rule that holds because somebody checked once is not a rule.
+        for match in _HOST_SPECIFIC_RE.finditer(body):
+            error(f"names a host feature: {match.group(0)!r}",
+                  "say what must be true, not which mechanism produces it - a "
+                  "skill that names one host's feature is a skill the next host "
+                  "cannot run, and Q12's whole bet is that a second host costs a "
+                  "manifest rather than a port",
+                  code="skill.host_specific")
+
+        # 5. announce on entry
         if not _ANNOUNCE_RE.search(skill.body):
             error("no `## Announce` section",
                   "one line the skill prints on entry, so the transcript records "
                   "which procedure ran",
                   code="skill.no_announce")
 
-        # 5. pressure-tested - but only what this project actually wrote.
+        # 6. pressure-tested - but only what this project actually wrote.
         # An unmodified copy of a shipped skill is pressure-tested where it
         # ships; asking every project to re-write those scenarios would make
         # `forge init` produce six warnings on its first run, and six
@@ -277,6 +302,32 @@ def check_skills(repo: Path, issue, known_commands: set[str] | None = None) -> l
                 "reason to believe a prompt does anything",
             ))
     return issues
+
+
+def copy_state(repo: Path, skill: Skill) -> str:
+    """`own` if this project wrote it, `copy` if unedited, `stale` if behind.
+
+    `forge init` copies the skills out and they then drift from the kernel in
+    silence - the monorepo of run 3 was still telling its reader to fan out
+    across subagents a day after the kernel stopped saying so, and nothing
+    anywhere said the copy was behind. `stale` is not a fault; a project is
+    entitled to pin a procedure. It is a fact the reader is entitled to.
+    """
+    packaged = PACKAGED_SKILLS / skill.name / "SKILL.md"
+    local = repo / skill.path
+    if not packaged.is_file():
+        return "own"
+    if PACKAGED_SKILLS.is_relative_to(repo.resolve()):
+        return "own"
+    if not local.is_file():
+        return "copy"
+
+    def normalised(path: Path) -> str:
+        # Line endings are not an edit. Without this, a project on the
+        # other platform has every copied skill reported as diverged.
+        return path.read_text(encoding="utf-8").replace("\r\n", "\n")
+
+    return "copy" if normalised(local) == normalised(packaged) else "stale"
 
 
 def _is_shipped_verbatim(repo: Path, skill: Skill) -> bool:
@@ -338,6 +389,7 @@ KERNEL_SIGNALS = frozenset({
     "verify.definition_of_done", "repo.clean",
     # skills
     "skill.too_long", "skill.compulsion", "skill.no_announce",
+    "skill.host_specific",
     "skill.unused_command", "skill.unknown_command", "skill.untested",
     # the change model itself
     "change.downgrade_refused", "change.track_upgrade",

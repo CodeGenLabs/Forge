@@ -25,7 +25,7 @@ import shutil as _shutil
 import sys
 from pathlib import Path
 
-from . import (bootstrap, change, derive, gates, gitio, hooks, impact,
+from . import (bootstrap, change, derive, gates, gitio, hooks, hosts, impact,
                instructions, ledger, reconcile as reconcile_mod, scaffold,
                schema, skills, spec, store, trace, validate, verify)
 from .anchor import (AnchorError, Status, classify, classify_store,
@@ -1272,10 +1272,22 @@ def _cmd_skill_list(args: argparse.Namespace) -> int:
     if not found:
         print(f"no skills in {skills.SKILLS_DIR}/")
         return _EXIT_OK
+    behind = 0
     for skill in found:
-        print(f"{skill.name:20} {skill.phase or '-':12} {skill.lines:4} lines")
+        state = skills.copy_state(repo, skill)
+        # `stale` is not a fault - a project may pin a procedure on purpose -
+        # but a copy silently drifting from the kernel is a fact the reader is
+        # entitled to. Found when a manifest exported a skill that still told
+        # its reader to do something the kernel had stopped saying.
+        mark = "  (differs from the shipped skill)" if state == "stale" else ""
+        behind += state == "stale"
+        print(f"{skill.name:20} {skill.phase or '-':12} {skill.lines:4} lines{mark}")
         if skill.description:
             print(f"{'':20} {' '.join(skill.description.split())}")
+    if behind:
+        print(f"\n{behind} local copy(s) differ from the kernel's. `forge skill "
+              f"export --host forge` overwrites them; editing one is also a "
+              f"legitimate answer.", file=sys.stderr)
     return _EXIT_OK
 
 
@@ -1421,6 +1433,20 @@ def _cmd_bootstrap_seal(args: argparse.Namespace) -> int:
     if not args.dry_run:
         print("\nNow: `forge sync derived`, then `forge check`. Unratified "
               "candidates stay where they are -\nreadable, not citable.")
+    return _EXIT_OK
+
+
+def _cmd_skill_export(args: argparse.Namespace) -> int:
+    repo = args.repo.resolve()
+    if args.host not in hosts.HOSTS:
+        print(f"forge: no host {args.host!r}. Known: "
+              + ", ".join(f"{h.name} ({h.note})" for h in hosts.HOSTS.values()),
+              file=sys.stderr)
+        return _EXIT_USAGE
+    outcome, written = hosts.export(repo, args.host)
+    print(f"{outcome:10} {hosts.HOSTS[args.host].target}")
+    for path in written[:8]:
+        print(f"           {path}")
     return _EXIT_OK
 
 
@@ -1830,6 +1856,18 @@ def build_parser() -> argparse.ArgumentParser:
     skl_show.add_argument("name")
     skl_show.add_argument("--repo", type=Path, default=Path.cwd())
     skl_show.set_defaults(func=_cmd_skill_show)
+    skl_export = skl_sub.add_parser(
+        "export",
+        help="write the manifest a second host reads",
+        description="OPEN_QUESTIONS.md Q12 bet that a second host costs a manifest "
+                    "rather than a port, because the mechanism is in the CLI and the "
+                    "procedures are plain markdown. Adding a host here is adding a "
+                    "table entry; if one ever needs more, the bet was wrong and the "
+                    "cost is visible in one file.",
+    )
+    skl_export.add_argument("--host", required=True, choices=sorted(hosts.HOSTS))
+    skl_export.add_argument("--repo", type=Path, default=Path.cwd())
+    skl_export.set_defaults(func=_cmd_skill_export)
 
     boot = sub.add_parser(
         "bootstrap",

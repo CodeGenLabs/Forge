@@ -359,6 +359,33 @@ syntax, and keep all mechanism in the kernel — a CLI runs everywhere. Then sup
 manifest, not a port. The single most important consequence: **skills must never depend on a host-specific
 feature** (a particular subagent API, a hook type, a tool name).
 
+> **Tested 2026-09-12, and the bet holds - with one violation the audit found.**
+> Six of the seven skills named no host feature. `bootstrap` told its reader to fan out
+> across subagents, which is a mechanism where it meant an outcome and one a host without
+> subagents cannot follow. It now states the requirement - each topic's file written
+> directly by whoever read the code, never summarised back - and says fan-out is the fast
+> way *if the host has it*.
+>
+> A rule that holds because somebody looked once is not a rule, so `skill.host_specific`
+> checks it. The frontmatter was already uniform and host-neutral across all seven.
+>
+> `forge skill export --host <name>` is the manifest, and `hosts.HOSTS` is a table: a
+> host is an entry saying where it reads from and in what shape. Two are there, both
+> verifiable on this machine - a pointer section merged into `AGENTS.md`, and the layout
+> `forge init` already writes. **No format this project has not seen is invented here**;
+> a third host is a table row when somebody can check what that host actually reads.
+>
+> Exercised on the monorepo of run 3, which carries its own `AGENTS.md` in Vietnamese:
+> the section merged in under markers, the project's prose untouched, and re-exporting is
+> idempotent.
+>
+> It also found a gap nobody had named: `forge init` copies the skills out and they then
+> drift from the kernel **in silence**. That monorepo was still telling its reader to fan
+> out a day after the kernel stopped saying so. `forge skill list` now marks a local copy
+> that differs, and `export --host forge` refreshes it - sourcing from the kernel, not
+> from the copy, which is what the first cut got wrong: it copied the stale file onto
+> itself and reported `unchanged`.
+
 **Missing evidence.** None; this is a scope decision.
 
 ---

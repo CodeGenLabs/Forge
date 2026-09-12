@@ -3,7 +3,7 @@ name: bootstrap
 phase: bootstrap
 description: >
   Give an existing repository a store it can trust: derive the facts, propose
-  candidates with fan-out subagents, and walk a human through ratifying them.
+  candidates one topic at a time, and walk a human through ratifying them.
 requires-kernel: ["forge bootstrap derive", "forge bootstrap review", "forge bootstrap seal", "forge check"]
 reads: from-dag
 writes: ["docs/system/candidates/*.md", "docs/system/OVERVIEW.md"]
@@ -36,10 +36,16 @@ is the difference between a useful baseline and a liability.
 
 ## Pass 2 - propose candidates
 
-Fan out. One subagent per topic, each reading `docs/system/derived/` plus the
-code in its area, each writing `docs/system/candidates/<topic>.md` directly.
-Subagents do not return content to you - a summary of a summary loses exactly
-the specifics that make a claim checkable.
+Work one topic at a time, and **write each topic's file directly** -
+`docs/system/candidates/<topic>.md`, from whoever read the code. Content must
+not be summarised back to a coordinator and re-written: a summary of a summary
+loses exactly the specifics that make a claim checkable, which is the anchor,
+the symbol and the line that proves it.
+
+If this host can run agents in parallel, one per topic is the fast way to do
+it. If it cannot, do the topics in sequence - the requirement is the direct
+write, not the fan-out. This skill names no host feature anywhere else, and
+should not name one here either.
 
 **Front-load `PIT-` and `CON-`.** A pitfall is knowledge paid for by a
 failure; a concept prevents a class of wrong code by fixing a word. Neither is
