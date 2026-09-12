@@ -2352,6 +2352,82 @@
         ],
         "untagged": 6
       },
+      "tests/test_reconcile.py": {
+        "language": "python",
+        "tests": [
+          {
+            "covers": [],
+            "line": 63,
+            "name": "test_the_commit_that_caused_the_drift_is_named"
+          },
+          {
+            "covers": [],
+            "line": 70,
+            "name": "test_a_fresh_store_reconciles_to_nothing"
+          },
+          {
+            "covers": [],
+            "line": 83,
+            "name": "test_drift_from_before_the_range_is_reported_apart"
+          },
+          {
+            "covers": [],
+            "line": 94,
+            "name": "test_an_unclassifiable_claim_is_not_reported_as_drift"
+          },
+          {
+            "covers": [],
+            "line": 117,
+            "name": "test_it_records_nothing_unless_asked"
+          },
+          {
+            "covers": [],
+            "line": 122,
+            "name": "test_recording_carries_the_cause_into_the_ledger"
+          },
+          {
+            "covers": [],
+            "line": 137,
+            "name": "test_recording_twice_opens_nothing_new"
+          },
+          {
+            "covers": [],
+            "line": 147,
+            "name": "test_an_already_recorded_claim_says_so"
+          },
+          {
+            "covers": [],
+            "line": 155,
+            "name": "test_an_unclassifiable_claim_gets_no_entry"
+          },
+          {
+            "covers": [],
+            "line": 176,
+            "name": "test_commits_touching_reports_author_and_subject"
+          },
+          {
+            "covers": [],
+            "line": 181,
+            "name": "test_commits_touching_ignores_other_paths"
+          },
+          {
+            "covers": [],
+            "line": 186,
+            "name": "test_commits_touching_with_no_paths_asks_nothing"
+          },
+          {
+            "covers": [],
+            "line": 195,
+            "name": "test_the_command_exits_one_when_a_verdict_is_owed"
+          },
+          {
+            "covers": [],
+            "line": 199,
+            "name": "test_the_command_exits_zero_when_nothing_is_owed"
+          }
+        ],
+        "untagged": 14
+      },
       "tests/test_scaffold.py": {
         "language": "python",
         "tests": [
@@ -3405,9 +3481,9 @@
       }
     },
     "tagged_tests": 0,
-    "total_tests": 650
+    "total_tests": 664
   },
-  "generated_from_commit": "426d1ed522172da669cf77769e56a0fb6cbc6027",
+  "generated_from_commit": "4b4af65546ea2045b4bcd6b934b8ecaf4f32092d",
   "generator": "forge sync derived",
   "tool": "forge"
 }

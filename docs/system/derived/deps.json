@@ -84,6 +84,12 @@
         "src/forge/gitio.py",
         "src/forge/store.py"
       ],
+      "src/forge/reconcile.py": [
+        "src/forge/__init__.py",
+        "src/forge/anchor.py",
+        "src/forge/gitio.py",
+        "src/forge/ledger.py"
+      ],
       "src/forge/scaffold.py": [
         "src/forge/__init__.py",
         "src/forge/change.py",
@@ -122,7 +128,7 @@
         "src/forge/validate.py"
       ]
     },
-    "files_with_imports": 14,
+    "files_with_imports": 15,
     "reverse": {
       "src/forge/__init__.py": [
         "src/forge/anchor.py",
@@ -134,6 +140,7 @@
         "src/forge/impact.py",
         "src/forge/instructions.py",
         "src/forge/ledger.py",
+        "src/forge/reconcile.py",
         "src/forge/scaffold.py",
         "src/forge/trace.py",
         "src/forge/validate.py",
@@ -144,6 +151,7 @@
         "src/forge/cli.py",
         "src/forge/impact.py",
         "src/forge/ledger.py",
+        "src/forge/reconcile.py",
         "src/forge/validate.py"
       ],
       "src/forge/bootstrap.py": [
@@ -196,6 +204,7 @@
         "src/forge/hooks.py",
         "src/forge/impact.py",
         "src/forge/ledger.py",
+        "src/forge/reconcile.py",
         "src/forge/trace.py",
         "src/forge/validate.py",
         "src/forge/verify.py"
@@ -210,6 +219,7 @@
         "src/forge/verify.py"
       ],
       "src/forge/ledger.py": [
+        "src/forge/reconcile.py",
         "src/forge/verify.py"
       ],
       "src/forge/schema.py": [
@@ -251,7 +261,7 @@
     "tool": "forge",
     "unresolved_imports": 0
   },
-  "generated_from_commit": "426d1ed522172da669cf77769e56a0fb6cbc6027",
+  "generated_from_commit": "4b4af65546ea2045b4bcd6b934b8ecaf4f32092d",
   "generator": "forge sync derived",
   "tool": "forge"
 }
