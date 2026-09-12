@@ -190,7 +190,7 @@ alike. The skills are plain markdown with no host-specific syntax, which
 [Q12](../OPEN_QUESTIONS.md) says is the thing that keeps a second host cheap. What is
 missing is only the delivery.
 
-### R8 - `forge install --host <name>` **(P1)**
+### R8 - `forge install --host <name>` **(P1, done 2026-09-12)**
 
 A manifest, never a port. Write the packaged skills to where each host reads them
 (`.claude/skills/`, `AGENTS.md`, and so on), and nothing else. The rule that makes this
@@ -198,8 +198,15 @@ stay cheap: **no skill may depend on a host-specific feature** - not a subagent 
 hook type, not a tool name. Every mechanism lives in the kernel, and the kernel is a
 command.
 
-Do R8 after R1-R3. Shipping the harness to four agents before a change can reach a verdict
-multiplies the friction by four.
+**Shipped:**
+- `forge install --host <name>` added as a top-level CLI command (aliasing `_cmd_skill_export`).
+- Shipped hosts configured in `src/forge/hosts.py`:
+  - `claude`: `.claude/skills` (`copy`)
+  - `antigravity`: `.agent/skills` (`copy`)
+  - `codex`: `AGENTS.md` (`pointer`)
+  - `agents-md`: `AGENTS.md` (`pointer`)
+  - `forge`: `.forge/skills` (`copy`)
+- Verified with unit tests in `tests/test_hosts.py` for each host and CLI command.
 
 ### R9 - Distribution **(P2)**
 
