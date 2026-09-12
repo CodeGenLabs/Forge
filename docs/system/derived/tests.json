@@ -820,65 +820,80 @@
           {
             "covers": [],
             "line": 154,
+            "name": "test_check_says_nothing_when_every_claim_names_an_enforcer"
+          },
+          {
+            "covers": [],
+            "line": 160,
+            "name": "test_check_counts_the_claims_nothing_will_catch"
+          },
+          {
+            "covers": [],
+            "line": 179,
+            "name": "test_a_claim_anchored_at_its_test_counts_as_enforced"
+          },
+          {
+            "covers": [],
+            "line": 192,
             "name": "test_sync_warns_when_the_content_commit_has_not_happened_yet"
           },
           {
             "covers": [],
-            "line": 173,
+            "line": 211,
             "name": "test_sync_does_not_count_the_tier_it_just_wrote"
           },
           {
             "covers": [],
-            "line": 182,
+            "line": 220,
             "name": "test_check_reports_a_hand_edited_derived_file"
           },
           {
             "covers": [],
-            "line": 195,
+            "line": 233,
             "name": "test_check_reports_a_dangling_reference"
           },
           {
             "covers": [],
-            "line": 206,
+            "line": 244,
             "name": "test_trace_prints_both_directions"
           },
           {
             "covers": [],
-            "line": 217,
+            "line": 255,
             "name": "test_trace_json_is_parseable"
           },
           {
             "covers": [],
-            "line": 225,
+            "line": 263,
             "name": "test_trace_of_an_unknown_id_exits_one"
           },
           {
             "covers": [],
-            "line": 232,
+            "line": 270,
             "name": "test_status_fits_on_one_screen"
           },
           {
             "covers": [],
-            "line": 241,
+            "line": 279,
             "name": "test_status_reports_the_derived_tier_stale_when_content_moved"
           },
           {
             "covers": [],
-            "line": 254,
+            "line": 292,
             "name": "test_a_body_only_edit_does_not_make_the_derived_tier_stale"
           },
           {
             "covers": [],
-            "line": 268,
+            "line": 306,
             "name": "test_status_stays_current_after_the_derived_tier_is_committed"
           },
           {
             "covers": [],
-            "line": 283,
+            "line": 321,
             "name": "test_output_is_ascii_only"
           }
         ],
-        "untagged": 21
+        "untagged": 24
       },
       "tests/test_deps.py": {
         "language": "python",
@@ -3602,9 +3617,9 @@
       }
     },
     "tagged_tests": 0,
-    "total_tests": 687
+    "total_tests": 690
   },
-  "generated_from_commit": "826bdbe5376a31a1e0501d0bd06f1e1829879996",
+  "generated_from_commit": "dfadbbc4f77fa53447098d0e80f8b6d676322384",
   "generator": "forge sync derived",
   "tool": "forge"
 }
