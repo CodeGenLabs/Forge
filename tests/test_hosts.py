@@ -129,6 +129,41 @@ def test_an_unknown_host_is_refused(project):
         hosts.export(project.root, "nonesuch")
 
 
+def test_claude_host_copies_skills(project):
+    outcome, written = hosts.export(project.root, "claude")
+    assert outcome == "copied"
+    assert any(p.startswith(".claude/skills/") for p in written)
+    for skill in skills.load_skills(project.root):
+        dest = project.root / ".claude/skills" / skill.name / "SKILL.md"
+        assert dest.is_file()
+
+
+def test_antigravity_host_copies_skills(project):
+    outcome, written = hosts.export(project.root, "antigravity")
+    assert outcome == "copied"
+    assert any(p.startswith(".agent/skills/") for p in written)
+    for skill in skills.load_skills(project.root):
+        dest = project.root / ".agent/skills" / skill.name / "SKILL.md"
+        assert dest.is_file()
+
+
+def test_codex_host_is_alias_for_agents_md(project):
+    outcome, written = hosts.export(project.root, "codex")
+    assert outcome == "written"
+    assert written == ["AGENTS.md"]
+    text = (project.root / "AGENTS.md").read_text(encoding="utf-8")
+    assert hosts.MARKER_START in text
+
+
+def test_forge_install_cli(project, capsys):
+    rc = main(["install", "--host", "claude", "--repo", str(project.root)])
+    assert rc == 0
+    captured = capsys.readouterr()
+    assert "copied" in captured.out
+    assert ".claude/skills" in captured.out
+    assert (project.root / ".claude/skills/forge/SKILL.md").is_file()
+
+
 # ---------------------------------------------------------------------------
 # Knowing a copy has drifted
 # ---------------------------------------------------------------------------

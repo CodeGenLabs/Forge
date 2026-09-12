@@ -2120,6 +2120,16 @@ def build_parser() -> argparse.ArgumentParser:
                     help="replace a pre-commit hook this tool did not write")
     hk.set_defaults(func=_cmd_hooks)
 
+    inst = sub.add_parser(
+        "install",
+        help="install skills to an agent host runtime",
+        description="Write the packaged skills to where each host reads them "
+                    "(.claude/skills/, AGENTS.md, etc.). A manifest, never a port.",
+    )
+    inst.add_argument("--host", required=True, choices=sorted(hosts.HOSTS))
+    inst.add_argument("--repo", type=Path, default=Path.cwd())
+    inst.set_defaults(func=_cmd_skill_export)
+
     doctor = sub.add_parser(
         "doctor",
         help="report the toolchain the kernel found, and whether this project's "

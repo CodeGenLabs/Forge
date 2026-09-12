@@ -55,6 +55,18 @@ HOSTS = {
     "agents-md": Host(
         name="agents-md", target="AGENTS.md", kind="pointer",
         note="a marked section in AGENTS.md, pointing at the skill files"),
+    # Claude Code reads skills from `.claude/skills/<name>/SKILL.md`.
+    "claude": Host(
+        name="claude", target=".claude/skills", kind="copy",
+        note="the skills copied to .claude/skills/<name>/SKILL.md"),
+    # Codex reads project instructions from AGENTS.md.
+    "codex": Host(
+        name="codex", target="AGENTS.md", kind="pointer",
+        note="alias for agents-md: a marked section in AGENTS.md"),
+    # Antigravity reads project skills from `.agent/skills/<name>/SKILL.md`.
+    "antigravity": Host(
+        name="antigravity", target=".agent/skills", kind="copy",
+        note="the skills copied to .agent/skills/<name>/SKILL.md"),
     # The layout `forge init` already writes, offered under its own name so a
     # host reading that path gets it without a second convention.
     "forge": Host(
