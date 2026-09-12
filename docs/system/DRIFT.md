@@ -57,5 +57,8 @@ anchors_changed:
 - src/forge/derive.py#build_inventory@8e06e5ca51 (shifted)
 proposed_reasoning: The body changed and the signature did not. Often harmless; the question
   is whether the property the claim asserts survived.
-status: open
+status: resolved
+verdict: confirmed
+resolved: '2026-09-12'
+evidence: re-confirmed at ec22a88bdd; anchors restamped, prose unchanged
 ```

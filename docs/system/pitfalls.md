@@ -6,11 +6,11 @@
 kind:     pitfall
 status:   asserted
 truth-source: decision
-anchors:  ["src/forge/derive.py#build_inventory@8e06e5ca51"]
+anchors:  ["src/forge/derive.py#build_inventory@ec22a88bdd"]
 evidence:
   - test: tests/test_derive.py::test_the_derived_tier_does_not_describe_itself
   - test: tests/test_deps.py::test_the_derived_tier_does_not_describe_itself
-reviewed: 2026-09-11
+reviewed: 2026-09-12
 ```
 
 A derived file cannot carry the id of the commit that contains it, and a
