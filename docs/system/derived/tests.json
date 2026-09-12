@@ -1525,81 +1525,101 @@
         "tests": [
           {
             "covers": [],
-            "line": 57,
+            "line": 58,
             "name": "test_a_staged_signature_change_is_seen"
           },
           {
             "covers": [],
-            "line": 65,
+            "line": 66,
             "name": "test_a_clean_index_is_fresh"
           },
           {
             "covers": [],
-            "line": 70,
+            "line": 71,
             "name": "test_an_unstaged_edit_is_not_seen"
           },
           {
             "covers": [],
-            "line": 80,
+            "line": 81,
             "name": "test_the_index_can_be_read_like_a_revision"
           },
           {
             "covers": [],
-            "line": 91,
+            "line": 92,
             "name": "test_staged_files_reports_only_what_is_staged"
           },
           {
             "covers": [],
-            "line": 106,
+            "line": 107,
             "name": "test_recorded_drift_no_longer_blocks"
           },
           {
             "covers": [],
-            "line": 120,
+            "line": 121,
             "name": "test_the_drift_itself_is_still_reported"
           },
           {
             "covers": [],
-            "line": 130,
+            "line": 131,
             "name": "test_a_resolved_entry_does_not_keep_the_claim_quiet"
           },
           {
             "covers": [],
-            "line": 148,
+            "line": 149,
             "name": "test_install_writes_an_executable_hook"
           },
           {
             "covers": [],
-            "line": 156,
+            "line": 157,
             "name": "test_install_is_idempotent"
           },
           {
             "covers": [],
-            "line": 161,
+            "line": 162,
             "name": "test_install_refuses_somebody_elses_hook"
           },
           {
             "covers": [],
-            "line": 173,
+            "line": 174,
             "name": "test_uninstall_only_removes_our_own"
           },
           {
             "covers": [],
-            "line": 184,
+            "line": 185,
             "name": "test_the_command_is_configurable"
           },
           {
             "covers": [],
-            "line": 191,
+            "line": 192,
             "name": "test_a_moved_hooks_directory_is_honoured"
           },
           {
             "covers": [],
-            "line": 203,
+            "line": 204,
             "name": "test_status_distinguishes_the_three_cases"
+          },
+          {
+            "covers": [],
+            "line": 213,
+            "name": "test_auto_record_green_with_passing_evidence"
+          },
+          {
+            "covers": [],
+            "line": 239,
+            "name": "test_auto_record_green_blocks_when_evidence_fails"
+          },
+          {
+            "covers": [],
+            "line": 260,
+            "name": "test_drift_confirm_green_batch_restamps"
+          },
+          {
+            "covers": [],
+            "line": 297,
+            "name": "test_drift_confirm_green_no_green_entries"
           }
         ],
-        "untagged": 15
+        "untagged": 19
       },
       "tests/test_hosts.py": {
         "language": "python",
@@ -3683,9 +3703,9 @@
       }
     },
     "tagged_tests": 0,
-    "total_tests": 702
+    "total_tests": 706
   },
-  "generated_from_commit": "0c5cded35b982c686979a373147b31bf4309ca65",
+  "generated_from_commit": "c6f062221ccfef0e273011e182a0ea6e16ae12d4",
   "generator": "forge sync derived",
   "tool": "forge"
 }
