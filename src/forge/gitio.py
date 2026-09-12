@@ -328,6 +328,30 @@ def _is_ancestor(repo: Path, maybe_ancestor: str, rev: str) -> bool:
     return completed.returncode == 0
 
 
+def commits_touching(repo: Path, base: str, head: str,
+                     paths: list[str]) -> list[tuple[str, str, str]]:
+    """(sha, author, subject) for commits in *base*..*head* touching *paths*.
+
+    This is what turns a scan into a review. `forge drift --store` can say a
+    claim is stale; only the history can say *which commit* did it and what
+    that commit thought it was doing - and a reviewer deciding between "the
+    code is wrong" and "the decision changed" is asking exactly that.
+
+    Newest first: a reviewer reads the most recent cause before the older ones.
+    """
+    if not paths:
+        return []
+    out = git(repo, "log", "--no-merges", "--format=%H%x1f%an%x1f%s",
+              f"{validate_rev(base)}..{validate_rev(head)}",
+              "--", *[validate_repo_path(p) for p in paths], check=False)
+    found: list[tuple[str, str, str]] = []
+    for line in out.splitlines():
+        parts = line.split("\x1f")
+        if len(parts) == 3:
+            found.append((parts[0], parts[1], parts[2]))
+    return found
+
+
 def staged_files(repo: Path) -> list[str]:
     """Paths whose staged content differs from HEAD.
 

@@ -26,8 +26,8 @@ import sys
 from pathlib import Path
 
 from . import (bootstrap, change, derive, gates, gitio, hooks, impact,
-               instructions, ledger, scaffold, schema, skills, spec, store,
-               trace, validate, verify)
+               instructions, ledger, reconcile as reconcile_mod, scaffold,
+               schema, skills, spec, store, trace, validate, verify)
 from .anchor import (AnchorError, Status, classify, classify_store,
                      parse_anchor)
 from .fingerprint import available_languages, fingerprint_source
@@ -1424,6 +1424,67 @@ def _cmd_bootstrap_seal(args: argparse.Namespace) -> int:
     return _EXIT_OK
 
 
+def _cmd_reconcile(args: argparse.Namespace) -> int:
+    repo = args.repo.resolve()
+    if not gitio.is_repo(repo):
+        print(f"forge: {repo} is not a git repository", file=sys.stderr)
+        return _EXIT_USAGE
+    try:
+        result = reconcile_mod.reconcile(repo, args.since, args.head)
+    except (gitio.GitError, gitio.InvalidRevision) as exc:
+        print(f"forge: {exc}", file=sys.stderr)
+        return _EXIT_USAGE
+
+    if args.record:
+        added = reconcile_mod.record(repo, result)
+        for entry in added:
+            print(f"opened   {entry.id}  {entry.claim}  {entry.signal}")
+        print(f"\n{len(added)} entry(s) opened in {ledger.DRIFT_FILE}."
+              if added else "no new entries; every drifted claim already has one",
+              file=sys.stderr)
+        return _EXIT_CHANGED if added else _EXIT_OK
+
+    if args.json:
+        print(json.dumps(result.to_dict(), indent=2))
+        return _EXIT_CHANGED if result.obligating else _EXIT_OK
+
+    everything = result.causes + result.unattributed + result.unclassifiable
+    if not everything:
+        print(f"nothing drifted between {result.base[:10]} and {result.head[:10]}")
+        return _EXIT_OK
+
+    width = max(len(c.claim_id) for c in everything)
+    for cause in result.causes:
+        mark = f"[{cause.recorded}]" if cause.recorded else "unrecorded"
+        status = cause.drift.status.value if cause.drift.status else "unclassified"
+        print(f"{cause.claim_id:{width}}  {status:11}  {mark}")
+        for sha, author, subject in cause.commits[:4]:
+            print(f"{'':{width}}    {sha[:10]}  {author:16.16}  {subject[:60]}")
+        if len(cause.commits) > 4:
+            print(f"{'':{width}}    ... and {len(cause.commits) - 4} more")
+
+    if result.unattributed:
+        print(f"\ndrifted before {result.base[:10]}, so this range does not "
+              f"explain them:")
+        for cause in result.unattributed:
+            status = cause.drift.status.value if cause.drift.status else "unclassified"
+            print(f"  {cause.claim_id:{width}}  {status}")
+
+    if result.unclassifiable:
+        print("\ncould not be classified at all - not drift, and not a "
+              "reviewer's problem:")
+        for cause in result.unclassifiable:
+            reason = cause.drift.errors[0][1] if cause.drift.errors else "unknown"
+            print(f"  {cause.claim_id:{width}}  {reason[:64]}")
+
+    sys.stdout.flush()
+    owed = [c for c in result.obligating if not c.recorded]
+    print(f"\n{len(result.obligating)} claim(s) need a verdict, {len(owed)} with no "
+          f"ledger entry yet. `forge reconcile --since {args.since} --record` opens "
+          f"one for each.", file=sys.stderr)
+    return _EXIT_CHANGED if result.obligating else _EXIT_OK
+
+
 def _cmd_hooks(args: argparse.Namespace) -> int:
     repo = args.repo.resolve()
     if not gitio.is_repo(repo):
@@ -1810,6 +1871,23 @@ def build_parser() -> argparse.ArgumentParser:
     boot_seal.add_argument("--repo", type=Path, default=Path.cwd())
     boot_seal.add_argument("--json", action="store_true")
     boot_seal.set_defaults(func=_cmd_bootstrap_seal)
+
+    rec = sub.add_parser(
+        "reconcile",
+        help="what drifted while nobody was looking, and which commits did it",
+        description="The recovery path the pre-commit hook needs beside it, because "
+                    "the hook will be bypassed: --no-verify, a colleague's commits, a "
+                    "dependency bot, or a repository adopting the harness after years "
+                    "of history. Records nothing unless asked.",
+    )
+    rec.add_argument("--since", required=True, metavar="REV",
+                     help="the commit to look back to")
+    rec.add_argument("--head", default="HEAD")
+    rec.add_argument("--record", action="store_true",
+                     help="open a ledger entry for each drifted claim that has none")
+    rec.add_argument("--repo", type=Path, default=Path.cwd())
+    rec.add_argument("--json", action="store_true")
+    rec.set_defaults(func=_cmd_reconcile)
 
     hk = sub.add_parser(
         "hooks",

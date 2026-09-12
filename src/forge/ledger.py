@@ -84,6 +84,11 @@ class Entry:
     adr: str | None = None
     waived_until: str | None = None
     waiver_reason: str | None = None
+    #: `<sha> <author> - <subject>` for the commits that reached this
+    #: claim's anchors. The report had this and the record did not, which
+    #: left the one thing `forge reconcile` adds over a plain scan out of
+    #: the artifact that survives the terminal being closed.
+    caused_by: list[str] = field(default_factory=list)
     parse_error: str | None = None
 
     @property
@@ -164,6 +169,7 @@ def parse_ledger(text: str) -> list[Entry]:
         entry.adr = _opt(block.get("adr"))
         entry.waived_until = _opt(block.get("waived-until"))
         entry.waiver_reason = _opt(block.get("waiver-reason"))
+        entry.caused_by = [str(c) for c in (block.get("caused-by") or [])]
         entries.append(entry)
     return entries
 
@@ -219,6 +225,8 @@ def _render(entry: Entry) -> str:
         "signal": entry.signal,
         "anchors_changed": entry.anchors_changed,
     }
+    if entry.caused_by:
+        block["caused_by"] = entry.caused_by
     if entry.proposed_verdict:
         block["proposed_verdict"] = entry.proposed_verdict
     if entry.proposed_reasoning:
@@ -244,7 +252,8 @@ def write_ledger(repo: Path, entries: list[Entry]) -> Path:
     return target
 
 
-def record(repo: Path, drifts, *, today: _dt.date | None = None) -> list[Entry]:
+def record(repo: Path, drifts, *, today: _dt.date | None = None,
+           causes: dict[str, list[str]] | None = None) -> list[Entry]:
     """Append an open entry for each obligating claim that is not fresh.
 
     Idempotent by claim: a claim with an entry already open gets no second one.
@@ -269,6 +278,7 @@ def record(repo: Path, drifts, *, today: _dt.date | None = None) -> list[Entry]:
                             + [f"{a} (unclassifiable: {m})" for a, m in drift.errors],
             proposed_verdict=_propose(drift),
             proposed_reasoning=_reasoning(drift),
+            caused_by=list((causes or {}).get(drift.claim_id, [])),
         )
         added.append(entry)
 

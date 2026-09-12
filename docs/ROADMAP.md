@@ -363,6 +363,42 @@ asks for.
 
 Exercised end to end on the monorepo: blocked, recorded, committed, then confirmed
 against the commit that now existed - ending at 12 of 12 claims fresh.
+
+---
+
+## R5 - `forge reconcile`, the other half of Q10 **(done, 2026-09-12)**
+
+The hook is only Q10's first recommendation. It **will** be bypassed -
+`--no-verify`, a colleague's commits, a dependency bot, a repository adopting the
+harness after years of history - and Q10 says plainly that without a recovery path the
+first scan after a busy week is the wall of findings that ends in bankruptcy.
+
+What `reconcile` adds over `forge drift --store`, which already lists every stale claim,
+is **attribution**. A scan says a claim is stale; only the history says which commit did
+it and what that commit thought it was doing - which is exactly the question a reviewer
+choosing between "the code is wrong" and "the decision changed" is asking. Forty stale
+claims is a wall; forty with `42c437f Bob - feat(host): let the engine be opened
+read-only` beside them is a review.
+
+It records nothing unless asked, and `--record` opens one entry per claim, idempotently,
+carrying the causing commits into the ledger - the report had the attribution and the
+record did not, which left the one thing this command adds out of the artifact that
+survives the terminal closing.
+
+Exercised on the monorepo by simulating exactly what Q10 describes: two commits by two
+people, both past the hook with `--no-verify`. It attributed the one real drift to Bob's
+commit and correctly said nothing about Alice's, whose change added a term to a list
+without touching the anchored symbol.
+
+**Three buckets, not one**, and the third was a defect in the first cut: a claim nothing
+could be *classified* about is not a claim that drifted. Every candidate carries this,
+because a candidate is never stamped with a `@sha` - so the four candidates that review
+rejected appeared in every reconcile under a heading saying they had drifted.
+
+An anchoring lesson worth keeping, from Alice's commit: `PIT-secret-term-must-be-
+normalised` is about a *list* and anchors only to the function that reads it, so adding
+a badly-spelled term to that list would not be noticed. The anchor decides what the claim
+can see, and a claim about one thing anchored to another is quietly blind.
 >
 > **Symbol-level narrowing is done too** (2026-09-11), with G19 and G20. A symbol anchor
 > is touched when the diff's hunks intersect that symbol's own line span; a file anchor
