@@ -251,17 +251,19 @@ Publish to PyPI so `pipx install forge-harness` works; pin the kernel version in
 
 ---
 
-## 7. `bugfix.yaml` - the "fix bug" case **(P2)**
+## 7. `bugfix.yaml` - the "fix bug" case **(P2, done 2026-09-12)**
 
-[MVP.md](../MVP.md) section 4 defers this to M6, and the deferral still looks right. A
-bug fix runs as track B today. What a dedicated schema would add is one mandatory
-artifact - `reproduce` - holding a failing test written **before** the fix, which then
-becomes the `evidence:` of whatever claim the bug produces. That is the mechanism that
-turns a bug into a pitfall claim instead of a forgotten commit.
+[MVP.md](../MVP.md) section 4 deferred this to M6. A bug fix can now run under the
+dedicated `bugfix` workflow schema (`forge change new <name> --workflow bugfix`), which
+adds one mandatory artifact - `reproduce` (`reproduce.md`) - holding a failing test
+written **before** the fix, which then becomes the `evidence:` of whatever claim the bug
+produces.
 
-Do it after R1-R5, and only once a few bugs have actually been fixed through track B, so
-its shape is decided by what track B was missing rather than by what it looks like it is
-missing.
+**Shipped:**
+- Built-in `bugfix` workflow schema in `src/forge/schema.py` declaring `reproduce` as the root mandatory artifact for tracks B and C, blocking `proposal` and downstream tasks until reproduction is established.
+- `_T_REPRODUCE` template added to `src/forge/scaffold.py:CHANGE_TEMPLATES` for `forge instructions reproduce --change N --write`.
+- `forge init` scaffolds both `feature.yaml` and `bugfix.yaml` under `.forge/schema/`.
+- Validated with unit tests in `tests/test_schema.py` (structure and track requirements) and `tests/test_change.py` (end-to-end change lifecycle and template unblocking).
 
 ---
 
