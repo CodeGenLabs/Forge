@@ -18,8 +18,9 @@
 - Live longitudinal engineer behavior: Whether real developers heed or ignore stale reports over weeks of active multi-person development cannot be determined without a human study.
 
 **What I would do next:**
-- Correct the overclaim in `q1b-where-else-does-the-knowledge-live.md` in place, striking through the claim that `PIT-adapter-prefix-is-a-raw-string-prefix` had no other home.
-- Wire automated enforcer checks into `forge drift` so that when a claim goes stale, forge automatically runs its cited `evidence` test before prompting for a human verdict.
+- Wire automated test execution into `forge drift`: when a claim goes stale, forge should automatically run its cited `evidence` tests before prompting for a human verdict, turning the 0/18 self-triaging friction into automated green/red signal.
+- Formalize a test-lookup gate or automated index for claims whose knowledge lives in existing test suites (as discovered in the Q1b correction for `PIT-adapter-prefix-is-a-raw-string-prefix`).
+
 
 ---
 
