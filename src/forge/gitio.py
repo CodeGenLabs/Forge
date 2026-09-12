@@ -345,8 +345,21 @@ def changed_files(repo: Path, base: str, *, head: str | None = None) -> list[str
 
 
 def first_commit_touching(repo: Path, path: str) -> str | None:
-    """The commit that introduced *path*, or None if it is not committed yet."""
-    out = git(repo, "log", "--diff-filter=A", "--format=%H", "--follow",
+    """The commit that introduced *path*, or None if it is not committed yet.
+
+    Deliberately **not** ``--follow``. Rename detection matched one change's
+    ``.forge.yaml`` to the previous change's, which `forge archive` had moved
+    into ``changes/archive/`` - they are near-identical small YAML files - and
+    followed the history back to where *that* was added. Every change after the
+    first then resolved its base to an earlier change's creation commit, so its
+    blast radius swallowed work the previous change had already accounted for
+    and the claim-touch rule demanded a second account for it.
+
+    Only visible from the second change onward, which is why two runs of one
+    change each never saw it. A change directory's path is fixed; following it
+    across a rename is exactly wrong.
+    """
+    out = git(repo, "log", "--diff-filter=A", "--format=%H",
               "--", validate_repo_path(path), check=False)
     lines = [line.strip() for line in out.splitlines() if line.strip()]
     return lines[-1] if lines else None
@@ -426,7 +439,19 @@ def changed_line_ranges(repo: Path, base: str, path: str,
     base = validate_rev(base)
     path = validate_repo_path(path)
 
-    args = ["diff", "-U0", "--no-color", "--find-renames", base]
+    # `--ignore-cr-at-eol`: a line that differs only by a trailing carriage
+    # return was not edited by anybody. Any editor or script that rewrites a
+    # store file with the other platform's line endings otherwise marks *every*
+    # claim in it as having had its definition edited - and the claim-touch rule
+    # then demands an account for all of them. That is the rubber-stamping
+    # pressure R1 removed, arriving through a third door; measured when a
+    # restamp script on Windows rewrote `pitfalls.md` as CRLF and one hunk
+    # covered the whole file.
+    #
+    # Deliberately not `-w`, which would also ignore indentation: reindenting a
+    # claim's body *is* an edit to it.
+    args = ["diff", "-U0", "--no-color", "--find-renames",
+            "--ignore-cr-at-eol", base]
     if head is not None:
         args.append(validate_rev(head))
     out = git(repo, *args, "--", path, check=False)

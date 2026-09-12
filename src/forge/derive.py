@@ -80,8 +80,17 @@ _BACKREF_RE = re.compile(r"forge:([A-Z]{2,4}-[A-Za-z0-9_-]+)")
 _TEST_DECL_RES = {
     "python": [re.compile(r"^\s*def\s+(test_[A-Za-z0-9_]*)\s*\(", re.M)],
     "go": [re.compile(r"^\s*func\s+((?:Test|Benchmark|Fuzz|Example)[A-Za-z0-9_]*)\s*\(", re.M)],
+    # `it.each([...])('name %s', ...)` is a parameterised test, and the table
+    # argument sits between the modifier and the name. The old pattern expected
+    # the name immediately after `it.each`, so every `it.each` in a repository
+    # was invisible: uncounted in the census, and any `@covers` on one was lost
+    # to the tag landing on whichever test came next. The optional
+    # `\([^)]*\)\s*` is that table.
     "typescript": [
-        re.compile(r"""^\s*(?:it|test)\s*(?:\.\w+)?\s*\(\s*['"`](.+?)['"`]""", re.M),
+        re.compile(
+            r"""^\s*(?:it|test)\s*(?:\.\w+)*\s*(?:\([^()]*(?:\([^()]*\)[^()]*)*\)\s*)?"""
+            r"""\(\s*['"`](.+?)['"`]""",
+            re.M),
     ],
 }
 _TEST_DECL_RES["tsx"] = _TEST_DECL_RES["typescript"]

@@ -1758,7 +1758,30 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _survive_the_console() -> None:
+    """Never crash for want of a character the terminal cannot draw.
+
+    The harness prints repository content - claim titles, test names, a failing
+    command's output - and repositories are written by people, in their own
+    languages, with tools that emit `✓`. A Windows console at cp1252 cannot
+    encode most of that, and the default `strict` handler turns it into an
+    uncaught `UnicodeEncodeError`.
+
+    Found the hard way: the fix that made `forge verify` report *what* failed
+    made it crash instead, on a vitest tick, on the very next run.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(errors="replace")
+        except (AttributeError, ValueError, OSError):
+            # Not a real stream - captured in a test, piped, redirected to a
+            # file object without reconfigure. Printing is best-effort here and
+            # a failure to harden must not become the crash it prevents.
+            pass
+
+
 def main(argv: list[str] | None = None) -> int:
+    _survive_the_console()
     args = build_parser().parse_args(argv)
     return args.func(args)
 

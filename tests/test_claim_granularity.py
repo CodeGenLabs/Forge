@@ -244,3 +244,84 @@ def test_a_claim_before_another_claim_is_unaffected(repo):
     assert [c.id for c in claims] == ["CON-one", "CON-two"]
     assert "Prose for two." in claims[1].prose
     assert "## Uncertain" not in claims[1].prose
+
+
+# ---------------------------------------------------------------------------
+# The base a change is measured from
+# ---------------------------------------------------------------------------
+
+def test_a_second_change_is_not_measured_from_the_first(repo):
+    """`first_commit_touching` used `--follow`. Rename detection matched one
+    change's `.forge.yaml` to the previous change's, which `forge archive` had
+    moved into `changes/archive/`, and followed the history back to where that
+    was added. Every change after the first then measured itself from an
+    earlier change's creation commit."""
+    from forge.cli import main
+
+    repo.write("src/a.py", "def a():\n    return 1\n")
+    main(["init", "--repo", str(repo.root)])
+    repo.commit("a scaffolded project")
+
+    change.new_change(repo.root, "the first change", today=TODAY)
+    repo.write("src/a.py", "def a():\n    return 2\n")
+    first = repo.commit("open and do the first change")
+
+    # Archive moves the first change's `.forge.yaml`, which is what created the
+    # rename for git to detect.
+    archive = repo.root / "changes/archive/2026-09-11-0001-the-first-change"
+    archive.parent.mkdir(parents=True, exist_ok=True)
+    (repo.root / "changes/0001-the-first-change").rename(archive)
+    repo.commit("archive the first change")
+
+    change.new_change(repo.root, "the second change", today=TODAY)
+    repo.commit("open the second change")
+
+    item = change.find_change(repo.root, "2")
+    assert impact.resolve_base(repo.root, item) != gitio.rev_parse(repo.root, first)
+
+
+def test_first_commit_touching_reports_the_path_it_was_asked_about(repo):
+    repo.write("one.txt", "first\n")
+    a = repo.commit("add one.txt")
+    repo.write("two.txt", "second\n")
+    repo.commit("add two.txt")
+
+    assert gitio.first_commit_touching(repo.root, "one.txt") == gitio.rev_parse(repo.root, a)
+
+
+# ---------------------------------------------------------------------------
+# A carriage return is not an edit
+# ---------------------------------------------------------------------------
+
+def test_rewriting_a_file_with_the_other_line_endings_is_not_an_edit(repo):
+    """Any editor or script that rewrites a store file with CRLF otherwise
+    marks every claim in it as edited, and the claim-touch rule then demands an
+    account for all of them - the rubber-stamping R1 removed, through a third
+    door."""
+    target = repo.root / "notes.md"
+    target.write_bytes(b"alpha\nbeta\ngamma\n")
+    base = repo.commit("LF")
+    target.write_bytes(b"alpha\r\nbeta\r\ngamma\r\n")
+
+    assert gitio.changed_line_ranges(repo.root, base, "notes.md") == []
+
+
+def test_a_real_edit_beside_a_line_ending_change_is_still_seen(repo):
+    """The narrowing must not swallow the edit it is meant to isolate."""
+    target = repo.root / "notes.md"
+    target.write_bytes(b"alpha\nbeta\ngamma\n")
+    base = repo.commit("LF")
+    target.write_bytes(b"alpha\r\nBETA\r\ngamma\r\n")
+
+    assert gitio.changed_line_ranges(repo.root, base, "notes.md") == [(2, 2)]
+
+
+def test_reindenting_a_line_is_still_an_edit(repo):
+    """`--ignore-cr-at-eol`, not `-w`: reindenting a claim's body is an edit
+    to it."""
+    target = repo.root / "notes.md"
+    target.write_bytes(b"alpha\nbeta\n")
+    base = repo.commit("flush left")
+    target.write_bytes(b"alpha\n    beta\n")
+
+    assert gitio.changed_line_ranges(repo.root, base, "notes.md") == [(2, 2)]

@@ -120,3 +120,83 @@ Q12 is untested.
 **Whether the store helped.** Eleven claims now exist for a repository whose maintainer
 already keeps `AGENTS.md` and a `docs/` tree. Whether the claims add anything over what
 was already written down is exactly Q1, and nobody has measured it.
+
+
+---
+
+## 5. A second change, and the three defects only a *second* change could find
+
+The first change touched no claims - nothing anchors into `tools/__tests__/` - so the
+`touched`/`Nearby` split three rounds of narrowing had produced was never exercised.
+A second change was chosen deliberately to hit one: `packages/engine/src/redact.ts`,
+which `PIT-secret-key-match-must-be-substring` anchors to.
+
+**The measurement came out clean.** Editing `isSecretKey` in a 19-package repository
+with 12 claims produced **2 touched** - the claim anchored to that symbol, and the new
+claim the change records - against **7 files reached by import and 0 claims nearby**,
+because nothing anchors into `audit.ts`, `index.ts` or the five leak tests. One function
+edited, two obligations, both right.
+
+Getting there cost three defects.
+
+### H13 — a change after the first measured itself from an earlier change
+
+`first_commit_touching` used `--follow`. Rename detection matched change 2's
+`.forge.yaml` to change 1's, which `forge archive` had moved into `changes/archive/` -
+they are near-identical small YAML files - and followed the history back to where *that*
+was added. Change 2's base was therefore a commit from before change 1 existed, its
+blast radius swallowed change 1's work, and the claim-touch rule demanded a second
+account for a claim change 1 had already accounted for.
+
+**Invisible to both earlier runs, which made one change each.** A change directory's
+path is fixed; following it across a rename is exactly wrong.
+
+### H14 — a carriage return is not an edit
+
+While diagnosing H13 I rewrote `pitfalls.md` from a script without pinning the newline,
+and Python on Windows turned every `
+` into `
+`. Git then reported one hunk
+covering the whole file, and *every* claim in it as having had its definition edited.
+
+My own tooling error - and a general hazard, because any editor configured the other way
+does the same to anybody's store. `changed_line_ranges` now passes
+`--ignore-cr-at-eol`. Deliberately not `-w`: reindenting a claim's body *is* an edit.
+
+This is the rubber-stamping pressure of [OPEN_QUESTIONS.md](../../OPEN_QUESTIONS.md) Q3
+through a third door. F15 was claims-sharing-a-file, G14 was
+claims-sharing-an-import-graph, and this is claims-sharing-a-line-ending.
+
+### H15 — every `it.each` test was invisible
+
+`it.each([...])('name %s', ...)` puts the table between the modifier and the name, and
+the declaration pattern expected the name immediately after `it.each`. So parameterised
+tests were uncounted, and a `@covers` tag above one bound to whichever ordinary test came
+next - which is precisely what happened to this change's tag, and why the store check
+rejected its evidence.
+
+Modest in volume here (+4 of 377) and total in kind: the form was invisible, not rare.
+
+### Two defects in my own H11 fix, found the same day
+
+The fix that made a failing command say *what* failed **crashed** on the next run: it
+printed vitest's `✓` to a Windows console at cp1252 and raised `UnicodeEncodeError`.
+`forge` now reconfigures both streams with `errors="replace"` at startup - the harness
+prints repository content, and repositories are written by people in their own
+languages.
+
+Then it printed noise: keying "interesting" on `.test.` matched vitest's one-line-per-
+*passing*-file summary, so a list headed "failures" filled with successes.
+
+---
+
+## 6. Where run 3 ended
+
+Two complete lifecycles on a real monorepo, both reaching `verdict: pass` and archiving
+unforced, both folding to the right per-capability path. `forge check` clean, 12 ratified
+claims, 377 tests indexed.
+
+Eleven of the fifteen findings are now fixed in the kernel. What run 3 still did not
+measure is unchanged from §4: whether anybody reads `Nearby`, whether a second agent
+host costs a manifest or a port, and whether the claims add anything over the `AGENTS.md`
+this project already keeps.

@@ -187,8 +187,13 @@ def _run(repo: Path, name: str, line: str, timeout: int) -> dict:
 #: of an indented code fragment with no test name and no file in it, so the
 #: only way to learn what broke was to re-run the suite by hand.
 _INTERESTING_RE = re.compile(
-    r"(?i)\b(fail(ed|ure|s)?|error|assert\w*|expected|✕|×|✗|not ok|panic|"
-    r"traceback|exception|\.test\.|\.spec\.|test_)\b|^\s*(FAIL|ERR)")
+    r"(?i)\b(fail(ed|ure|s)?|error|assert\w*|expected|not ok|panic|"
+    r"traceback|exception)\b|[✕×✗]|^\s*(FAIL|ERR)")
+
+#: A runner's progress chatter, which matches nothing useful and drowns what
+#: does. Vitest prints one line per *passing* file with a tick and a duration;
+#: keying on `.test.` pulled every one of them into a list headed "failures".
+_NOISE_RE = re.compile(r"\(\d+ tests?\)\s*\d+m?s\s*$|^\s*[✓√?]\s|^\s*\d+\s*passed")
 
 #: Terminal colour, which a JSON report does not render and a reader does not
 #: want. Stripped rather than kept: `\x1b[31m` around every useful word makes
@@ -210,7 +215,8 @@ def _failure_lines(completed: subprocess.CompletedProcess) -> dict:
     lines = [ln.rstrip() for ln in text.splitlines() if ln.strip()]
     if not lines:
         return {}
-    named = [ln for ln in lines if _INTERESTING_RE.search(ln)]
+    named = [ln for ln in lines
+             if _INTERESTING_RE.search(ln) and not _NOISE_RE.search(ln)]
     return {
         # The lines that say what broke, capped so the report stays readable.
         "failures": named[:12] if named else [],

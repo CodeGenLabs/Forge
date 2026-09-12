@@ -275,3 +275,56 @@ def test_a_malformed_manifest_does_not_stop_the_scan(repo):
 
     assert deps(repo)["edges"]["packages/client/src/a.ts"] == [
         "packages/contract/src/index.ts"]
+
+
+# ---------------------------------------------------------------------------
+# `it.each` is a test declaration
+# ---------------------------------------------------------------------------
+
+def test_a_parameterised_test_is_counted(repo):
+    """`it.each([...])('name %s', ...)` puts the table between the modifier and
+    the name, and the old pattern expected the name immediately after `it.each`.
+    Every `it.each` in a repository was invisible: uncounted, and any `@covers`
+    on one was lost to the tag landing on whichever test came next."""
+    repo.write("src/a.test.ts",
+               "it.each([1, 2])('parameterised %s', (n) => {})\n")
+    repo.commit("a parameterised test")
+
+    tests = derive.build_tests(repo.root)
+    assert tests["total_tests"] == 1
+
+
+def test_a_covers_tag_binds_to_the_parameterised_test_below_it(repo):
+    repo.write("src/a.test.ts",
+               "// @covers REQ-one\n"
+               "it.each([1, 2])('parameterised %s', (n) => {})\n\n"
+               "it('the next one', () => {})\n")
+    repo.commit("a tag above a parameterised test")
+
+    tests = derive.build_tests(repo.root)["files"]["src/a.test.ts"]["tests"]
+    by_name = {t["name"]: t["covers"] for t in tests}
+    assert by_name["parameterised %s"] == ["REQ-one"]
+    assert by_name["the next one"] == []
+
+
+def test_the_plain_and_modified_forms_still_count(repo):
+    repo.write("src/a.test.ts",
+               "it('plain', () => {})\n"
+               "it.skip('skipped', () => {})\n"
+               "test.each([['a']])('table %s', (x) => {})\n"
+               "it.concurrent.each([1])('nested modifier %s', (n) => {})\n")
+    repo.commit("four shapes")
+
+    assert derive.build_tests(repo.root)["total_tests"] == 4
+
+
+def test_a_call_that_is_not_a_test_is_not_counted(repo):
+    """The optional table group must not turn any `something(...)('str')` into
+    a test."""
+    repo.write("src/a.test.ts",
+               "it('real', () => {})\n"
+               "describe('a group', () => {})\n"
+               "const f = compose(g)('not a test')\n")
+    repo.commit("one test and two things that are not")
+
+    assert derive.build_tests(repo.root)["total_tests"] == 1
