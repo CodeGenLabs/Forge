@@ -218,7 +218,7 @@
           "src/forge/derive.py"
         ],
         "anchors": [
-          "src/forge/derive.py#build_inventory@8e06e5ca51"
+          "src/forge/derive.py#build_inventory@ec22a88bdd"
         ],
         "back_references": [],
         "candidate": false,
@@ -391,10 +391,10 @@
       "ids_indexed": 13,
       "invariants_without_tests": [],
       "tests_tagged": 0,
-      "tests_total": 706
+      "tests_total": 712
     }
   },
-  "generated_from_commit": "2c3d56a2ad307ec829f09c31e4e361830b54693b",
+  "generated_from_commit": "f825f9aea852973eaaaad0c5671d01c72c533965",
   "generator": "forge sync derived",
   "tool": "forge"
 }

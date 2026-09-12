@@ -1233,9 +1233,39 @@
             "covers": [],
             "line": 317,
             "name": "test_no_config_is_not_an_error"
+          },
+          {
+            "covers": [],
+            "line": 329,
+            "name": "test_covers_in_string_literals_are_ignored"
+          },
+          {
+            "covers": [],
+            "line": 335,
+            "name": "test_fake"
+          },
+          {
+            "covers": [],
+            "line": 340,
+            "name": "test_real"
+          },
+          {
+            "covers": [],
+            "line": 350,
+            "name": "test_backrefs_in_string_literals_are_ignored"
+          },
+          {
+            "covers": [],
+            "line": 367,
+            "name": "test_typescript_comments_vs_literals"
+          },
+          {
+            "covers": [],
+            "line": 389,
+            "name": "test_go_comments_vs_literals"
           }
         ],
-        "untagged": 32
+        "untagged": 38
       },
       "tests/test_evidence.py": {
         "language": "python",
@@ -3703,9 +3733,9 @@
       }
     },
     "tagged_tests": 0,
-    "total_tests": 706
+    "total_tests": 712
   },
-  "generated_from_commit": "c6f062221ccfef0e273011e182a0ea6e16ae12d4",
+  "generated_from_commit": "f825f9aea852973eaaaad0c5671d01c72c533965",
   "generator": "forge sync derived",
   "tool": "forge"
 }
