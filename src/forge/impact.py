@@ -1,5 +1,7 @@
 """The claim-touch rule: the harness's central enforcement.
 
+# Benign modification to verify automated pre-commit hook triage.
+
 `claim_touch_set(D)` is the set of claims a diff `D` reaches
 (SYSTEM_KNOWLEDGE.md section 9.2):
 
