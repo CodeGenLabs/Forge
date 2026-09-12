@@ -146,6 +146,22 @@ def _drift_ledger(repo: Path, args: argparse.Namespace) -> int:
         still = ledger.open_entries(repo)
         return _EXIT_CHANGED if still else _EXIT_OK
 
+    if verb == "confirm" and getattr(args, "green", False):
+        try:
+            confirmed_list = ledger.confirm_green(repo, head=args.head)
+            if not confirmed_list:
+                print("no open drift entries have passing evidence tests")
+                return _EXIT_OK
+            for entry, restamped in confirmed_list:
+                print(f"confirmed {entry.id}  {entry.claim}  restamped {len(restamped)} anchor line(s) (evidence test passed)")
+                for where in restamped:
+                    print(f"  {where}")
+            print("\nEvidence tests passed at HEAD; anchors restamped.", file=sys.stderr)
+            return _EXIT_OK
+        except ledger.LedgerError as exc:
+            print(f"forge: {exc}", file=sys.stderr)
+            return _EXIT_USAGE
+
     if not rest:
         print(f"forge: `drift {verb}` needs an entry id, as in "
               f"`forge drift {verb} D-001`", file=sys.stderr)
@@ -214,11 +230,44 @@ def _drift_store(repo: Path, args: argparse.Namespace) -> int:
         print(f"forge: {exc}", file=sys.stderr)
         return _EXIT_USAGE
 
-    if getattr(args, "test", False):
+    run_tests = (getattr(args, "test", False) or
+                 getattr(args, "auto_record_green", False) or
+                 getattr(args, "prompt_record_green", False))
+    if run_tests:
         from . import evidence as _evidence
         for d in drifts:
             if d.changed and d.obligating and d.evidence:
                 d.evidence_results = _evidence.evaluate_evidence(repo, d.evidence)
+
+    if getattr(args, "auto_record_green", False) or getattr(args, "prompt_record_green", False):
+        changed = [d for d in drifts if d.obligating and d.changed]
+        all_green = False
+        if changed:
+            all_green = all(
+                getattr(d, "evidence_results", None)
+                and all(r.status == "pass" for r in d.evidence_results)
+                for d in changed
+            )
+        if all_green:
+            should_record = False
+            if getattr(args, "auto_record_green", False):
+                should_record = True
+            elif getattr(args, "prompt_record_green", False):
+                if sys.stdin.isatty():
+                    _render_drifts(drifts, narrowed=paths is not None)
+                    print(f"\nAll {len(changed)} drifted claim(s) passed evidence tests (green).")
+                    try:
+                        ans = input("Auto-record and stage drift into this commit? [Y/n] ").strip().lower()
+                        should_record = ans in ("", "y", "yes")
+                    except (EOFError, KeyboardInterrupt):
+                        should_record = False
+            if should_record:
+                added = ledger.record(repo, drifts, run_evidence=True)
+                if added:
+                    gitio.git(repo, "add", ledger.DRIFT_FILE)
+                    print(f"\n[evidence: PASS] Auto-recorded {len(added)} drift entry(s) into "
+                          f"{ledger.DRIFT_FILE} and staged.")
+                return _EXIT_OK
 
     if args.json:
         print(json.dumps([d.to_dict() for d in drifts], indent=2))
@@ -1735,6 +1784,10 @@ def build_parser() -> argparse.ArgumentParser:
     drift.add_argument("--test", action="store_true",
                        help="run evidence tests for drifted claims to determine whether "
                             "invariants still hold")
+    drift.add_argument("--auto-record-green", action="store_true",
+                       help="auto-record and stage drift entries into the commit when all evidence tests pass")
+    drift.add_argument("--prompt-record-green", action="store_true",
+                       help="prompt to auto-record and stage drift entries when all evidence tests pass")
     # The ledger verbs live in the first positional rather than in argparse
     # subparsers, because subparsers would take that slot from `forge drift
     # <anchor>` - a form this repository's own tests and measurement tools
@@ -1743,6 +1796,8 @@ def build_parser() -> argparse.ArgumentParser:
     led = drift.add_argument_group(
         "the drift ledger",
         "forge drift record | list | resolve <id> | confirm <id> | waive <id>")
+    led.add_argument("--green", action="store_true",
+                     help="for `confirm`: restamp all open entries whose evidence tests pass at HEAD")
     led.add_argument("--verdict", help="V1 | V2 | V3 | V4, for `resolve`")
     led.add_argument("--evidence", help="how a V2 or V4 is known")
     led.add_argument("--adr", help="the decision a V3 rests on")

@@ -65,7 +65,7 @@ if ! {forge} check --scope store --repo "$root"; then
     exit 1
 fi
 
-if ! {forge} drift --staged --unrecorded --repo "$root"; then
+if ! {forge} drift --staged --unrecorded --test --prompt-record-green --repo "$root"; then
     echo ""
     echo "Code under a claim's anchor changed here, and nobody has written that"
     echo "down. The hook does not ask for a verdict - a verdict points at a commit"
@@ -76,6 +76,7 @@ if ! {forge} drift --staged --unrecorded --repo "$root"; then
     echo "That opens a ledger entry and lets the commit through. Rule on it after,"
     echo "against the commit it is about:"
     echo ""
+    echo "    {forge} drift confirm --green   # restamps claims with passing tests"
     echo "    {forge} drift confirm <id>      # still true; restamps the anchor"
     echo "    {forge} drift resolve <id> --verdict V1|V2|V3|V4"
     echo ""

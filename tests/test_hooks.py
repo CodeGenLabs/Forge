@@ -9,6 +9,7 @@ the same verdict whether or not anything was staged.
 
 from __future__ import annotations
 
+import sys
 from datetime import date
 
 import pytest
@@ -209,3 +210,94 @@ def test_status_distinguishes_the_three_cases(anchored):
     hooks.hooks_dir(anchored.root).joinpath(hooks.HOOK_NAME).write_text(
         "#!/bin/sh\n", encoding="utf-8", newline="\n")
     assert hooks.installed_state(anchored.root)[0] == "theirs"
+
+
+def test_auto_record_green_with_passing_evidence(anchored, capsys):
+    anchored.write(".forge/config.yaml", f"commands:\n  test: {sys.executable} -m pytest -q\n")
+    anchored.write("tests/test_app.py", "def test_ok():\n    assert True\n")
+    base = anchored.head
+    anchored.write("docs/system/domain.md",
+                   f"# Domain\n\n### PIT-greet - shape\n\n```claim\n"
+                   f"kind: pitfall\nstatus: asserted\ntruth-source: code\n"
+                   f"anchors: [\"src/app.py#greet@{base}\"]\n"
+                   f"evidence:\n  - test: tests/test_app.py::test_ok\n"
+                   f"reviewed: 2026-09-01\n```\nProse.\n")
+    anchored.commit("setup claim with evidence")
+
+    # Shift body of src/app.py
+    stage(anchored, "def greet():\n    return 'hello world'\n")
+
+    # Drift is detected but auto-recorded because evidence is green
+    code = main(["drift", "--staged", "--unrecorded", "--test", "--auto-record-green",
+                 "--repo", str(anchored.root)])
+    assert code == 0
+    out = capsys.readouterr().out
+    assert "Auto-recorded" in out
+    assert "staged" in out
+    # Verify DRIFT.md was staged in git index
+    assert "docs/system/DRIFT.md" in gitio.staged_files(anchored.root)
+
+
+def test_auto_record_green_blocks_when_evidence_fails(anchored, capsys):
+    anchored.write(".forge/config.yaml", f"commands:\n  test: {sys.executable} -m pytest -q\n")
+    anchored.write("tests/test_app.py", "def test_ok():\n    assert False, 'broken invariant'\n")
+    base = anchored.head
+    anchored.write("docs/system/domain.md",
+                   f"# Domain\n\n### PIT-greet - shape\n\n```claim\n"
+                   f"kind: pitfall\nstatus: asserted\ntruth-source: code\n"
+                   f"anchors: [\"src/app.py#greet@{base}\"]\n"
+                   f"evidence:\n  - test: tests/test_app.py::test_ok\n"
+                   f"reviewed: 2026-09-01\n```\nProse.\n")
+    anchored.commit("setup claim with broken evidence")
+
+    stage(anchored, "def greet():\n    return 'hello world'\n")
+
+    code = main(["drift", "--staged", "--unrecorded", "--test", "--auto-record-green",
+                 "--repo", str(anchored.root)])
+    assert code == 1
+    # DRIFT.md should NOT be staged
+    assert "docs/system/DRIFT.md" not in gitio.staged_files(anchored.root)
+
+
+def test_drift_confirm_green_batch_restamps(anchored, capsys):
+    anchored.write(".forge/config.yaml", f"commands:\n  test: {sys.executable} -m pytest -q\n")
+    anchored.write("tests/test_app.py", "def test_ok():\n    assert True\n")
+    old_base = anchored.head
+    anchored.write("docs/system/domain.md",
+                   f"# Domain\n\n### PIT-greet - shape\n\n```claim\n"
+                   f"kind: pitfall\nstatus: asserted\ntruth-source: code\n"
+                   f"anchors: [\"src/app.py#greet@{old_base}\"]\n"
+                   f"evidence:\n  - test: tests/test_app.py::test_ok\n"
+                   f"reviewed: 2026-09-01\n```\nProse.\n")
+    anchored.commit("setup claim")
+
+    # Shift body and commit it
+    anchored.write("src/app.py", "def greet():\n    return 'updated'\n")
+    new_head = anchored.commit("updated greet body")
+
+    # Record drift into ledger
+    drifts = anchor.classify_store(anchored.root, head=new_head)
+    ledger.record(anchored.root, drifts, run_evidence=True)
+    open_entries = ledger.open_entries(anchored.root)
+    assert len(open_entries) == 1
+    assert open_entries[0].is_open
+
+    # Run confirm --green
+    code = main(["drift", "confirm", "--green", "--repo", str(anchored.root)])
+    assert code == 0
+    out = capsys.readouterr().out
+    assert "confirmed" in out
+    assert "evidence test passed" in out
+
+    # Verify entry is resolved
+    assert not ledger.open_entries(anchored.root)
+    # Verify anchor is restamped to new_head
+    domain_text = (anchored.root / "docs/system/domain.md").read_text(encoding="utf-8")
+    assert f"@{new_head[:10]}" in domain_text
+
+
+def test_drift_confirm_green_no_green_entries(anchored, capsys):
+    code = main(["drift", "confirm", "--green", "--repo", str(anchored.root)])
+    assert code == 0
+    assert "no open drift entries" in capsys.readouterr().out
+

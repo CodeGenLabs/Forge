@@ -29,7 +29,7 @@ from . import gitio, store
 __all__ = [
     "DRIFT_FILE", "Entry", "LedgerError", "VERDICTS",
     "load_ledger", "next_id", "record", "resolve", "waive", "confirm",
-    "open_entries",
+    "confirm_green", "open_entries",
 ]
 
 DRIFT_FILE = "docs/system/DRIFT.md"
@@ -471,6 +471,34 @@ def confirm(repo: Path, entry_id: str, *, head: str = "HEAD",
     entry.evidence = f"re-confirmed at {sha[:10]}; anchors restamped, prose unchanged"
     write_ledger(repo, entries)
     return entry, restamped
+
+
+def confirm_green(repo: Path, *, head: str = "HEAD",
+                  today: _dt.date | None = None) -> list[tuple[Entry, list[str]]]:
+    """Find all open ledger entries whose claim evidence tests pass, and confirm them."""
+    from . import evidence as _evidence
+
+    today = today or _dt.date.today()
+    entries = load_ledger(repo)
+    open_entries = [e for e in entries if e.is_open and e.claim]
+    if not open_entries:
+        return []
+
+    claims_by_id = {c.id: c for c in store.load_store(repo)}
+    confirmed_list: list[tuple[Entry, list[str]]] = []
+
+    for open_e in open_entries:
+        claim = claims_by_id.get(open_e.claim)
+        if not claim or not claim.evidence:
+            continue
+        test_results = _evidence.evaluate_evidence(repo, claim.evidence)
+        if not test_results:
+            continue
+        if all(r.status == "pass" for r in test_results):
+            confirmed_entry, restamped = confirm(repo, open_e.id, head=head, today=today)
+            confirmed_list.append((confirmed_entry, restamped))
+
+    return confirmed_list
 
 
 def _restamp(repo: Path, claim_id: str, sha: str, today: _dt.date) -> list[str]:
