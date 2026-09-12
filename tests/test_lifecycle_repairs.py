@@ -387,3 +387,83 @@ def test_a_verification_report_does_not_dirty_the_derived_tier(opened):
 
     assert [n for n, changed in derive.derive_all(opened.root, dry_run=True).items()
             if changed] == []
+
+
+# ---------------------------------------------------------------------------
+# Three small debts the runs kept reporting
+# ---------------------------------------------------------------------------
+
+def test_an_unimplemented_check_says_what_it_waits_on_not_who_owes_it():
+    """It read "Owed by: M4" long after M4 shipped without bringing it, so the
+    gate spent weeks naming a debt that had been settled without being paid. A
+    label that ages into a lie is worse than "nobody has scheduled this",
+    because the first is read as a plan."""
+    from forge import gates
+
+    for check, waiting_on in gates.PENDING.items():
+        assert "unscheduled" in waiting_on, check
+        assert not any(m in waiting_on for m in ("M0", "M1", "M2", "M3", "M4", "M5"))
+
+
+def test_the_unavailable_message_names_the_check_and_the_gap(opened, capsys):
+    from forge import gates
+
+    (result,) = gates.run_gate(opened.root, "implement:task:post", item(opened))
+    (issue,) = result.issues
+    assert issue.code == "gate.unavailable"
+    assert "task.scope_and_covers" in issue.message
+    assert "Waiting on:" in issue.message
+    assert "proves nothing" in issue.message
+
+
+def test_a_change_can_be_named_either_way(opened, capsys):
+    """`change show 1` was positional while every other change-scoped command
+    took `--change` - and `change show` printed the flag form in its own
+    "Next:" line, so the tool taught a spelling it then rejected."""
+    assert main(["change", "show", "1", "--repo", str(opened.root)]) == 0
+    positional = capsys.readouterr().out
+    assert main(["change", "show", "--change", "1", "--repo", str(opened.root)]) == 0
+    assert capsys.readouterr().out == positional
+
+
+def test_naming_no_change_is_a_usage_error(opened, capsys):
+    assert main(["change", "show", "--repo", str(opened.root)]) == 2
+    assert "--change 1" in capsys.readouterr().err
+
+
+def test_track_takes_the_flag_too(opened, capsys):
+    """The fixture is already on track C, so the interesting thing is *which*
+    complaint comes back: the kernel's, which means the flag was accepted, and
+    not argparse's."""
+    main(["change", "track", "--change", "1", "--to", "C",
+          "--reason", "it turned out to touch a component boundary",
+          "--repo", str(opened.root)])
+    assert "already on track C" in capsys.readouterr().err
+
+
+def test_doctor_reports_commands_the_manifests_declare(repo, capsys):
+    """`bootstrap derive` reads these off the manifests and prints them; only
+    `seal` writes them to config. Between the two, doctor said "none declared"
+    on a repository where derive had just listed four - the same facts, and the
+    tool disagreeing with itself about them."""
+    repo.write("package.json",
+               '{"name": "x", "scripts": {"build": "tsc", "test": "vitest run"}}')
+    main(["init", "--repo", str(repo.root)])
+    repo.commit("a project with scripts and no forge commands")
+
+    assert main(["doctor", "--repo", str(repo.root)]) == 0
+    out = capsys.readouterr().out
+    assert "none declared" in out
+    assert "manifests declare 2" in out
+    assert "npm run build" in out and "npm run test" in out
+
+
+def test_doctor_says_nothing_extra_when_there_is_nothing_to_say(repo, capsys):
+    repo.write("README.md", "no manifests here\n")
+    main(["init", "--repo", str(repo.root)])
+    repo.commit("a project with no manifest")
+
+    assert main(["doctor", "--repo", str(repo.root)]) == 0
+    out = capsys.readouterr().out
+    assert "none declared" in out
+    assert "manifests declare" not in out

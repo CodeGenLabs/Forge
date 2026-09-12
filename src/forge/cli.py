@@ -753,13 +753,29 @@ def _change_summary(repo: Path, item: change.Change) -> dict:
     }
 
 
+def _named_change(args: argparse.Namespace) -> str | None:
+    """The change named either way.
+
+    `forge change show 1` was positional while every other change-scoped
+    command took `--change`, and `change show` printed the flag form in its own
+    "Next:" line - so the tool taught a spelling it then rejected. Both work;
+    the flag is the one the rest of the surface uses and the one the hints
+    print.
+    """
+    return getattr(args, "change_flag", None) or getattr(args, "change", None)
+
+
 def _cmd_change_show(args: argparse.Namespace) -> int:
     repo = args.repo.resolve()
     if not gitio.is_repo(repo):
         print(f"forge: {repo} is not a git repository", file=sys.stderr)
         return _EXIT_USAGE
+    named = _named_change(args)
+    if not named:
+        print("forge: name a change, as `--change 1` or `1`", file=sys.stderr)
+        return _EXIT_USAGE
     try:
-        item = change.find_change(repo, args.change)
+        item = change.find_change(repo, named)
     except change.ChangeError as exc:
         print(f"forge: {exc}", file=sys.stderr)
         return _EXIT_USAGE
@@ -811,8 +827,12 @@ def _cmd_change_track(args: argparse.Namespace) -> int:
     if not gitio.is_repo(repo):
         print(f"forge: {repo} is not a git repository", file=sys.stderr)
         return _EXIT_USAGE
+    named = _named_change(args)
+    if not named:
+        print("forge: name a change, as `--change 1` or `1`", file=sys.stderr)
+        return _EXIT_USAGE
     try:
-        item = change.find_change(repo, args.change)
+        item = change.find_change(repo, named)
     except change.ChangeError as exc:
         print(f"forge: {exc}", file=sys.stderr)
         return _EXIT_USAGE
@@ -845,8 +865,12 @@ def _cmd_impact(args: argparse.Namespace) -> int:
     if not gitio.is_repo(repo):
         print(f"forge: {repo} is not a git repository", file=sys.stderr)
         return _EXIT_USAGE
+    named = _named_change(args)
+    if not named:
+        print("forge: name a change, as `--change 1` or `1`", file=sys.stderr)
+        return _EXIT_USAGE
     try:
-        item = change.find_change(repo, args.change)
+        item = change.find_change(repo, named)
         computed = impact.compute_impact(repo, item, base=args.base)
     except (change.ChangeError, gitio.GitError, gitio.InvalidRevision) as exc:
         print(f"forge: {exc}", file=sys.stderr)
@@ -968,8 +992,12 @@ def _cmd_spec_fold(args: argparse.Namespace) -> int:
     if not gitio.is_repo(repo):
         print(f"forge: {repo} is not a git repository", file=sys.stderr)
         return _EXIT_USAGE
+    named = _named_change(args)
+    if not named:
+        print("forge: name a change, as `--change 1` or `1`", file=sys.stderr)
+        return _EXIT_USAGE
     try:
-        item = change.find_change(repo, args.change)
+        item = change.find_change(repo, named)
     except change.ChangeError as exc:
         print(f"forge: {exc}", file=sys.stderr)
         return _EXIT_USAGE
@@ -1573,6 +1601,18 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
     declared = verify.commands(repo)
     if not declared:
         print("commands         none declared in .forge/config.yaml")
+        # `bootstrap derive` reads these off the project's own manifests and
+        # prints them; only `bootstrap seal` writes them to config. Between the
+        # two, doctor used to say "none declared" on a repository where derive
+        # had just listed four - the same facts, and the tool disagreeing with
+        # itself about them.
+        detectable = bootstrap.detect_commands(repo)
+        if detectable:
+            print(f"{'':16} but this project's manifests declare "
+                  f"{len(detectable)}: "
+                  + ", ".join(f"{k} ({v})" for k, v in sorted(detectable.items())))
+            print(f"{'':16} `forge bootstrap seal` writes them, or copy them into "
+                  f".forge/config.yaml by hand")
         return _EXIT_OK
 
     unresolved = 0
@@ -1732,7 +1772,11 @@ def build_parser() -> argparse.ArgumentParser:
     chg_list.set_defaults(func=_cmd_change_list)
 
     chg_show = chg_sub.add_parser("show", help="one change: artifacts, tasks, next step")
-    chg_show.add_argument("change")
+    chg_show.add_argument("change", nargs="?",
+                           help="the change, by number or slug")
+    chg_show.add_argument("--change", dest="change_flag",
+                           help="the same thing, spelled the way "
+                                "every other command spells it")
     chg_show.add_argument("--repo", type=Path, default=Path.cwd())
     chg_show.add_argument("--json", action="store_true")
     chg_show.set_defaults(func=_cmd_change_show)
@@ -1744,7 +1788,11 @@ def build_parser() -> argparse.ArgumentParser:
                     "ARC- claim must not be able to shed the artifacts that account "
                     "for it.",
     )
-    chg_track.add_argument("change")
+    chg_track.add_argument("change", nargs="?",
+                           help="the change, by number or slug")
+    chg_track.add_argument("--change", dest="change_flag",
+                           help="the same thing, spelled the way "
+                                "every other command spells it")
     chg_track.add_argument("--to", required=True, choices=list(schema.TRACKS))
     chg_track.add_argument("--reason", required=True,
                            help="what was discovered that made the change bigger")

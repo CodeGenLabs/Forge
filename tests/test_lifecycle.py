@@ -198,7 +198,12 @@ def test_an_unimplemented_check_never_passes_silently(project):
     assert len(results) == 1
     assert results[0].available is False
     assert "proves nothing" in results[0].issues[0].message
-    assert "M4" in results[0].issues[0].message
+    # It used to assert "M4" was named. M4 shipped without bringing this check,
+    # so the message named a debt that had been settled without being paid -
+    # and the test was holding that lie in place. The message now says what is
+    # missing, which cannot age the same way.
+    assert "Waiting on:" in results[0].issues[0].message
+    assert "unscheduled" in results[0].issues[0].message
 
 
 def test_an_unimplemented_check_does_not_block_either(project):

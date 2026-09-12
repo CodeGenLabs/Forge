@@ -7,9 +7,15 @@ has to be justifiable in one sentence, and gates that never fire get deleted.
 Two rules the runner enforces, both about honesty:
 
 **A check the kernel does not implement never passes silently.** It reports
-`gate.unavailable` and names the milestone that will bring it. A gate that
-quietly succeeds because nobody wrote its check is worse than no gate, because
-it is evidence of a check that did not happen.
+`gate.unavailable` and says what it is waiting on. A gate that quietly succeeds
+because nobody wrote its check is worse than no gate, because it is evidence of
+a check that did not happen.
+
+It says what is *missing*, never which milestone will bring it. One entry read
+"Owed by: M4" long after M4 shipped without bringing it, so the gate spent
+weeks naming a debt that had been settled without being paid - and a label that
+ages into a lie is worse than "nobody has scheduled this", because the first is
+read as a plan.
 
 **`blocking` decides the exit code, not whether the check runs.** A
 non-blocking gate still reports what it found. The distinction is about
@@ -316,7 +322,7 @@ def _needs_change(check: str) -> Issue:
     )
 
 
-def _unavailable(check: str, milestone: str) -> list[Issue]:
+def _unavailable(check: str, waiting_on: str) -> list[Issue]:
     """A check the kernel does not implement yet.
 
     Reported, never passed. A gate that succeeds because nobody wrote its
@@ -324,8 +330,8 @@ def _unavailable(check: str, milestone: str) -> list[Issue]:
     """
     return [Issue(
         "WARNING", "gate.unavailable", ".",
-        f"{check} is not implemented yet, so this gate proves nothing. Owed by: "
-        f"{milestone}",
+        f"{check} is not implemented, so this gate proves nothing. "
+        f"Waiting on: {waiting_on}",
         "check it by hand at this point, and do not read the gate's silence as a pass",
     )]
 
@@ -340,12 +346,24 @@ CHECKS = {
     "verify.definition_of_done": _check_definition_of_done,
 }
 
-#: Checks the gate table names that no milestone has built. Listed rather than
-#: omitted, so `forge gate` can say *which* milestone owes each one instead of
+#: Checks the gate table names that nothing has built. Listed rather than
+#: omitted, so `forge gate` can say what each one is waiting on instead of
 #: reporting an unknown name.
+#:
+#: These say what is *missing*, not which milestone will bring it. The first
+#: entry used to read "M4, which brings per-task execution records"; M4 shipped
+#: and brought no such thing, so the gate spent weeks naming a debt that had
+#: already been settled without paying it. A label that ages into a lie is
+#: worse than one that says "nobody has scheduled this", because the first is
+#: read as a plan.
 PENDING = {
-    "task.scope_and_covers": "M4, which brings per-task execution records",
-    "drift.rules_conformance": "the rule tier: .forge/rules/ and its back-references",
+    "task.scope_and_covers": (
+        "unscheduled. It needs two things the format does not carry: a declared "
+        "file scope per task, and a diff attributable to one task rather than to "
+        "the whole change"),
+    "drift.rules_conformance": (
+        "unscheduled. It needs the rule tier - `.forge/rules/` and the "
+        "`forge:<ID>` back-references that bind a rule to a claim"),
 }
 
 
@@ -357,8 +375,10 @@ def run_gate(repo: Path, point: str, item: change.Change | None) -> list[GateRes
             continue
         runner = CHECKS.get(gate.check)
         if runner is None:
-            milestone = PENDING.get(gate.check, "no milestone: this check has no owner")
-            results.append(GateResult(gate, _unavailable(gate.check, milestone),
+            waiting_on = PENDING.get(
+                gate.check, "nothing - the gate table names a check that "
+                            "does not exist")
+            results.append(GateResult(gate, _unavailable(gate.check, waiting_on),
                                       available=False))
             continue
         results.append(GateResult(gate, runner(repo, item)))

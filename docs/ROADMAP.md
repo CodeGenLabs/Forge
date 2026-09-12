@@ -399,6 +399,32 @@ An anchoring lesson worth keeping, from Alice's commit: `PIT-secret-term-must-be
 normalised` is about a *list* and anchors only to the function that reads it, so adding
 a badly-spelled term to that list would not be noticed. The anchor decides what the claim
 can see, and a claim about one thing anchored to another is quietly blind.
+
+---
+
+## The three small debts, settled (2026-09-12)
+
+None blocked anything, and all three were things a new user met first.
+
+**F8** - `task.scope_and_covers` reported "Owed by: M4" long after M4 shipped without
+bringing it, so the gate spent weeks naming a debt that had been settled without being
+paid. The entries now say what is *missing* rather than who owes it: that check is
+unscheduled, and it needs two things the format does not carry - a declared file scope
+per task, and a diff attributable to one task rather than to the whole change. A label
+that ages into a lie is worse than "nobody has scheduled this", because the first is
+read as a plan.
+
+**F1** - `forge change show 1` was positional while every other change-scoped command
+took `--change`, and `change show` printed the flag form in its own "Next:" line, so the
+tool taught a spelling it then rejected. Both work now; naming neither is a usage error
+that shows both.
+
+**H6** - `forge doctor` said "none declared" on a repository where `bootstrap derive`
+had just printed four detected commands. Detection reads the project's manifests and
+only `seal` writes them to config, so between the two the tool disagreed with itself
+about the same facts. Doctor now reports what the manifests declare, and how to adopt
+them.
+
 >
 > **Symbol-level narrowing is done too** (2026-09-11), with G19 and G20. A symbol anchor
 > is touched when the diff's hunks intersect that symbol's own line span; a file anchor
