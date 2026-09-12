@@ -162,24 +162,17 @@ test directory surrenders requirement coverage.
 This is the "project đang làm dở" case, and it is the one
 [OPEN_QUESTIONS.md Q10](../OPEN_QUESTIONS.md) predicts will kill the harness.
 
-### R6 - `forge hooks install` **(P1)**
+### R6 - `forge hooks install` **(P1, done 2026-09-12, see M7 below)**
 
-A pre-commit hook running `forge check --scope store` and `forge drift --changed`, and
-running `forge sync derived` so the derived tier is committed with the code rather than
-in a trailing `chore:` commit - this repository's own history has eight of those.
+A pre-commit hook running `forge check --scope store` and `forge drift --staged --unrecorded`,
+blocking only when drift has no open ledger entry, with index-aware classification
+(commit `826bdbe`, `src/forge/hooks.py`, tested in `tests/test_hooks.py`).
 
-Blocked on R4's index-aware classification (F6): a hook that reports every
-about-to-be-committed file as fresh is worse than no hook.
+### R7 - `forge reconcile <range>` **(P2, done 2026-09-12, see below)**
 
-**Measure and record:** the runtime of `forge drift --changed` on a large diff. Q10 says
-this number is unknown and it decides whether the hook is viable.
-
-### R7 - `forge reconcile <range>` **(P2)**
-
-The recovery path for when the hook is bypassed: classify the commits in a range, produce
-one batch of ledger entries, review them in a single flow. Build it after R4 and after the
-hook has been bypassed at least once in real use - its shape should be decided by what
-actually accumulates, not by what we imagine will.
+The recovery path for when the hook is bypassed: classifies the commits in a range,
+attributes which commits reached which anchors, and optionally records ledger entries
+via `--record` (`src/forge/reconcile.py`, tested in `tests/test_reconcile.py`).
 
 ---
 
