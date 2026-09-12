@@ -735,9 +735,34 @@
             "covers": [],
             "line": 234,
             "name": "test_a_claim_before_another_claim_is_unaffected"
+          },
+          {
+            "covers": [],
+            "line": 252,
+            "name": "test_a_second_change_is_not_measured_from_the_first"
+          },
+          {
+            "covers": [],
+            "line": 281,
+            "name": "test_first_commit_touching_reports_the_path_it_was_asked_about"
+          },
+          {
+            "covers": [],
+            "line": 295,
+            "name": "test_rewriting_a_file_with_the_other_line_endings_is_not_an_edit"
+          },
+          {
+            "covers": [],
+            "line": 307,
+            "name": "test_a_real_edit_beside_a_line_ending_change_is_still_seen"
+          },
+          {
+            "covers": [],
+            "line": 317,
+            "name": "test_reindenting_a_line_is_still_an_edit"
           }
         ],
-        "untagged": 12
+        "untagged": 17
       },
       "tests/test_cli.py": {
         "language": "python",
@@ -967,9 +992,29 @@
             "covers": [],
             "line": 266,
             "name": "test_a_malformed_manifest_does_not_stop_the_scan"
+          },
+          {
+            "covers": [],
+            "line": 283,
+            "name": "test_a_parameterised_test_is_counted"
+          },
+          {
+            "covers": [],
+            "line": 295,
+            "name": "test_a_covers_tag_binds_to_the_parameterised_test_below_it"
+          },
+          {
+            "covers": [],
+            "line": 308,
+            "name": "test_the_plain_and_modified_forms_still_count"
+          },
+          {
+            "covers": [],
+            "line": 319,
+            "name": "test_a_call_that_is_not_a_test_is_not_counted"
           }
         ],
-        "untagged": 25
+        "untagged": 29
       },
       "tests/test_derive.py": {
         "language": "python",
@@ -3279,9 +3324,9 @@
       }
     },
     "tagged_tests": 0,
-    "total_tests": 626
+    "total_tests": 635
   },
-  "generated_from_commit": "65c4a36a90c0199105732c2c0f53399d3fe60619",
+  "generated_from_commit": "c1c30334327a32405a8a57d17910914a4c344a0e",
   "generator": "forge sync derived",
   "tool": "forge"
 }
