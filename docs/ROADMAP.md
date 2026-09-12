@@ -557,12 +557,15 @@ One question per claim: name an edit that makes this false **without touching an
 > somewhere it was not.
 
 Six of the seven are caught anyway - four by a conformance test, one by `forge check`
-itself, one by a foreign key at runtime. **One is caught by nothing.**
+itself, one by a foreign key at runtime. **One is caught only instance by instance.**
 `PIT-apply-takes-only-the-token` in corvus says `apply*` must accept nothing but the
-preview token, which is the rule that keeps the SQL shown from differing from the SQL run,
-and no test, lint rule or type enforces it. Its anchor is the class that *hands out*
-tokens rather than the code that must only accept them, so a new `apply` that regenerates
-SQL breaks the rule with every check in that repository green.
+preview token, the rule that keeps the SQL shown from differing from the SQL run. Every
+`apply*` that exists is enforced by its own Zod params schema - the measurement's first
+draft said "no test, no lint rule, no type" and was wrong about the type, corrected in
+place rather than silently. What nothing enforces is the **rule**: a new `applyIndex`
+declared with `{ previewToken, sql }` passes every check in that repository. The claim's
+anchor is the class that *hands out* tokens rather than the code that must only accept
+them, so it cannot notice either.
 
 That is the first time this project has found something wrong in a repository rather than
 something wrong with itself, and it came out of a question about forge.

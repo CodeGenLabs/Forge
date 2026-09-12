@@ -50,12 +50,33 @@ Six of the seven are caught by something else: four by a conformance test, one b
 `forge check`, one by a database constraint. The repositories are not exposed; they are
 protected by a mechanism the claim was not built on.
 
-**One is exposed.** `PIT-apply-takes-only-the-token` says `apply*` must accept nothing but
-the preview token - the rule that keeps the SQL shown from differing from the SQL run - and
-nothing enforces it. No test, no lint rule, no type. Its anchor is `PreviewTokenManager`,
-which is the thing that hands out tokens rather than the thing that must only accept them.
-A new `applyIndex(sql)` in any service breaks the rule and every check in this repository
-stays green.
+**One is exposed**, and the first version of this paragraph overstated how badly. The
+overstatement is left visible rather than quietly fixed.
+
+~~`PIT-apply-takes-only-the-token` ... nothing enforces it. No test, no lint rule, no
+type.~~ **Wrong on the type.** Each `apply*` in `packages/contract/src/methods/` declares
+`params: z.object({ previewToken: z.string() })`, and Zod strips unknown keys, so no extra
+argument reaches a handler. Every `apply*` that exists today is enforced, one at a time, by
+its own schema.
+
+**What is unenforced is the rule, not the instances.** Nothing stops a new
+`ddl.applyIndex` being declared with `params: z.object({ previewToken, sql })`. Every check
+in the repository stays green, and the SQL shown stops being the SQL run - the failure the
+claim exists to prevent. The claim's anchor is `PreviewTokenManager`, the thing that *hands
+out* tokens rather than the code that must only *accept* them, so the anchor cannot notice
+either. No test iterates the contract's methods to assert the shape; the integration tests
+exercise the flows one at a time, the same way the schemas do.
+
+This is the same shape as every other uncovered row - the rule breaks by code appearing
+somewhere it was not - and the fix is the one corvus already uses twice: a conformance test
+over every contract method whose name matches `apply`, asserting its params are exactly the
+token. `no-mock-in-bundle.test.ts` and `no-dev-credential-in-image.test.ts` are that
+pattern. This rule never got one.
+
+The correction matters more than the finding. "Nothing enforces it" came from reading the
+claim and the test directory; the schema was two files away and said otherwise. A
+measurement that names a gap in somebody else's repository has to be read twice, and the
+first draft of this one was not.
 
 That is a real finding about corvus, produced by a question about forge, and it is the
 first time in this project that the harness found something wrong in a repository rather
