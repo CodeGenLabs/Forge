@@ -7,16 +7,16 @@
         "lines": 468
       },
       "markdown": {
-        "files": 68,
-        "lines": 12184
+        "files": 73,
+        "lines": 13323
       },
       "other": {
         "files": 2,
         "lines": 37
       },
       "python": {
-        "files": 49,
-        "lines": 20295
+        "files": 51,
+        "lines": 20774
       },
       "toml": {
         "files": 1,
@@ -30,8 +30,8 @@
     "entry_points": [
       "src/forge/cli.py"
     ],
-    "files_considered": 128,
-    "files_tracked": 128,
+    "files_considered": 135,
+    "files_tracked": 135,
     "stack": {
       "python": {
         "lockfile": null,
@@ -87,6 +87,7 @@
       "tests/test_derive.py",
       "tests/test_fingerprint.py",
       "tests/test_gitio.py",
+      "tests/test_hooks.py",
       "tests/test_impact.py",
       "tests/test_impact_scope.py",
       "tests/test_instructions.py",
@@ -103,7 +104,7 @@
       "tools/pressure_test.py"
     ]
   },
-  "generated_from_commit": "c1c30334327a32405a8a57d17910914a4c344a0e",
+  "generated_from_commit": "426d1ed522172da669cf77769e56a0fb6cbc6027",
   "generator": "forge sync derived",
   "tool": "forge"
 }

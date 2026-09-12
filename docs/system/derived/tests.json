@@ -1424,6 +1424,87 @@
         ],
         "untagged": 21
       },
+      "tests/test_hooks.py": {
+        "language": "python",
+        "tests": [
+          {
+            "covers": [],
+            "line": 57,
+            "name": "test_a_staged_signature_change_is_seen"
+          },
+          {
+            "covers": [],
+            "line": 65,
+            "name": "test_a_clean_index_is_fresh"
+          },
+          {
+            "covers": [],
+            "line": 70,
+            "name": "test_an_unstaged_edit_is_not_seen"
+          },
+          {
+            "covers": [],
+            "line": 80,
+            "name": "test_the_index_can_be_read_like_a_revision"
+          },
+          {
+            "covers": [],
+            "line": 91,
+            "name": "test_staged_files_reports_only_what_is_staged"
+          },
+          {
+            "covers": [],
+            "line": 106,
+            "name": "test_recorded_drift_no_longer_blocks"
+          },
+          {
+            "covers": [],
+            "line": 120,
+            "name": "test_the_drift_itself_is_still_reported"
+          },
+          {
+            "covers": [],
+            "line": 130,
+            "name": "test_a_resolved_entry_does_not_keep_the_claim_quiet"
+          },
+          {
+            "covers": [],
+            "line": 148,
+            "name": "test_install_writes_an_executable_hook"
+          },
+          {
+            "covers": [],
+            "line": 156,
+            "name": "test_install_is_idempotent"
+          },
+          {
+            "covers": [],
+            "line": 161,
+            "name": "test_install_refuses_somebody_elses_hook"
+          },
+          {
+            "covers": [],
+            "line": 173,
+            "name": "test_uninstall_only_removes_our_own"
+          },
+          {
+            "covers": [],
+            "line": 184,
+            "name": "test_the_command_is_configurable"
+          },
+          {
+            "covers": [],
+            "line": 191,
+            "name": "test_a_moved_hooks_directory_is_honoured"
+          },
+          {
+            "covers": [],
+            "line": 203,
+            "name": "test_status_distinguishes_the_three_cases"
+          }
+        ],
+        "untagged": 15
+      },
       "tests/test_impact.py": {
         "language": "python",
         "tests": [
@@ -3324,9 +3405,9 @@
       }
     },
     "tagged_tests": 0,
-    "total_tests": 635
+    "total_tests": 650
   },
-  "generated_from_commit": "c1c30334327a32405a8a57d17910914a4c344a0e",
+  "generated_from_commit": "426d1ed522172da669cf77769e56a0fb6cbc6027",
   "generator": "forge sync derived",
   "tool": "forge"
 }

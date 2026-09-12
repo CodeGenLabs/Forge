@@ -34,8 +34,8 @@
         "src/forge/fingerprint.py",
         "src/forge/gates.py",
         "src/forge/gitio.py",
+        "src/forge/hooks.py",
         "src/forge/impact.py",
-        "src/forge/instructions.py",
         "src/forge/validate.py"
       ],
       "src/forge/derive.py": [
@@ -55,6 +55,10 @@
         "src/forge/spec.py",
         "src/forge/validate.py",
         "src/forge/verify.py"
+      ],
+      "src/forge/hooks.py": [
+        "src/forge/__init__.py",
+        "src/forge/gitio.py"
       ],
       "src/forge/impact.py": [
         "src/forge/__init__.py",
@@ -118,7 +122,7 @@
         "src/forge/validate.py"
       ]
     },
-    "files_with_imports": 13,
+    "files_with_imports": 14,
     "reverse": {
       "src/forge/__init__.py": [
         "src/forge/anchor.py",
@@ -126,6 +130,7 @@
         "src/forge/cli.py",
         "src/forge/derive.py",
         "src/forge/gates.py",
+        "src/forge/hooks.py",
         "src/forge/impact.py",
         "src/forge/instructions.py",
         "src/forge/ledger.py",
@@ -188,20 +193,21 @@
         "src/forge/cli.py",
         "src/forge/derive.py",
         "src/forge/gates.py",
+        "src/forge/hooks.py",
         "src/forge/impact.py",
         "src/forge/ledger.py",
         "src/forge/trace.py",
         "src/forge/validate.py",
         "src/forge/verify.py"
       ],
+      "src/forge/hooks.py": [
+        "src/forge/cli.py"
+      ],
       "src/forge/impact.py": [
         "src/forge/cli.py",
         "src/forge/gates.py",
         "src/forge/instructions.py",
         "src/forge/verify.py"
-      ],
-      "src/forge/instructions.py": [
-        "src/forge/cli.py"
       ],
       "src/forge/ledger.py": [
         "src/forge/verify.py"
@@ -245,7 +251,7 @@
     "tool": "forge",
     "unresolved_imports": 0
   },
-  "generated_from_commit": "5ed2fcaa911479bc9c17152aa74838b8d1716774",
+  "generated_from_commit": "426d1ed522172da669cf77769e56a0fb6cbc6027",
   "generator": "forge sync derived",
   "tool": "forge"
 }
