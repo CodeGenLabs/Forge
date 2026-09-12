@@ -674,9 +674,14 @@
             "covers": [],
             "line": 294,
             "name": "test_init_writes_the_workflow_so_it_can_be_edited"
+          },
+          {
+            "covers": [],
+            "line": 305,
+            "name": "test_bugfix_workflow_change_lifecycle"
           }
         ],
-        "untagged": 30
+        "untagged": 31
       },
       "tests/test_claim_granularity.py": {
         "language": "python",
@@ -2893,95 +2898,100 @@
           {
             "covers": [],
             "line": 47,
+            "name": "test_the_builtin_bugfix_workflow_is_valid"
+          },
+          {
+            "covers": [],
+            "line": 61,
             "name": "test_the_builtin_workflow_is_valid_yaml_with_a_conditional_track"
           },
           {
             "covers": [],
-            "line": 56,
+            "line": 70,
             "name": "test_the_tracks_match_the_workflow_document"
           },
           {
             "covers": [],
-            "line": 67,
+            "line": 81,
             "name": "test_a_lighter_track_filters_prerequisites_rather_than_blocking_on_them"
           },
           {
             "covers": [],
-            "line": 77,
+            "line": 91,
             "name": "test_load_falls_back_to_the_builtin"
           },
           {
             "covers": [],
-            "line": 82,
+            "line": 96,
             "name": "test_a_project_copy_wins"
           },
           {
             "covers": [],
-            "line": 90,
+            "line": 104,
             "name": "test_an_unknown_workflow_names_what_exists"
           },
           {
             "covers": [],
-            "line": 100,
+            "line": 114,
             "name": "test_a_newer_schema_version_is_refused"
           },
           {
             "covers": [],
-            "line": 105,
+            "line": 119,
             "name": "test_version_is_required"
           },
           {
             "covers": [],
-            "line": 109,
+            "line": 123,
             "name": "test_duplicate_ids_are_refused"
           },
           {
             "covers": [],
-            "line": 113,
+            "line": 127,
             "name": "test_a_requires_target_must_exist"
           },
           {
             "covers": [],
-            "line": 118,
+            "line": 132,
             "name": "test_self_reference_is_refused"
           },
           {
             "covers": [],
-            "line": 123,
+            "line": 137,
             "name": "test_a_cycle_is_reported_with_its_full_path"
           },
           {
             "covers": [],
-            "line": 135,
+            "line": 149,
             "name": "test_generates_may_not_escape_the_change_directory"
           },
           {
             "covers": [],
-            "line": 140,
+            "line": 154,
             "name": "test_an_id_must_be_a_kebab_slug"
           },
           {
             "covers": [],
-            "line": 144,
+            "line": 158,
             "name": "test_an_unknown_track_token_is_refused"
           },
           {
             "covers": [],
-            "line": 151,
+            "line": 165,
             "name": "test_a_conditional_track_needs_a_named_skip_key"
           },
           {
             "covers": [],
-            "line": 157,
+            "line": 171,
             "name": "test_artifacts_must_be_a_non_empty_list"
           },
           {
             "covers": [],
-            "line": 161,
+            "line": 175,
             "name": "test_a_malformed_file_names_itself"
           }
         ],
-        "untagged": 19
+        "untagged": 20
       },
       "tests/test_skills.py": {
         "language": "python",
@@ -3804,9 +3814,9 @@
       }
     },
     "tagged_tests": 0,
-    "total_tests": 725
+    "total_tests": 727
   },
-  "generated_from_commit": "e5c71dae526550ba7391f6c4c2ed74359925f79a",
+  "generated_from_commit": "8de6ac3f4a3f053346813dffaab45553a896c295",
   "generator": "forge sync derived",
   "tool": "forge"
 }
