@@ -8,6 +8,7 @@ wrong. A gate that exits 0 on a usage error is worse than no gate.
 from __future__ import annotations
 
 import json
+import sys
 
 import pytest
 
@@ -329,3 +330,83 @@ def test_output_is_ascii_only(stored, capsys):
     captured = capsys.readouterr()
     for stream in (captured.out, captured.err):
         assert stream.isascii(), f"non-ascii in output: {stream!r}"
+
+
+def test_drift_store_with_passing_evidence_test(stored, capsys):
+    stored.write(".forge/config.yaml", f"commands:\n  test: {sys.executable} -m pytest -q\n")
+    stored.commit("add test config")
+    # Change body of refundable to cause drift (shifted)
+    stored.write("src/pay.py", "def refundable(a, b):\n    return a - b + 0\n")
+    stored.commit("body shifted")
+
+    code = main(["drift", "--store", "--test", "--repo", str(stored.root)])
+    assert code == 1  # drift occurred
+    out = capsys.readouterr().out
+    assert "INV-7" in out
+    assert "[evidence: PASS] tests/test_pay.py::test_bounded (exit 0)" in out
+
+
+def test_drift_store_with_failing_evidence_test(stored, capsys):
+    stored.write(".forge/config.yaml", f"commands:\n  test: {sys.executable} -m pytest -q\n")
+    stored.commit("add test config")
+    # Break the test
+    stored.write("tests/test_pay.py", "# @covers INV-7\ndef test_bounded():\n    assert False, 'invariant broke'\n")
+    # Change body to trigger drift
+    stored.write("src/pay.py", "def refundable(a, b):\n    return 999\n")
+    stored.commit("break invariant")
+
+    code = main(["drift", "--store", "--test", "--repo", str(stored.root)])
+    assert code == 1
+    out = capsys.readouterr().out
+    assert "INV-7" in out
+    assert "[evidence: FAIL] tests/test_pay.py::test_bounded" in out
+    assert "invariant broke" in out
+
+
+def test_drift_store_json_with_evidence(stored, capsys):
+    stored.write(".forge/config.yaml", f"commands:\n  test: {sys.executable} -m pytest -q\n")
+    stored.commit("add test config")
+    stored.write("src/pay.py", "def refundable(a, b):\n    return a - b + 0\n")
+    stored.commit("body shifted")
+
+    code = main(["drift", "--store", "--test", "--json", "--repo", str(stored.root)])
+    assert code == 1
+    payload = json.loads(capsys.readouterr().out)
+    inv = [d for d in payload if d["claim"] == "INV-7"][0]
+    assert "evidence_results" in inv
+    assert inv["evidence_results"][0]["status"] == "pass"
+    assert inv["evidence_results"][0]["exit_code"] == 0
+
+
+def test_drift_record_with_test_proposes_confirm_when_pass(stored, capsys):
+    stored.write(".forge/config.yaml", f"commands:\n  test: {sys.executable} -m pytest -q\n")
+    stored.commit("add test config")
+    stored.write("src/pay.py", "def refundable(a, b):\n    return a - b + 0\n")
+    stored.commit("body shifted")
+
+    code = main(["drift", "record", "--test", "--repo", str(stored.root)])
+    assert code == 1
+    out = capsys.readouterr().out
+    assert "proposed confirm" in out
+    # Check DRIFT.md content
+    drift_text = (stored.root / "docs/system/DRIFT.md").read_text(encoding="utf-8")
+    assert "proposed_verdict: confirm" in drift_text
+    assert "Evidence test" in drift_text
+    assert "passed" in drift_text
+
+
+def test_drift_record_with_test_proposes_v1_when_fail(stored, capsys):
+    stored.write(".forge/config.yaml", f"commands:\n  test: {sys.executable} -m pytest -q\n")
+    stored.commit("add test config")
+    stored.write("tests/test_pay.py", "# @covers INV-7\ndef test_bounded():\n    assert False, 'broken rule'\n")
+    stored.write("src/pay.py", "def refundable(a, b):\n    return 0\n")
+    stored.commit("break test")
+
+    code = main(["drift", "record", "--test", "--repo", str(stored.root)])
+    assert code == 1
+    out = capsys.readouterr().out
+    assert "proposed V1" in out
+    drift_text = (stored.root / "docs/system/DRIFT.md").read_text(encoding="utf-8")
+    assert "proposed_verdict: V1" in drift_text
+    assert "Evidence test failed" in drift_text
+

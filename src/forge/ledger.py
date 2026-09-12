@@ -253,7 +253,8 @@ def write_ledger(repo: Path, entries: list[Entry]) -> Path:
 
 
 def record(repo: Path, drifts, *, today: _dt.date | None = None,
-           causes: dict[str, list[str]] | None = None) -> list[Entry]:
+           causes: dict[str, list[str]] | None = None,
+           run_evidence: bool = False) -> list[Entry]:
     """Append an open entry for each obligating claim that is not fresh.
 
     Idempotent by claim: a claim with an entry already open gets no second one.
@@ -264,6 +265,14 @@ def record(repo: Path, drifts, *, today: _dt.date | None = None,
     entries = load_ledger(repo)
     already = {e.claim for e in entries if e.is_open}
     added: list[Entry] = []
+
+    if run_evidence:
+        from . import evidence as _evidence
+        for drift in drifts:
+            if (drift.obligating and drift.changed and drift.claim_id not in already
+                    and not getattr(drift, "evidence_results", None)
+                    and getattr(drift, "evidence", None)):
+                drift.evidence_results = _evidence.evaluate_evidence(repo, drift.evidence)
 
     for drift in drifts:
         if not drift.obligating or not drift.changed or drift.claim_id in already:
@@ -290,20 +299,51 @@ def record(repo: Path, drifts, *, today: _dt.date | None = None,
 def _propose(drift) -> str | None:
     """A proposal, never a decision.
 
-    Only the one case the evidence actually supports is proposed. A signature
-    change means the thing the claim points at is not there in the shape it was
-    confirmed in, which is at least a re-anchoring question. Everything else -
-    a changed body, a vanished symbol - is exactly the judgement the ledger
-    exists to route to a human, and a machine guess there would be read as an
-    answer.
+    When evidence tests were executed:
+    - If all executed tests passed (exit 0), propose 'confirm': the property
+      still holds despite code movement.
+    - If any test failed (exit != 0), propose 'V1': the code change broke the
+      asserted property.
+
+    Otherwise falls back to fingerprint-only heuristics: a signature change
+    proposes V1; everything else leaves the decision open.
     """
     from .anchor import Status
+
+    ev_results = getattr(drift, "evidence_results", [])
+    executed = [r for r in ev_results if getattr(r, "status", None) in ("pass", "fail")]
+    if executed:
+        if any(r.status == "fail" for r in executed):
+            return "V1"
+        if all(r.status == "pass" for r in executed):
+            return "confirm"
 
     return "V1" if drift.status is Status.STALE and not drift.errors else None
 
 
 def _reasoning(drift) -> str:
     from .anchor import Status
+
+    ev_results = getattr(drift, "evidence_results", [])
+    executed = [r for r in ev_results if getattr(r, "status", None) in ("pass", "fail")]
+    if executed:
+        failed = [r for r in executed if r.status == "fail"]
+        if failed:
+            details = []
+            for r in failed:
+                snip = f": {r.failures[0]}" if r.failures else ""
+                details.append(f"{r.target} (exit {r.exit_code}{snip})")
+            return (
+                f"Evidence test failed ({'; '.join(details)}). "
+                "The code change broke the asserted property. "
+                "Proposed V1: the code is wrong."
+            )
+        targets = ", ".join(r.target for r in executed)
+        return (
+            f"Evidence test ({targets}) passed (exit 0). "
+            "The property still holds despite code movement. "
+            "Proposed confirm: safe to restamp with `forge drift confirm <id>`."
+        )
 
     if drift.errors:
         return ("An anchor could not be classified at all, so nothing is known about "

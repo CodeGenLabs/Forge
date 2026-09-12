@@ -114,7 +114,11 @@ def _drift_ledger(repo: Path, args: argparse.Namespace) -> int:
         # HEAD instead would say `shifted` where the hook had just said `stale`.
         # Two answers about one claim, a minute apart.
         head = gitio.INDEX if args.staged else args.head
-        added = ledger.record(repo, classify_store(repo, head=head))
+        added = ledger.record(
+            repo,
+            classify_store(repo, head=head),
+            run_evidence=getattr(args, "test", False),
+        )
         if not added:
             print("no new drift; every claim is either fresh or already in the ledger")
             return _EXIT_OK
@@ -210,6 +214,12 @@ def _drift_store(repo: Path, args: argparse.Namespace) -> int:
         print(f"forge: {exc}", file=sys.stderr)
         return _EXIT_USAGE
 
+    if getattr(args, "test", False):
+        from . import evidence as _evidence
+        for d in drifts:
+            if d.changed and d.obligating and d.evidence:
+                d.evidence_results = _evidence.evaluate_evidence(repo, d.evidence)
+
     if args.json:
         print(json.dumps([d.to_dict() for d in drifts], indent=2))
     else:
@@ -265,6 +275,16 @@ def _render_drift_block(drifts: list, indent: str) -> None:
         if d.changed:
             for r in d.culprits:
                 print(f"{indent}  {' ' * width}{str(r.anchor)}  {r.detail}")
+            if getattr(d, "evidence_results", None):
+                for res in d.evidence_results:
+                    if res.status == "pass":
+                        print(f"{indent}  {' ' * width}[evidence: PASS] {res.target} (exit 0)")
+                    elif res.status == "fail":
+                        print(f"{indent}  {' ' * width}[evidence: FAIL] {res.target} (exit {res.exit_code})")
+                        for f_line in res.failures[:3]:
+                            print(f"{indent}  {' ' * width}  {f_line}")
+                    elif res.status == "unavailable":
+                        print(f"{indent}  {' ' * width}[evidence: UNAVAILABLE] {res.target}: {res.reason}")
         for text, message in d.errors:
             print(f"{indent}  {' ' * width}{text}  ERROR {message}")
 
@@ -1712,6 +1732,9 @@ def build_parser() -> argparse.ArgumentParser:
     drift.add_argument("--baseline", help="overrides each anchor's @sha")
     drift.add_argument("--head", default="HEAD")
     drift.add_argument("--json", action="store_true")
+    drift.add_argument("--test", action="store_true",
+                       help="run evidence tests for drifted claims to determine whether "
+                            "invariants still hold")
     # The ledger verbs live in the first positional rather than in argparse
     # subparsers, because subparsers would take that slot from `forge drift
     # <anchor>` - a form this repository's own tests and measurement tools

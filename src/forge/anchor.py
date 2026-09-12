@@ -26,7 +26,7 @@ OPEN_QUESTIONS.md Q2.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 
@@ -402,6 +402,10 @@ class ClaimDrift:
     results: list[AnchorResult]
     #: (anchor text, message) for anchors that could not be classified at all.
     errors: list[tuple[str, str]]
+    #: Raw evidence entries declared on the claim.
+    evidence: list[str] = field(default_factory=list)
+    #: Executed evidence test results, populated when evidence evaluation is requested.
+    evidence_results: list = field(default_factory=list)
 
     @property
     def status(self) -> Status | None:
@@ -421,7 +425,7 @@ class ClaimDrift:
         return [r for r in self.results if r.status is worst] if worst else []
 
     def to_dict(self) -> dict:
-        return {
+        out = {
             "claim": self.claim_id,
             "kind": self.kind,
             "title": self.title,
@@ -432,6 +436,11 @@ class ClaimDrift:
             "anchors": [r.to_dict() for r in self.results],
             "errors": [{"anchor": a, "message": m} for a, m in self.errors],
         }
+        if self.evidence_results:
+            out["evidence_results"] = [
+                r.to_dict() if hasattr(r, "to_dict") else r for r in self.evidence_results
+            ]
+        return out
 
 
 def _anchor_touches(anchor: Anchor, paths: frozenset[str]) -> bool:
@@ -508,5 +517,6 @@ def classify_store(
             obligating=not claim.is_candidate and claim.status != "retired",
             results=results,
             errors=errors,
+            evidence=list(claim.evidence),
         ))
     return out
