@@ -494,3 +494,47 @@ repository with an unusually good rules tree, on a trap chosen by the person sco
 at n=6. The honest inverse is a trap recorded *only* in the store, in a repository with
 no rules document. If the store loses there, that is an answer about the design; this
 one is an answer about authoring.
+
+
+## R10 - the census behind Q1, and what it moves to the top **(done, 2026-09-12)**
+
+Q1 was one trap and six agents. [Q1b](measurements/q1b-where-else-does-the-knowledge-live.md)
+asks the same question of **all thirteen** pitfalls in both bootstrapped repositories, by
+inspection: where else does this knowledge already live? Reproducible, and a reader can
+disagree with a row rather than with a number.
+
+**Ten of thirteen have a home the reader meets while doing the work** - four in a prose
+document, five in the code at the anchor, one in a test. Three have none.
+
+The orphan worth reading is `PIT-adapter-prefix-is-a-raw-string-prefix`: mounting an
+adapter on `https://example.com` also captures `https://example.com.other.com`, and no
+docstring, changelog entry or test states it. The nearest test *looks* like it covers the
+case and does not - its negative example is a subdomain, which does not start with the
+prefix. Derivable by a careful reader, stated nowhere. That is the sharpest description of
+what a store is for that these repositories produced.
+
+**What predicts redundancy is what was read.** A candidate read out of a document restates
+it; a candidate read out of code, or earned by a change that went wrong, is the one with no
+other home. Bootstrap produced the best orphan in the census, so this is not an argument
+against bootstrap - it is an argument about its sources, and `bootstrap.restates()` already
+separates the redundant class mechanically.
+
+**The consequence for this roadmap, stated as a reordering rather than as a conclusion:**
+
+- **Claim prose is the weakest part of a claim.** Ten of thirteen are a second copy, and
+  Q1 measured what one such copy buys: nothing, at 40% more tool calls. Work that makes
+  claim prose better is now the *lowest* priority item on this list.
+- **The anchor is the part with no competitor.** A comment, a runtime warning, a changelog
+  line and a conformance test all state their knowledge perfectly well, and not one of them
+  knows when the code underneath moved. Staleness is the only thing on the list that only
+  this harness does.
+- **And it is still unmeasured.** M1 measured whether anchors *survive* refactoring - a
+  false-positive rate. Nothing has measured whether a stale-claim report changes what
+  anybody does. That is now the top open question, ahead of `forge stats` and ahead of the
+  inverse agent experiment R9 proposed.
+
+**Next, concretely.** The inverse experiment R9 named is still worth running and now has
+its trap chosen for it by this census: `PIT-adapter-prefix-is-a-raw-string-prefix`, in a
+repository with no rules document, against a task where a bare-prefix mount is the obvious
+answer. It needs six agent runs and the user's go-ahead, which is why it is a proposal here
+and not a done item.
