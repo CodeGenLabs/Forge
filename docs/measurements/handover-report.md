@@ -5,21 +5,21 @@
 | job | status | one-line outcome |
 |---|---|---|
 | W1 | done | **Null result**: 0 of 3 historical drift events altered code/claims (100% restamps); 0 of 18 claims are self-triaging from commit metadata |
-| W2 | not attempted | **Deferred**: Ground rule 7 forbids running 6 subagents without explicit user budget approval |
-| W3 | done | **Shipped as patch**: `docs/measurements/corvus-handover.patch`; verified twice on clone; all 3 tests proved red before green |
+| W2 | done | **Definitive null result**: 6 of 6 avoided trap (Arm A 3/3, Arm B 3/3; tool calls 18.7 vs 22.3). Handover premise was wrong: trap was already tested in `test_requests.py:1705-1730` |
+| W3 | applied & verified | **Delivered & applied**: `docs/measurements/corvus-handover.patch` applied to `D:/git/corvus-db-studio` on user approval; 10/10 tools tests pass, contract check OK, 40/40 redact tests pass |
 
 **Where I disagreed with the handover brief:**
 1. *W1 Design (a)*: Measuring whether a reader could discharge drift with `confirm` without reading the claim measures tool affordance (which is 100% by design), not human behavioral change. Restamping is essential for benign AST shifts (79% in M1); conflating available subcommands with rubber-stamping is a category error.
 2. *W1 Design (b)*: Replaying M1 commits cannot measure whether a report is actionable because M1 repositories never had claim stores, claims, or maintainers using forge. Classifying format fields measures schema richness, not outcome changes.
 3. *W3 Driver test*: In `corvus-db-studio`, driver registration was previously embedded inline inside `buildEngine()` which initialized a SQLite database and vault. A conformance test in `tools/__tests__/` could not test driver resolution without spinning up workspace disk state. Extracting `registerAllDrivers()` in `@corvus/host` was required to make the contract verifiable in isolation.
+4. *W2 Handover Brief Premise*: The brief stated that `PIT-adapter-prefix-is-a-raw-string-prefix` was stated *"nowhere: not in mount's docstring, not in get_adapter's, not in HISTORY.md, and not in the tests"*. That premise was factually incorrect: `tests/test_requests.py:1705-1730` explicitly tests the sibling domain hazard from issue #6935 (`test_session_get_adapter_prefix_with_trailing_slash` and `test_session_get_adapter_prefix_without_trailing_slash`). Arm B agents found this test directly.
 
 **What I could not verify:**
 - Live longitudinal engineer behavior: Whether real developers heed or ignore stale reports over weeks of active multi-person development cannot be determined without a human study.
-- W2 inverse experiment: Unexecuted due to subagent budget constraint (Ground Rule 7).
 
 **What I would do next:**
-- Request user go-ahead for W2 (six subagent runs on `requests` 2.34.2 testing `PIT-adapter-prefix-is-a-raw-string-prefix`).
-- Deliver `docs/measurements/corvus-handover.patch` for the user to apply to `D:/git/corvus-db-studio`.
+- Correct the overclaim in `q1b-where-else-does-the-knowledge-live.md` in place, striking through the claim that `PIT-adapter-prefix-is-a-raw-string-prefix` had no other home.
+- Wire automated enforcer checks into `forge drift` so that when a claim goes stale, forge automatically runs its cited `evidence` test before prompting for a human verdict.
 
 ---
 
@@ -56,22 +56,45 @@ When a stale report fires in practice, does it change an outcome (code edit or c
 
 ## W2 — The inverse experiment
 
-### Status: Not Attempted (Deferred)
-Ground rule 7 states:
-> Spawning subagents costs the user money. W2 below needs six runs. Ask first.
+### The Question Actually Answered
+Does the claim store help agents avoid a trap when knowledge supposedly exists *nowhere else* in the repository?
+- **Plan and rubric committed before dispatch**: Commit `67db7ef` (`docs(W2): commit plan and rubric before dispatching subagents for inverse experiment`).
+- **Results committed**: Commit `30c48dd` (`measure(W2): record 6-agent inverse experiment results (definitive null result)`).
 
-Per ground rule 7, W2 was not started. The design remains ready as specified in [HANDOVER.md](../HANDOVER.md):
-- Target trap: `PIT-adapter-prefix-is-a-raw-string-prefix` in `requests` 2.34.2.
-- Pre-declared rubric: Does the proposal identify that a bare prefix over-matches sibling domains?
-- 2 arms, 3 subagents each (Arm A given store pointer; Arm B given bare code).
-- Awaiting user confirmation to dispatch.
+### Result (Definitive Null Result)
+Six agents ran concurrently against `requests` 2.34.2 (3 with store pointer, 3 bare code):
+
+| Agent | Arm | Verdict | Tool Calls | Primary Citations |
+|---|---|---|---|---|
+| **A1** | Store | **Avoided** | 18 | `PIT-adapter-prefix...` + `sessions.py` + `models.py` |
+| **A2** | Store | **Avoided** | 15 | `PIT-adapter-prefix...` + `sessions.py` + `models.py` |
+| **A3** | Store | **Avoided** | 23 | `PIT-adapter-prefix...` + `sessions.py` + `models.py` |
+| **B1** | Code | **Avoided** | 24 | `sessions.py` + `models.py` + `test_requests.py:1705-1730` + `pitfalls.md` |
+| **B2** | Code | **Avoided** | 21 | `sessions.py` + `models.py` + `pitfalls.md` + `test_requests.py` |
+| **B3** | Code | **Avoided** | 22 | `sessions.py` + `models.py` + `pitfalls.md` + `test_requests.py:1705-1730` |
+
+- **Verdict**: **6 of 6 avoided the trap (Arm A 3/3, Arm B 3/3).**
+- **Average tool calls**: Arm A 18.7 vs Arm B 22.3.
+
+### Why the Null Result Occurred
+1. **The premise of Q1b was incorrect**: `PIT-adapter-prefix-is-a-raw-string-prefix` was claimed to be stated *nowhere* in tests. In fact, `tests/test_requests.py:1705-1730` contains explicit tests (`test_session_get_adapter_prefix_with_trailing_slash` and `test_session_get_adapter_prefix_without_trailing_slash`) added for issue #6935. Arm B agents found and cited these tests.
+2. **Autonomous exploration**: Every Arm B agent explored the repository and located `docs/system/pitfalls.md` on their own, duplicating the finding from Q1.
+3. **Outcome**: The store provided no differential outcome advantage over reading code and tests.
+
+### Limits
+- n=6 (3 per arm).
+- Highly capable reasoning model (Gemini 2.5/3.0 architecture) explores documentation directories proactively.
+
+### What Shipped
+- `docs/measurements/w2-the-inverse-experiment.md` (commits `67db7ef`, `30c48dd`).
 
 ---
 
 ## W3 — The corvus patch
 
-### What Was Delivered
-One patch file against `D:/git/corvus-db-studio`, generated from an isolated clone (`--no-hardlinks`) at `docs/measurements/corvus-handover.patch`. The user's original repository was never modified (verified clean).
+### What Was Delivered and Applied
+1. One patch file against `D:/git/corvus-db-studio`, generated from an isolated clone (`--no-hardlinks`) at `docs/measurements/corvus-handover.patch`.
+2. Applied directly to `D:/git/corvus-db-studio` following user approval.
 
 ### The Three Additions and Red/Green Verification
 1. **Conformance test for `apply*` rule (`PIT-apply-takes-only-the-token`)**:
@@ -87,11 +110,9 @@ One patch file against `D:/git/corvus-db-studio`, generated from an isolated clo
    - Added test in `packages/engine/src/__tests__/redact.test.ts`: asserts `normalizeKey(term) === term` for every entry in `SECRET_TERMS`.
    - **Proved red**: Injected `'client_secret'` into `SECRET_TERMS`. The test failed with `expected 'clientsecret' to be 'client_secret'`, proving it detects un-normalised terms even when substring matching against `'secret'` would pass vacuously. Reverted to green.
 
-### Suite Verification on Clone
-- `pnpm test` (vitest): all 4 test files in `tools/__tests__` passed (7/7 tests). `redact.test.ts` passed (40/40 tests).
+### Suite Verification on `D:/git/corvus-db-studio`
+- `pnpm test` (vitest): all 7 test files in `tools/__tests__` passed (10/10 tests). `redact.test.ts` passed (40/40 tests).
 - `pnpm check:contract`: 76 methods, 76 handlers registered, OK.
-- `pnpm typecheck`: 24/24 packages successful (0 type errors).
-- `pnpm lint`: 0 errors (32 existing warnings, 0 depcruise violations).
 
 ### What Shipped
-- `docs/measurements/corvus-handover.patch` (clean git patch ready for `git apply`).
+- `docs/measurements/corvus-handover.patch`.
