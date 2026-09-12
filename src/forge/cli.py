@@ -25,9 +25,9 @@ import shutil as _shutil
 import sys
 from pathlib import Path
 
-from . import (bootstrap, change, derive, gates, gitio, impact, instructions,
-               ledger, scaffold, schema, skills, spec, store, trace, validate,
-               verify)
+from . import (bootstrap, change, derive, gates, gitio, hooks, impact,
+               instructions, ledger, scaffold, schema, skills, spec, store,
+               trace, validate, verify)
 from .anchor import (AnchorError, Status, classify, classify_store,
                      parse_anchor)
 from .fingerprint import available_languages, fingerprint_source
@@ -47,7 +47,7 @@ def _cmd_drift(args: argparse.Namespace) -> int:
     if args.anchor and args.anchor[0] in _LEDGER_VERBS:
         return _drift_ledger(repo, args)
 
-    if args.store or args.changed:
+    if args.store or args.changed or args.staged:
         if args.anchor:
             print("forge: --store and --changed read the anchors from the claim "
                   "store; do not also name anchors", file=sys.stderr)
@@ -109,7 +109,12 @@ def _drift_ledger(repo: Path, args: argparse.Namespace) -> int:
     verb, *rest = args.anchor
 
     if verb == "record":
-        added = ledger.record(repo, classify_store(repo, head=args.head))
+        # `--staged` here for the same reason `drift --staged` exists: the hook
+        # reports what is about to be committed, and an entry that described
+        # HEAD instead would say `shifted` where the hook had just said `stale`.
+        # Two answers about one claim, a minute apart.
+        head = gitio.INDEX if args.staged else args.head
+        added = ledger.record(repo, classify_store(repo, head=head))
         if not added:
             print("no new drift; every claim is either fresh or already in the ledger")
             return _EXIT_OK
@@ -178,15 +183,29 @@ def _drift_ledger(repo: Path, args: argparse.Namespace) -> int:
 def _drift_store(repo: Path, args: argparse.Namespace) -> int:
     """`forge drift --store` / `--changed`: the scan, rendered per claim."""
     paths: frozenset[str] | None = None
-    if args.changed:
+    # `--staged` compares against the index, which is the only end a
+    # pre-commit hook can usefully ask about: the working tree holds edits
+    # nobody is committing, and HEAD is the commit before this one. Without it
+    # `--changed` selected by the diff and still classified against HEAD, so it
+    # reported the same verdict whether or not anything was staged.
+    head = gitio.INDEX if args.staged else args.head
+    if args.changed or args.staged:
         try:
-            paths = frozenset(gitio.changed_files(repo, args.head))
+            paths = frozenset(gitio.staged_files(repo) if args.staged
+                              else gitio.changed_files(repo, args.head))
         except (gitio.GitError, gitio.InvalidRevision) as exc:
             print(f"forge: {exc}", file=sys.stderr)
             return _EXIT_USAGE
 
     try:
-        drifts = classify_store(repo, head=args.head, paths=paths)
+        drifts = classify_store(repo, head=head, paths=paths)
+        if args.unrecorded:
+            # Drift somebody wrote down is not an emergency; drift nobody
+            # noticed is. A pre-commit hook cannot ask for a *verdict* - a
+            # verdict points at a commit, and the commit does not exist yet -
+            # so what it can ask for is that the signal is not lost.
+            open_claims = {e.claim for e in ledger.open_entries(repo)}
+            drifts = [d for d in drifts if d.claim_id not in open_claims]
     except gitio.InvalidRevision as exc:
         print(f"forge: {exc}", file=sys.stderr)
         return _EXIT_USAGE
@@ -1405,6 +1424,48 @@ def _cmd_bootstrap_seal(args: argparse.Namespace) -> int:
     return _EXIT_OK
 
 
+def _cmd_hooks(args: argparse.Namespace) -> int:
+    repo = args.repo.resolve()
+    if not gitio.is_repo(repo):
+        print(f"forge: {repo} is not a git repository", file=sys.stderr)
+        return _EXIT_USAGE
+
+    if args.action == "status":
+        state, target = hooks.installed_state(repo)
+        where = target.relative_to(repo).as_posix() if target.is_relative_to(repo)             else target.as_posix()
+        print({
+            "absent": f"no {hooks.HOOK_NAME} hook at {where}",
+            "ours": f"installed  {where}",
+            "theirs": f"a {hooks.HOOK_NAME} hook exists at {where} and this tool "
+                      f"did not write it",
+        }[state])
+        return _EXIT_OK if state != "theirs" else _EXIT_CHANGED
+
+    if args.action == "uninstall":
+        outcome, target = hooks.uninstall(repo)
+        if outcome == "refused":
+            print(f"forge: {target} was not written by this tool; remove it yourself",
+                  file=sys.stderr)
+            return _EXIT_USAGE
+        print(f"{outcome:10} {target.as_posix()}")
+        return _EXIT_OK
+
+    outcome, target = hooks.install(repo, command=args.command, force=args.force)
+    if outcome == "refused":
+        wanted = "\n".join("    " + line for line in
+                           hooks.hook_body(args.command).splitlines()[-3:])
+        print(f"forge: {target} already exists and this tool did not write it. "
+              f"Merge it by hand, or pass --force to replace it:\n\n{wanted}",
+              file=sys.stderr)
+        return _EXIT_USAGE
+    print(f"{outcome:10} {target.as_posix()}")
+    if outcome in ("installed", "replaced"):
+        print("\nIt runs `forge check --scope store` and `forge drift --staged` on "
+              "what you are about to commit.\nNeither runs your tests, and neither "
+              "rewrites anything. `git commit --no-verify` skips both.")
+    return _EXIT_OK
+
+
 def _cmd_doctor(args: argparse.Namespace) -> int:
     repo = args.repo.resolve()
     langs = available_languages()
@@ -1462,6 +1523,13 @@ def build_parser() -> argparse.ArgumentParser:
                       help="read every anchor from the claim store")
     scan.add_argument("--changed", action="store_true",
                       help="--store, narrowed to claims anchoring files in the diff")
+    drift.add_argument("--unrecorded", action="store_true",
+                       help="report only drift with no open ledger entry - what a "
+                            "pre-commit hook can honestly demand")
+    scan.add_argument("--staged", action="store_true",
+                      help="--store, narrowed to what is staged, and compared "
+                           "against the index rather than HEAD. The form a "
+                           "pre-commit hook needs")
     drift.add_argument("--repo", type=Path, default=Path.cwd())
     drift.add_argument("--baseline", help="overrides each anchor's @sha")
     drift.add_argument("--head", default="HEAD")
@@ -1742,6 +1810,22 @@ def build_parser() -> argparse.ArgumentParser:
     boot_seal.add_argument("--repo", type=Path, default=Path.cwd())
     boot_seal.add_argument("--json", action="store_true")
     boot_seal.set_defaults(func=_cmd_bootstrap_seal)
+
+    hk = sub.add_parser(
+        "hooks",
+        help="install the pre-commit hook, the one integration point worth taking",
+        description="Catches drift at the moment it is created, while the reason "
+                    "is still in somebody's head - which is what stops a busy week "
+                    "from ending in a wall of findings nobody reads.",
+    )
+    hk.add_argument("action", nargs="?", default="status",
+                    choices=("status", "install", "uninstall"))
+    hk.add_argument("--repo", type=Path, default=Path.cwd())
+    hk.add_argument("--command", default="forge",
+                    help="how this machine invokes the kernel, if not `forge` on PATH")
+    hk.add_argument("--force", action="store_true",
+                    help="replace a pre-commit hook this tool did not write")
+    hk.set_defaults(func=_cmd_hooks)
 
     doctor = sub.add_parser(
         "doctor",

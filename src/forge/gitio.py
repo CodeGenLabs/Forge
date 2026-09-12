@@ -27,6 +27,7 @@ __all__ = [
     "validate_rev",
     "validate_repo_path",
     "git",
+    "INDEX",
     "blob_at",
     "blobs_at",
     "exists_at",
@@ -36,6 +37,7 @@ __all__ = [
     "rename_map",
     "resolve_path_at",
     "changed_files",
+    "staged_files",
     "first_commit_touching",
     "parent_of",
     "diff_is_whitespace_only",
@@ -48,7 +50,22 @@ __all__ = [
 # harness only ever needs concrete commits, and a narrow accept set is the
 # cheapest defence against a crafted value in a claim file.
 _REV_RE = re.compile(r"\A[0-9a-fA-F]{4,40}\Z")
-_SYMBOLIC_REVS = frozenset({"HEAD"})
+#: What is staged. A pre-commit hook is about the index and nothing else: the
+#: working tree holds edits nobody is committing yet, and HEAD holds the commit
+#: before this one. Without this, `forge drift --changed` in a hook compares
+#: HEAD against an anchor's recorded sha and reports the same verdict whether
+#: or not anything is staged - measured, and a hook built on it is a placebo.
+#:
+#: Git spells it `:0:<path>`, not `<rev>:<path>`, so `_at` builds the qualified
+#: name rather than each reader interpolating its own.
+INDEX = "INDEX"
+_SYMBOLIC_REVS = frozenset({"HEAD", INDEX})
+
+
+def _at(rev: str, path: str) -> str:
+    """The git object name for *path* at *rev*."""
+    return f":0:{path}" if rev == INDEX else f"{rev}:{path}"
+
 
 _WINDOWS_DRIVE_RE = re.compile(r"\A[A-Za-z]:")
 
@@ -142,7 +159,7 @@ def blob_at(repo: Path, rev: str, path: str) -> bytes | None:
     """
     rev = validate_rev(rev)
     path = validate_repo_path(path)
-    return _git_bytes(repo, "show", f"{rev}:{path}")
+    return _git_bytes(repo, "show", _at(rev, path))
 
 
 def blobs_at(repo: Path, rev: str, paths: list[str]) -> dict[str, bytes | None]:
@@ -164,7 +181,7 @@ def blobs_at(repo: Path, rev: str, paths: list[str]) -> dict[str, bytes | None]:
     if not wanted:
         return {}
 
-    request = "".join(f"{rev}:{p}\n" for p in wanted).encode("utf-8")
+    request = "".join(_at(rev, p) + chr(10) for p in wanted).encode("utf-8")
     completed = subprocess.run(
         ["git", "-c", "core.quotePath=false", "-C", str(repo),
          "cat-file", "--batch"],
@@ -200,7 +217,7 @@ def exists_at(repo: Path, rev: str, path: str) -> bool:
     rev = validate_rev(rev)
     path = validate_repo_path(path).rstrip("/")
     completed = subprocess.run(
-        ["git", "-C", str(repo), "cat-file", "-e", f"{rev}:{path}"],
+        ["git", "-C", str(repo), "cat-file", "-e", _at(rev, path)],
         capture_output=True,
         check=False,
     )
@@ -216,7 +233,7 @@ def tree_hash_at(repo: Path, rev: str, dirpath: str) -> str | None:
     """
     rev = validate_rev(rev)
     dirpath = validate_repo_path(dirpath).rstrip("/")
-    out = _git_bytes(repo, "rev-parse", f"{rev}:{dirpath}")
+    out = _git_bytes(repo, "rev-parse", _at(rev, dirpath))
     if out is None:
         return None
     return out.decode().strip() or None
@@ -311,9 +328,24 @@ def _is_ancestor(repo: Path, maybe_ancestor: str, rev: str) -> bool:
     return completed.returncode == 0
 
 
+def staged_files(repo: Path) -> list[str]:
+    """Paths whose staged content differs from HEAD.
+
+    What a pre-commit hook is actually about. `changed_files` reports the
+    working tree, which includes edits nobody is committing yet.
+    """
+    out = git(repo, "diff", "--cached", "--name-only", "--find-renames",
+              check=False)
+    return sorted({line.strip() for line in out.splitlines() if line.strip()})
+
+
 def list_files_at(repo: Path, rev: str) -> list[str]:
     """Every tracked path at *rev*, POSIX-separated."""
-    out = git(repo, "ls-tree", "-r", "--name-only", validate_rev(rev))
+    rev = validate_rev(rev)
+    if rev == INDEX:
+        out = git(repo, "ls-files")
+    else:
+        out = git(repo, "ls-tree", "-r", "--name-only", rev)
     return [line.strip() for line in out.splitlines() if line.strip()]
 
 

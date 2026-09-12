@@ -325,6 +325,44 @@ Three defects that neither earlier repository could have exposed:
 
 Still open and unmeasured: whether `Nearby` is actually read. Run 3's change touched no
 claims at all, so the split three rounds of narrowing produced was never exercised.
+
+A second change on the same repository closed that gap: editing `isSecretKey` produced
+**2 touched, 0 nearby, 7 reached by import** - one function, two obligations, both
+right. It cost three more defects, all invisible to a run that makes one change:
+**H13** (`--follow` matched a change's `.forge.yaml` to the previous one that `archive`
+had moved, so every change after the first measured itself from an earlier change),
+**H14** (a CRLF rewrite marked every claim in a file as edited - Q3's rubber-stamping
+through a *third* door, after claims sharing a file and claims sharing an import graph),
+and **H15** (every `it.each` test was invisible to the index).
+
+---
+
+## M7 - the pre-commit hook **(done, 2026-09-12)**
+
+[OPEN_QUESTIONS.md](../OPEN_QUESTIONS.md) Q10 names how every knowledge scheme dies:
+drift accumulates unnoticed, the first scan after a busy week is a wall of findings, and
+somebody declares bankruptcy. It recommends a pre-commit hook. Two things had to be true
+first, and neither was until run 3.
+
+**Fast enough.** 93 seconds for `sync derived` on a 620-file repository; 1.4 now, and
+the hook does less.
+
+**Looking at the right thing.** `drift --changed` selected by the working diff and still
+classified against HEAD, so it returned the same verdict whether or not anything was
+staged - a hook built on it would have been a placebo everybody trusted. `gitio` can now
+address the index (`INDEX`, `:0:<path>`), and `drift --staged` compares against it.
+
+**And a third thing, found by building it.** The first hook demanded the drift be
+*resolved*, and that can never be satisfied: a verdict points at a commit, and at
+pre-commit time the commit does not exist, so `confirm` restamps to HEAD and the index
+still differs. The hook now blocks on drift with no **open ledger entry** - `drift
+--staged --unrecorded`. Drift somebody wrote down is not an emergency; drift nobody
+noticed is. `forge drift record --staged` lets the commit through, and the entry lands
+in the same commit as the code, which is the reviewable unit SYSTEM_KNOWLEDGE.md §6
+asks for.
+
+Exercised end to end on the monorepo: blocked, recorded, committed, then confirmed
+against the commit that now existed - ending at 12 of 12 claims fresh.
 >
 > **Symbol-level narrowing is done too** (2026-09-11), with G19 and G20. A symbol anchor
 > is touched when the diff's hunks intersect that symbol's own line span; a file anchor
