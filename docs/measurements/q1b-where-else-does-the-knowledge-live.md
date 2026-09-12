@@ -35,19 +35,21 @@ settles it.
 | `PIT-proxy-auth-leaks-through-tls-tunnel` | code, at the anchor | `sessions.py`: "Avoid appending this to TLS tunneled requests where it may be leaked" |
 | `PIT-netrc-lookup-must-use-parsed-hostname` | prose | `HISTORY.md`; the code shows `ri.hostname` and says nothing about why |
 | `PIT-no-proxy-matching-is-not-endswith` | prose | `HISTORY.md`; the boundary logic is visible, the hazard is not named |
-| `PIT-adapter-prefix-is-a-raw-string-prefix` | **nothing** | see below |
+~~| `PIT-adapter-prefix-is-a-raw-string-prefix` | **nothing** | see below |~~
+| `PIT-adapter-prefix-is-a-raw-string-prefix` | a test | `tests/test_requests.py:1705-1730` (issue #6935) |
 | `PIT-content-length-from-text-mode-file` | code, at the anchor | `super_len` raises `FileModeWarning` with a paragraph of explanation |
 | `PIT-redirected-body-must-be-rewound` | code, at the anchor | `rewind_body`'s docstring and the named `UnrewindableBodyError` |
 
-**Tally: 10 of 13 have a home a reader meets while doing the work.** Four in a prose
-document, five in the code at the anchor, one in a test. Three have none.
+**Tally: ~~10~~ 11 of 13 have a home a reader meets while doing the work.** Four in a prose
+document, five in the code at the anchor, ~~one~~ two in a test. ~~Three~~ Two have none.
 
 ## The one that is worth looking at closely
 
 `PIT-adapter-prefix-is-a-raw-string-prefix` says that `Session.mount("https://example.com", a)`
 also captures `https://example.com.other.com`, because `get_adapter` matches with
-`str.startswith`. Nothing in the repository states this:
+`str.startswith`.
 
+~~Nothing in the repository states this:
 - `mount`'s docstring says only that adapters are sorted by descending prefix length.
 - `get_adapter`'s docstring says only that it returns the appropriate adapter.
 - `HISTORY.md` has no entry.
@@ -55,10 +57,10 @@ also captures `https://example.com.other.com`, because `get_adapter` matches wit
   its negative example is `https://another.example.com/`, a **sub**domain, which does not
   start with the prefix. The sibling-domain case is absent.
 - `test_transport_adapter_ordering` mounts `http://git` alongside `http://github.com`, so
-  a careful reader can *derive* the hazard from it. Nobody states it.
+  a careful reader can *derive* the hazard from it. Nobody states it.~~
 
-That gap - **derivable by a careful reader, stated nowhere** - is the most precise
-description of what a claim store is for that these two repositories produced.
+**Correction (2026-09-12, during W2):**
+The claim that this hazard was stated nowhere was an overclaim caused by checking `test_session_get_adapter_prefix_matching` and stopping. `tests/test_requests.py` lines 1705–1730 carries two dedicated tests added for issue #6935: `test_session_get_adapter_prefix_with_trailing_slash` and `test_session_get_adapter_prefix_without_trailing_slash`, which explicitly test matching against `https://example.com.other.com`. The knowledge lives in the tests, which is why all three Arm B agents found it during W2.
 
 ## What the census says that Q1 could not
 
