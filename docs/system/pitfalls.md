@@ -7,6 +7,9 @@ kind:     pitfall
 status:   asserted
 truth-source: decision
 anchors:  ["src/forge/derive.py#build_inventory@8e06e5ca51"]
+evidence:
+  - test: tests/test_derive.py::test_the_derived_tier_does_not_describe_itself
+  - test: tests/test_deps.py::test_the_derived_tier_does_not_describe_itself
 reviewed: 2026-09-11
 ```
 
@@ -22,6 +25,8 @@ kind:     pitfall
 status:   asserted
 truth-source: decision
 anchors:  ["src/forge/impact.py@79b07211f8"]
+evidence:
+  - test: tests/test_impact.py::test_the_reason_never_swallows_the_next_line
 reviewed: 2026-09-11
 ```
 
@@ -37,6 +42,8 @@ kind:     pitfall
 status:   asserted
 truth-source: decision
 anchors:  ["src/forge/spec.py@8e06e5ca51"]
+evidence:
+  - test: tests/test_spec.py::test_markdown_bullets_are_not_diff_markers
 reviewed: 2026-09-11
 ```
 
@@ -58,6 +65,8 @@ kind:     pitfall
 status:   asserted
 truth-source: code
 anchors:  ["src/forge/bootstrap.py#_bullets@cd62b56feb"]
+evidence:
+  - test: tests/test_bootstrap.py::test_a_wrapped_question_is_not_truncated
 reviewed: 2026-09-11
 ```
 

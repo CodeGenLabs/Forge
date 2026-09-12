@@ -613,7 +613,46 @@ def _cmd_check(args: argparse.Namespace) -> int:
     else:
         print(f"ok - no issues. Checked: {checked}.")
         print(f"Not yet checked: {pending}.")
+    if "store" in scopes:
+        _report_unenforced(repo)
     return _EXIT_CHANGED if errors else _EXIT_OK
+
+
+def _report_unenforced(repo: Path) -> None:
+    """One line saying how many rules nothing will catch when they break.
+
+    Measured in docs/measurements/q1c-what-an-anchor-does-not-cover.md: seven of
+    eighteen pitfall and invariant claims can be falsified by an edit that never
+    touches an anchor, because the claim is about a rule the repository must obey
+    everywhere rather than about the code at the anchor. Six of those seven were
+    caught anyway - by a conformance test, by `forge check`, by a foreign key -
+    and the seventh was caught by nothing at all.
+
+    So the useful fact is not "this claim is unanchorable", which is a judgement
+    no check can make. It is "this claim names no enforcer", which is not a
+    judgement at all. Reported as a count rather than as an issue per claim: at
+    the time of writing fifteen of eighteen would have fired, and a wall of
+    warnings on every run is how a warning stops being read.
+    """
+    try:
+        claims = [c for c in store.load_store(repo)
+                  if not c.is_candidate and c.kind in ("pitfall", "invariant")]
+    except Exception:  # pragma: no cover - a broken store is already reported
+        return
+    if not claims:
+        return
+    bare = [c for c in claims
+            if not c.evidence
+            and not any(derive.is_test_path(a.split("@")[0].split("#")[0])
+                        for a in c.anchors)]
+    if not bare:
+        return
+    print(f"\nNames no enforcer: {len(bare)} of {len(claims)} pitfall/invariant "
+          "claims cite neither a test nor a guard.")
+    print("        Nothing will catch those when they break, and an anchor does "
+          "not, either,")
+    print("        unless the claim is about the code it points at. "
+          "`evidence:` is where the enforcer goes.")
 
 
 def _cmd_init(args: argparse.Namespace) -> int:

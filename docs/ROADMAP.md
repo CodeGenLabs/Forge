@@ -538,3 +538,46 @@ its trap chosen for it by this census: `PIT-adapter-prefix-is-a-raw-string-prefi
 repository with no rules document, against a task where a bare-prefix mount is the obvious
 answer. It needs six agent runs and the user's go-ahead, which is why it is a proposal here
 and not a done item.
+
+
+## R11 - what an anchor does not cover **(done, 2026-09-12)**
+
+R10 put staleness at the top of this list and said it was unmeasured. This measures one
+half of it - [Q1c](measurements/q1c-what-an-anchor-does-not-cover.md) - and it is the half
+that matters more. M1 measured whether anchors *survive* refactoring, a false-positive
+rate. The false negative is worse: a claim that fails to go stale when it breaks is a
+checked-looking record of something untrue.
+
+One question per claim: name an edit that makes this false **without touching an anchor**.
+
+**Seven of eighteen.** And the reason is uniform enough to be a law:
+
+> An anchor covers a claim exactly when the claim is about the code at the anchor. A rule
+> the whole repository must obey has no such symbol, because it breaks by code appearing
+> somewhere it was not.
+
+Six of the seven are caught anyway - four by a conformance test, one by `forge check`
+itself, one by a foreign key at runtime. **One is caught by nothing.**
+`PIT-apply-takes-only-the-token` in corvus says `apply*` must accept nothing but the
+preview token, which is the rule that keeps the SQL shown from differing from the SQL run,
+and no test, lint rule or type enforces it. Its anchor is the class that *hands out*
+tokens rather than the code that must only accept them, so a new `apply` that regenerates
+SQL breaks the rule with every check in that repository green.
+
+That is the first time this project has found something wrong in a repository rather than
+something wrong with itself, and it came out of a question about forge.
+
+**Shipped:** `curate-knowledge` now says to anchor a repository-wide rule at **what
+enforces it** - the test, the lint rule, the guard, the constraint - not at an example of
+it, and to say so in the prose when nothing does. `forge check --scope store` ends with one
+line counting the claims that name no enforcer; a claim anchored *at* its conformance test
+counts as enforced, which is the pattern corvus arrived at without writing it down.
+
+**A check that was attempted and abandoned, recorded so nobody builds it again.** The
+obvious detector is lexical - flag a pitfall whose title says *every*, *never*, *only*. Run
+against these eighteen it is wrong in both directions, because the distinction is the scope
+of the subject rather than the vocabulary. It is a count, not a verdict, for the same
+reason the `restates:` line is: state the fact, let the human judge.
+
+**Still open, and now the only thing above it:** whether a stale report, when it does fire,
+changes what anybody does. Nothing measured here touches that.

@@ -80,6 +80,22 @@ anyone, read each edit against three questions:
   `forge check --scope store` answers this; a test that was renamed leaves
   the claim claiming enforcement nothing provides.
 
+- **Is the anchor the thing that breaks, or an example of it?** An anchor
+  covers a claim exactly when the claim is about the code at the anchor.
+  A rule the whole repository must obey - fake data lives only here, every
+  seeded driver must be registered, `apply*` takes only the token - has no
+  such symbol, because it breaks by code appearing somewhere it was not.
+  Anchor that kind of claim to **what enforces it**: the conformance test,
+  the lint rule, the guard, the database constraint. If nothing enforces
+  it, say so in the prose, because an unenforced repository-wide rule is a
+  claim whose anchor cannot go stale when it breaks.
+
+  Measured, in `docs/measurements/q1c-what-an-anchor-does-not-cover.md`:
+  seven of eighteen pitfalls and invariants across three repositories can
+  be falsified without touching an anchor. Six were caught anyway by a test,
+  a check or a foreign key. One was caught by nothing, and had been green
+  for its whole life.
+
 Set `reviewed:` to today only where you actually re-read the prose and agreed
 with it. It feeds review-debt reporting, and a date stamped by habit makes
 that reporting useless.

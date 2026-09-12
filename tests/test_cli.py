@@ -153,6 +153,44 @@ def test_sync_then_check_is_clean(stored, capsys):
     assert "Not yet checked" in out
 
 
+def test_check_says_nothing_when_every_claim_names_an_enforcer(stored, capsys):
+    """`INV-7` cites a test, so the line has nothing to report and stays quiet."""
+    main(["check", "--repo", str(stored.root)])
+    assert "Names no enforcer" not in capsys.readouterr().out
+
+
+def test_check_counts_the_claims_nothing_will_catch(stored, capsys):
+    """Measured in q1c: an anchor covers a claim only when the claim is about
+    the code at the anchor, and a rule the whole repository must obey has no
+    such symbol. What a check can state is not that judgement but the fact
+    underneath it - that the claim names no enforcer at all.
+
+    A count rather than an issue per claim: fifteen of eighteen real claims
+    would have fired when this was written, and a wall of warnings on every run
+    is how a warning stops being read.
+    """
+    stored.write("docs/system/domain.md",
+                 STORE_CLAIM.replace("evidence:\n  - test: tests/test_pay.py::test_bounded\n", ""))
+    stored.commit("an invariant that names nothing")
+    main(["check", "--repo", str(stored.root)])
+    out = capsys.readouterr().out
+    assert "Names no enforcer: 1 of 1" in out
+    assert "`evidence:` is where the enforcer goes" in out
+
+
+def test_a_claim_anchored_at_its_test_counts_as_enforced(stored, capsys):
+    """The pattern that worked in corvus, arrived at without being written
+    down: a repository-wide rule anchored at the conformance test that proves
+    it, rather than at one example of it."""
+    stored.write("docs/system/domain.md",
+                 STORE_CLAIM
+                 .replace("evidence:\n  - test: tests/test_pay.py::test_bounded\n", "")
+                 .replace("  - src/pay.py#refundable", "  - tests/test_pay.py"))
+    stored.commit("an invariant anchored at its proof")
+    main(["check", "--repo", str(stored.root)])
+    assert "Names no enforcer" not in capsys.readouterr().out
+
+
 def test_sync_warns_when_the_content_commit_has_not_happened_yet(stored, capsys):
     """The tier is generated from HEAD, so syncing with tracked content still
     uncommitted produces a tier that is stale the moment it is written.
