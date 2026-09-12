@@ -25,7 +25,7 @@ import shutil as _shutil
 import sys
 from pathlib import Path
 
-from . import (bootstrap, change, derive, gates, gitio, hooks, hosts, impact,
+from . import (bootstrap, change, config, derive, gates, gitio, hooks, hosts, impact,
                instructions, ledger, reconcile as reconcile_mod, scaffold,
                schema, skills, spec, store, trace, validate, verify)
 from .anchor import (AnchorError, Status, classify, classify_store,
@@ -1703,6 +1703,15 @@ def _cmd_hooks(args: argparse.Namespace) -> int:
 
 def _cmd_doctor(args: argparse.Namespace) -> int:
     repo = args.repo.resolve()
+    from . import __version__
+    print(f"kernel           {__version__}")
+    cfg = config.load_config(repo)
+    if cfg.kernel_version:
+        skew = config.detect_kernel_skew(cfg.kernel_version, __version__)
+        if skew:
+            print(f"kernel_pin       {cfg.kernel_version} (SKEW: {skew})")
+        else:
+            print(f"kernel_pin       {cfg.kernel_version} (matches)")
     langs = available_languages()
     print(f"python           {sys.version.split()[0]}")
     print(f"grammars         {', '.join(langs) if langs else 'none (all anchors will be coarse)'}")

@@ -3,6 +3,9 @@
 # Everything here has a default; the kernel runs with no config at all. Only the
 # keys the current milestones read are listed.
 
+# Pinned kernel version so this repository can detect version skew (Q11).
+kernel_version: "0.0.1"
+
 derive:
   # Files whose ID-looking strings are *data*, not declarations. They still
   # count in the inventory and the test totals; only `@covers` and `forge:<ID>`

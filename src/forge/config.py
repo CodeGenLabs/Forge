@@ -19,13 +19,16 @@ from pathlib import Path
 
 import yaml
 
-__all__ = ["Config", "load_config", "CONFIG_PATH"]
+__all__ = ["Config", "load_config", "CONFIG_PATH", "detect_kernel_skew"]
 
 CONFIG_PATH = ".forge/config.yaml"
 
 
 @dataclass
 class Config:
+    #: Pinned kernel version string (e.g. "0.0.1", ">=0.0.1"). When present,
+    #: `forge check` verifies that the running kernel matches or satisfies it.
+    kernel_version: str | None = None
     #: Globs excluded from everything, on top of the built-in vendor and build
     #: exclusions. Use for code the project does not own.
     exclude: list[str] = field(default_factory=list)
@@ -72,11 +75,18 @@ def load_config(repo: Path) -> Config:
     if not isinstance(raw, dict):
         return Config(source=CONFIG_PATH, error=f"{CONFIG_PATH} is not a mapping")
 
+    kernel_section = _section(raw, "kernel")
+    raw_kv = raw.get("kernel_version")
+    if raw_kv is None and "version" in kernel_section:
+        raw_kv = kernel_section.get("version")
+    kernel_version = str(raw_kv).strip() if raw_kv is not None else None
+
     derive_section = _section(raw, "derive")
     budgets = _section(raw, "budgets")
     thresholds = _section(raw, "thresholds")
     defaults = Config()
     return Config(
+        kernel_version=kernel_version,
         exclude=_string_list(derive_section.get("exclude")),
         exclude_id_scan=_string_list(derive_section.get("exclude_id_scan")),
         always_loaded_lines=_positive_int(
@@ -134,3 +144,65 @@ def _matches(path: str, patterns: list[str]) -> bool:
         if prefix and (path == prefix or path.startswith(prefix + "/")):
             return True
     return False
+
+
+def _parse_version_tuple(v: str) -> tuple[int, ...]:
+    """Parse a version string into an integer tuple: '0.0.1' -> (0, 0, 1)."""
+    import re
+
+    cleaned = v.lstrip("v").strip()
+    # Strip any suffix like -alpha, +build
+    base = cleaned.split("-")[0].split("+")[0]
+    numbers = re.findall(r"\d+", base)
+    return tuple(int(n) for n in numbers) if numbers else (0,)
+
+
+def detect_kernel_skew(pinned: str, current: str) -> str | None:
+    """Return a description of skew if *current* does not satisfy *pinned*, else None."""
+    pinned = pinned.strip()
+    current_tuple = _parse_version_tuple(current)
+
+    if pinned.startswith(">="):
+        target = _parse_version_tuple(pinned[2:])
+        if current_tuple < target:
+            return f"running {current} is older than minimum required {pinned}"
+        return None
+    if pinned.startswith(">"):
+        target = _parse_version_tuple(pinned[1:])
+        if current_tuple <= target:
+            return f"running {current} is not newer than required {pinned}"
+        return None
+    if pinned.startswith("<="):
+        target = _parse_version_tuple(pinned[2:])
+        if current_tuple > target:
+            return f"running {current} exceeds maximum allowed {pinned}"
+        return None
+    if pinned.startswith("<"):
+        target = _parse_version_tuple(pinned[1:])
+        if current_tuple >= target:
+            return f"running {current} is not older than required {pinned}"
+        return None
+    if pinned.startswith("=="):
+        target_str = pinned[2:].strip()
+        if current.strip() != target_str and current_tuple != _parse_version_tuple(target_str):
+            return f"running {current} does not match pinned {pinned}"
+        return None
+    if pinned.startswith("!="):
+        target_str = pinned[2:].strip()
+        if current.strip() == target_str or current_tuple == _parse_version_tuple(target_str):
+            return f"running {current} is forbidden by {pinned}"
+        return None
+    if pinned.startswith("~=") or pinned.startswith("^"):
+        target = _parse_version_tuple(pinned[2:].strip())
+        if current_tuple < target:
+            return f"running {current} is older than compatible {pinned}"
+        if len(target) > 1 and current_tuple[0] != target[0]:
+            return f"running {current} has mismatched major version with {pinned}"
+        return None
+
+    target = _parse_version_tuple(pinned)
+    if current.strip() != pinned and current_tuple != target:
+        if current_tuple < target:
+            return f"running {current} is older than pinned {pinned}"
+        return f"running {current} is newer than pinned {pinned}"
+    return None

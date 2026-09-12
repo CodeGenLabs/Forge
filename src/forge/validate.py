@@ -958,6 +958,16 @@ def check_store(repo: Path, *, today: _dt.date | None = None) -> list[Issue]:
             "WARNING", "store.config", config.source or ".forge/config.yaml",
             config.error, "fix the YAML, or delete the file to use defaults",
         ))
+    if config.kernel_version:
+        from . import __version__
+        from .config import detect_kernel_skew
+        skew = detect_kernel_skew(config.kernel_version, __version__)
+        if skew:
+            issues.append(Issue(
+                "WARNING", "store.kernel_skew", config.source or ".forge/config.yaml",
+                f"kernel version skew: {skew}",
+                f"align kernel installation or update {config.source or '.forge/config.yaml'}",
+            ))
     issues.extend(_check_ids(repo, claims, texts))
     for claim in claims:
         issues.extend(_check_block(claim, decisions, covers_index, today))

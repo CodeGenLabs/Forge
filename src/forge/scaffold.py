@@ -197,6 +197,9 @@ _CONFIG = """\
 # forge configuration. Every key has a default; delete the file to use them all.
 version: 1
 
+# Pinned kernel version so this repository can detect version skew (Q11).
+kernel_version: "0.0.1"
+
 derive:
   # Paths the derived tier does not describe, on top of the built-in vendor and
   # build exclusions. Use for code this project does not own.
