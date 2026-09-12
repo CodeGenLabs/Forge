@@ -114,6 +114,26 @@ def label_for_path(path: str) -> str:
     return "other"
 
 
+#: Every tracked blob at one commit, read in a single `git cat-file --batch`
+#: and kept only for that commit. Four of the builders walk every tracked file,
+#: and `git show` per file cost 93 seconds on a 635-file repository against
+#: 0.5 with one batch - process creation, not work. Keyed by the resolved
+#: commit so a different HEAD can never be served a stale answer, and cleared
+#: on a miss so it holds one commit's worth and never grows.
+_BLOB_CACHE: dict[tuple[str, str], dict[str, bytes | None]] = {}
+
+
+def _blobs(repo: Path) -> dict[str, bytes | None]:
+    head = gitio.rev_parse(repo, "HEAD")
+    key = (str(repo), head)
+    cached = _BLOB_CACHE.get(key)
+    if cached is None:
+        cached = gitio.blobs_at(repo, "HEAD", gitio.list_files_at(repo, "HEAD"))
+        _BLOB_CACHE.clear()
+        _BLOB_CACHE[key] = cached
+    return cached
+
+
 def is_generated(path: str) -> bool:
     """Files the harness itself writes.
 
@@ -371,9 +391,10 @@ def build_inventory(repo: Path) -> dict:
 
     by_language: dict[str, dict] = {}
     tests: list[str] = []
+    blobs = _blobs(repo)
     for path in interesting:
         language = label_for_path(path)
-        blob = gitio.blob_at(repo, "HEAD", path)
+        blob = blobs.get(path)
         lines = blob.count(b"\n") + (1 if blob and not blob.endswith(b"\n") else 0) if blob else 0
         bucket = by_language.setdefault(language, {"files": 0, "lines": 0})
         bucket["files"] += 1
@@ -413,6 +434,7 @@ def build_tests(repo: Path) -> dict:
     config = load_config(repo)
     files: dict[str, dict] = {}
     by_id: dict[str, list[str]] = {}
+    blobs = _blobs(repo)
 
     for path in gitio.list_files_at(repo, "HEAD"):
         if is_ignored(path, config) or not is_test_path(path):
@@ -424,7 +446,7 @@ def build_tests(repo: Path) -> dict:
         language = language_for_path(path)
         if language is None:
             continue
-        blob = gitio.blob_at(repo, "HEAD", path)
+        blob = blobs.get(path)
         if blob is None:
             continue
         text = blob.decode("utf-8", "replace")
@@ -503,12 +525,13 @@ def build_backrefs(repo: Path) -> dict:
     """
     config = load_config(repo)
     by_id: dict[str, list[str]] = {}
+    blobs = _blobs(repo)
     for path in gitio.list_files_at(repo, "HEAD"):
         if is_ignored(path, config) or config.excludes_id_scan(path):
             continue
         if label_for_path(path) in _PROSE_LABELS:
             continue
-        blob = gitio.blob_at(repo, "HEAD", path)
+        blob = blobs.get(path)
         if blob is None or b"forge:" not in blob:
             continue
         text = blob.decode("utf-8", "replace")
@@ -610,10 +633,69 @@ def _python_edges(text: str, source: str, index: set[str]) -> set[str]:
     return targets
 
 
+def _workspace_packages(index: set[str], blobs: dict[str, bytes | None]) -> dict[str, str]:
+    """Package name -> directory, for every `package.json` in the repository.
+
+    A monorepo's own packages are imported by name (`@corvus/contract`), not by
+    relative path, and the old rule skipped every specifier that did not start
+    with a dot. That confuses "not relative" with "not in this repository":
+    `react` is a lockfile fact, `@corvus/contract` is this repository's coupling
+    and is exactly what the graph is for.
+
+    Measured on a 19-package TypeScript monorepo: the file that imports
+    `@corvus/contract` had **zero** recorded edges, and the whole repository
+    reported `671 edges, 0 cycles`. The zero was not a finding about a
+    well-layered design; it was the cross-package edges being dropped, which
+    are the only ones that could have formed a cycle.
+    """
+    out: dict[str, str] = {}
+    for path in index:
+        if not path.endswith("package.json"):
+            continue
+        blob = blobs.get(path)
+        if blob is None:
+            continue
+        try:
+            manifest = json.loads(blob.decode("utf-8", "replace"))
+        except (json.JSONDecodeError, ValueError):
+            continue
+        name = manifest.get("name")
+        if not isinstance(name, str) or not name:
+            continue
+        directory = path.rsplit("/", 1)[0] if "/" in path else ""
+        # The root manifest names the whole repository; mapping it would make
+        # every bare specifier resolve to the root and wire the graph to itself.
+        if directory:
+            out[name] = directory
+    return out
+
+
+def _workspace_target(specifier: str, packages: dict[str, str],
+                      index: set[str]) -> str | None:
+    """Resolve `@scope/pkg` or `@scope/pkg/deep` against the workspace map."""
+    for name in sorted(packages, key=len, reverse=True):
+        if specifier != name and not specifier.startswith(f"{name}/"):
+            continue
+        directory = packages[name]
+        rest = specifier[len(name):].strip("/")
+        stem = f"{directory}/{rest}" if rest else directory
+        for candidate in (stem, *(f"{stem}{ext}" for ext in _TS_EXTENSIONS),
+                          *(f"{stem}/index{ext}" for ext in _TS_EXTENSIONS),
+                          *(f"{stem}/src/index{ext}" for ext in _TS_EXTENSIONS)):
+            if candidate in index:
+                return candidate
+        return None
+    return None
+
+
 def _relative_targets(specifier: str, source: str, index: set[str]) -> str | None:
-    """Resolve a TypeScript/JavaScript specifier. Package imports are skipped:
-    the graph is about *this* repository's coupling, and `react` is a fact of
-    the lockfile that `inventory.json` already reports."""
+    """Resolve a relative TypeScript/JavaScript specifier.
+
+    Bare package specifiers are handled by `_workspace_target`, which knows
+    which of them name packages inside this repository. Everything left over is
+    a third-party dependency and is a fact of the lockfile that
+    `inventory.json` already reports.
+    """
     if not specifier.startswith("."):
         return None
     base = source.rsplit("/", 1)[0] if "/" in source else ""
@@ -671,11 +753,13 @@ def build_deps(repo: Path) -> dict:
 
     edges: dict[str, set[str]] = {}
     unresolved = 0
+    blobs = _blobs(repo)
+    workspace = _workspace_packages(index, blobs)
     for path in sorted(index):
         language = language_for_path(path)
         if language not in ("python", "go", "typescript", "tsx"):
             continue
-        blob = gitio.blob_at(repo, "HEAD", path)
+        blob = blobs.get(path)
         if blob is None:
             continue
         text = blob.decode("utf-8", "replace")
@@ -697,10 +781,11 @@ def build_deps(repo: Path) -> dict:
         else:
             for pattern in _IMPORT_RES["typescript"]:
                 for specifier in pattern.findall(text):
-                    target = _relative_targets(specifier, path, index)
+                    target = (_relative_targets(specifier, path, index)
+                              or _workspace_target(specifier, workspace, index))
                     if target:
                         found.add(target)
-                    elif specifier.startswith("."):
+                    elif specifier.startswith(".") or specifier in workspace:
                         unresolved += 1
 
         found.discard(path)
@@ -718,7 +803,13 @@ def build_deps(repo: Path) -> dict:
         "reverse": {k: sorted(reverse[k]) for k in sorted(reverse)},
         "cycles": _import_cycles(edges),
         "files_with_imports": len(edges),
-        "unresolved_relative_imports": unresolved,
+        # Renamed from `unresolved_relative_imports` when workspace packages
+        # started resolving: it now counts an import that names something
+        # inside this repository and could not be pointed at a file, whether
+        # the specifier was relative or a package name. A third-party import is
+        # not unresolved, it is external, and counting it would make the number
+        # a measure of the lockfile.
+        "unresolved_imports": unresolved,
     }
 
 

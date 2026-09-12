@@ -243,9 +243,9 @@
       ]
     },
     "tool": "forge",
-    "unresolved_relative_imports": 0
+    "unresolved_imports": 0
   },
-  "generated_from_commit": "903f4c3b191e762c8151d7c658563826c2b60f52",
+  "generated_from_commit": "5ed2fcaa911479bc9c17152aa74838b8d1716774",
   "generator": "forge sync derived",
   "tool": "forge"
 }

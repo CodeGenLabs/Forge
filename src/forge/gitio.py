@@ -28,6 +28,7 @@ __all__ = [
     "validate_repo_path",
     "git",
     "blob_at",
+    "blobs_at",
     "exists_at",
     "tree_hash_at",
     "rev_parse",
@@ -142,6 +143,56 @@ def blob_at(repo: Path, rev: str, path: str) -> bytes | None:
     rev = validate_rev(rev)
     path = validate_repo_path(path)
     return _git_bytes(repo, "show", f"{rev}:{path}")
+
+
+def blobs_at(repo: Path, rev: str, paths: list[str]) -> dict[str, bytes | None]:
+    """Read many blobs at *rev* in one git process.
+
+    `blob_at` spawns `git show` per file, which is fine for the handful of
+    anchors a drift scan reads and ruinous for a census. Measured: `forge sync
+    derived` took **93 seconds** on a 635-file repository and under a second on
+    a 95-file one - process creation, not work. Three artifacts each read every
+    tracked file, so that is roughly 1,900 spawns.
+
+    `git cat-file --batch` answers all of them down one pipe. A path that does
+    not exist at *rev* comes back as `<name> missing`, and is reported as None
+    rather than raising - the same contract `blob_at` has, because the callers
+    that count files must not stop at the first deleted one.
+    """
+    rev = validate_rev(rev)
+    wanted = [validate_repo_path(p) for p in paths]
+    if not wanted:
+        return {}
+
+    request = "".join(f"{rev}:{p}\n" for p in wanted).encode("utf-8")
+    completed = subprocess.run(
+        ["git", "-c", "core.quotePath=false", "-C", str(repo),
+         "cat-file", "--batch"],
+        input=request, capture_output=True, check=False,
+    )
+    if completed.returncode != 0:
+        # One bad path must not lose the other six hundred answers.
+        return {p: blob_at(repo, rev, p) for p in wanted}
+
+    out: dict[str, bytes | None] = {}
+    data = completed.stdout
+    offset = 0
+    for path in wanted:
+        end = data.find(b"\n", offset)
+        if end < 0:
+            out[path] = None
+            continue
+        header = data[offset:end].decode("utf-8", "replace").split()
+        offset = end + 1
+        if len(header) < 3 or header[1] != "blob":
+            # "missing", or a tree where a file was expected.
+            out[path] = None
+            continue
+        size = int(header[2])
+        out[path] = data[offset:offset + size]
+        # Each blob is followed by a newline git adds itself.
+        offset += size + 1
+    return out
 
 
 def exists_at(repo: Path, rev: str, path: str) -> bool:

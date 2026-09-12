@@ -171,3 +171,58 @@ def test_tree_hash_changes_when_anything_beneath_changes(repo):
 
     assert before and after and before != after
     assert gitio.tree_hash_at(repo.root, first, "nope") is None
+
+
+# ---------------------------------------------------------------------------
+# Reading many blobs at once
+# ---------------------------------------------------------------------------
+
+def test_blobs_at_returns_every_requested_path(repo):
+    repo.write("a.txt", "alpha\n")
+    repo.write("dir/b.txt", "beta\n")
+    repo.commit("two files")
+
+    out = gitio.blobs_at(repo.root, "HEAD", ["a.txt", "dir/b.txt"])
+    assert out == {"a.txt": b"alpha\n", "dir/b.txt": b"beta\n"}
+
+
+def test_blobs_at_agrees_with_blob_at(repo):
+    """The batch reader replaced a per-file `git show` on the hot path, so the
+    two must not disagree about a single byte."""
+    repo.write("bin.dat", b"\x00\x01\x02no trailing newline")
+    repo.write("text.txt", "line\nline\n")
+    repo.commit("a binary file and a text one")
+
+    paths = ["bin.dat", "text.txt"]
+    batch = gitio.blobs_at(repo.root, "HEAD", paths)
+    assert batch == {p: gitio.blob_at(repo.root, "HEAD", p) for p in paths}
+
+
+def test_blobs_at_reports_a_missing_path_as_none(repo):
+    """`blob_at`'s contract, kept: the callers that count files must not stop
+    at the first path that is not there."""
+    repo.write("a.txt", "alpha\n")
+    repo.commit("one file")
+
+    out = gitio.blobs_at(repo.root, "HEAD", ["a.txt", "gone.txt"])
+    assert out == {"a.txt": b"alpha\n", "gone.txt": None}
+
+
+def test_blobs_at_handles_an_empty_file(repo):
+    repo.write("empty.txt", "")
+    repo.write("after.txt", "x\n")
+    repo.commit("an empty file, and one after it")
+
+    out = gitio.blobs_at(repo.root, "HEAD", ["empty.txt", "after.txt"])
+    assert out == {"empty.txt": b"", "after.txt": b"x\n"}
+
+
+def test_blobs_at_asks_for_nothing_and_runs_nothing(repo):
+    repo.commit("empty")
+    assert gitio.blobs_at(repo.root, "HEAD", []) == {}
+
+
+def test_blobs_at_validates_its_paths(repo):
+    repo.commit("empty")
+    with pytest.raises(gitio.InvalidPath):
+        gitio.blobs_at(repo.root, "HEAD", ["../escape.txt"])

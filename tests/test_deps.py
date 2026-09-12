@@ -104,7 +104,7 @@ def test_a_package_import_is_skipped_and_not_counted_unresolved(repo):
     repo.commit("a package import")
     result = deps(repo)
     assert result["edges"] == {}
-    assert result["unresolved_relative_imports"] == 0
+    assert result["unresolved_imports"] == 0
 
 
 def test_a_dangling_relative_import_is_counted(repo):
@@ -113,7 +113,7 @@ def test_a_dangling_relative_import_is_counted(repo):
     claim-touch set than the truth."""
     repo.write("src/api.ts", 'import { x } from "./gone";\n')
     repo.commit("a broken import")
-    assert deps(repo)["unresolved_relative_imports"] == 1
+    assert deps(repo)["unresolved_imports"] == 1
 
 
 # ---------------------------------------------------------------------------
@@ -199,3 +199,79 @@ def test_the_derived_tier_does_not_describe_itself(repo):
     repo.commit("chore: sync derived tier")
     assert all(not path.startswith("docs/system/derived")
                for path in deps(repo)["edges"])
+
+
+# ---------------------------------------------------------------------------
+# A monorepo's own packages are imported by name
+# ---------------------------------------------------------------------------
+
+def test_a_workspace_package_import_is_an_edge(repo):
+    """The incident: on a 19-package TypeScript monorepo the file importing
+    `@corvus/contract` had zero recorded edges, and the repository reported
+    `671 edges, 0 cycles`. The zero was the cross-package edges being dropped -
+    the only ones that could have formed a cycle."""
+    repo.write("packages/contract/package.json",
+               '{"name": "@corvus/contract", "main": "./src/index.ts"}')
+    repo.write("packages/contract/src/index.ts", "export type Transport = {}\n")
+    repo.write("packages/client/package.json", '{"name": "@corvus/client"}')
+    repo.write("packages/client/src/createClient.ts",
+               "import type { Transport } from '@corvus/contract'\n")
+    repo.commit("two workspace packages")
+
+    edges = deps(repo)["edges"]
+    assert edges["packages/client/src/createClient.ts"] == [
+        "packages/contract/src/index.ts"]
+
+
+def test_a_deep_workspace_import_resolves(repo):
+    repo.write("packages/ui/package.json", '{"name": "@corvus/ui"}')
+    repo.write("packages/ui/src/button.ts", "export const Button = 1\n")
+    repo.write("apps/web/package.json", '{"name": "@corvus/web"}')
+    repo.write("apps/web/main.ts", "import { Button } from '@corvus/ui/src/button'\n")
+    repo.commit("a deep import across packages")
+
+    assert deps(repo)["edges"]["apps/web/main.ts"] == ["packages/ui/src/button.ts"]
+
+
+def test_a_third_party_import_is_still_skipped(repo):
+    """`react` is a lockfile fact that `inventory.json` already reports. The
+    rule that was wrong confused "not relative" with "not in this repository";
+    it must not now swing to treating every bare specifier as local."""
+    repo.write("packages/ui/package.json", '{"name": "@corvus/ui"}')
+    repo.write("packages/ui/src/button.ts",
+               "import React from 'react'\nimport {x} from '@vendor/thing'\n")
+    repo.commit("third-party imports only")
+
+    assert deps(repo)["edges"].get("packages/ui/src/button.ts", []) == []
+
+
+def test_the_root_manifest_is_not_a_workspace_package(repo):
+    """Mapping the root name would make every bare specifier resolve to the
+    repository root and wire the graph to itself."""
+    repo.write("package.json", '{"name": "corvus", "workspaces": ["packages/*"]}')
+    repo.write("src/a.ts", "import x from 'corvus'\n")
+    repo.commit("a root manifest")
+
+    assert deps(repo)["edges"].get("src/a.ts", []) == []
+
+
+def test_a_workspace_import_that_resolves_to_nothing_is_counted_unresolved(repo):
+    repo.write("packages/contract/package.json", '{"name": "@corvus/contract"}')
+    repo.write("packages/contract/README.md", "no source here\n")
+    repo.write("packages/client/package.json", '{"name": "@corvus/client"}')
+    repo.write("packages/client/src/a.ts", "import x from '@corvus/contract'\n")
+    repo.commit("a package with no entry point")
+
+    assert deps(repo)["unresolved_imports"] >= 1
+
+
+def test_a_malformed_manifest_does_not_stop_the_scan(repo):
+    repo.write("packages/broken/package.json", "{not json")
+    repo.write("packages/contract/package.json", '{"name": "@corvus/contract"}')
+    repo.write("packages/contract/src/index.ts", "export const x = 1\n")
+    repo.write("packages/client/package.json", '{"name": "@corvus/client"}')
+    repo.write("packages/client/src/a.ts", "import x from '@corvus/contract'\n")
+    repo.commit("one unreadable manifest")
+
+    assert deps(repo)["edges"]["packages/client/src/a.ts"] == [
+        "packages/contract/src/index.ts"]
