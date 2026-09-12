@@ -887,9 +887,39 @@
             "covers": [],
             "line": 193,
             "name": "test_the_derived_tier_does_not_describe_itself"
+          },
+          {
+            "covers": [],
+            "line": 207,
+            "name": "test_a_workspace_package_import_is_an_edge"
+          },
+          {
+            "covers": [],
+            "line": 224,
+            "name": "test_a_deep_workspace_import_resolves"
+          },
+          {
+            "covers": [],
+            "line": 234,
+            "name": "test_a_third_party_import_is_still_skipped"
+          },
+          {
+            "covers": [],
+            "line": 246,
+            "name": "test_the_root_manifest_is_not_a_workspace_package"
+          },
+          {
+            "covers": [],
+            "line": 256,
+            "name": "test_a_workspace_import_that_resolves_to_nothing_is_counted_unresolved"
+          },
+          {
+            "covers": [],
+            "line": 266,
+            "name": "test_a_malformed_manifest_does_not_stop_the_scan"
           }
         ],
-        "untagged": 19
+        "untagged": 25
       },
       "tests/test_derive.py": {
         "language": "python",
@@ -1265,9 +1295,39 @@
             "covers": [],
             "line": 161,
             "name": "test_tree_hash_changes_when_anything_beneath_changes"
+          },
+          {
+            "covers": [],
+            "line": 179,
+            "name": "test_blobs_at_returns_every_requested_path"
+          },
+          {
+            "covers": [],
+            "line": 187,
+            "name": "test_blobs_at_agrees_with_blob_at"
+          },
+          {
+            "covers": [],
+            "line": 199,
+            "name": "test_blobs_at_reports_a_missing_path_as_none"
+          },
+          {
+            "covers": [],
+            "line": 209,
+            "name": "test_blobs_at_handles_an_empty_file"
+          },
+          {
+            "covers": [],
+            "line": 218,
+            "name": "test_blobs_at_asks_for_nothing_and_runs_nothing"
+          },
+          {
+            "covers": [],
+            "line": 223,
+            "name": "test_blobs_at_validates_its_paths"
           }
         ],
-        "untagged": 15
+        "untagged": 21
       },
       "tests/test_impact.py": {
         "language": "python",
@@ -3169,9 +3229,9 @@
       }
     },
     "tagged_tests": 0,
-    "total_tests": 604
+    "total_tests": 616
   },
-  "generated_from_commit": "a68b162c492dd8f0b3e7949849349594c5330c6f",
+  "generated_from_commit": "49bb5e30af20d2199a1a29846f3ed4dac9f70c00",
   "generator": "forge sync derived",
   "tool": "forge"
 }

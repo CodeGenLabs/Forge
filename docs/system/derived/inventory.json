@@ -16,7 +16,7 @@
       },
       "python": {
         "files": 49,
-        "lines": 19588
+        "lines": 19861
       },
       "toml": {
         "files": 1,
@@ -103,7 +103,7 @@
       "tools/pressure_test.py"
     ]
   },
-  "generated_from_commit": "a68b162c492dd8f0b3e7949849349594c5330c6f",
+  "generated_from_commit": "49bb5e30af20d2199a1a29846f3ed4dac9f70c00",
   "generator": "forge sync derived",
   "tool": "forge"
 }
