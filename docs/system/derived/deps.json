@@ -30,6 +30,7 @@
         "src/forge/anchor.py",
         "src/forge/bootstrap.py",
         "src/forge/change.py",
+        "src/forge/config.py",
         "src/forge/derive.py",
         "src/forge/evidence.py",
         "src/forge/fingerprint.py",
@@ -179,6 +180,7 @@
       ],
       "src/forge/config.py": [
         "src/forge/bootstrap.py",
+        "src/forge/cli.py",
         "src/forge/derive.py",
         "src/forge/gates.py",
         "src/forge/impact.py",
@@ -281,7 +283,7 @@
     "tool": "forge",
     "unresolved_imports": 0
   },
-  "generated_from_commit": "0c5cded35b982c686979a373147b31bf4309ca65",
+  "generated_from_commit": "e5c71dae526550ba7391f6c4c2ed74359925f79a",
   "generator": "forge sync derived",
   "tool": "forge"
 }

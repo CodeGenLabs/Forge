@@ -15,23 +15,23 @@
         "lines": 225
       },
       "python": {
-        "files": 57,
-        "lines": 22892
+        "files": 58,
+        "lines": 23077
       },
       "toml": {
         "files": 1,
-        "lines": 44
+        "lines": 45
       },
       "yaml": {
         "files": 2,
-        "lines": 46
+        "lines": 49
       }
     },
     "entry_points": [
       "src/forge/cli.py"
     ],
-    "files_considered": 149,
-    "files_tracked": 149,
+    "files_considered": 150,
+    "files_tracked": 150,
     "stack": {
       "python": {
         "lockfile": null,
@@ -83,6 +83,7 @@
       "tests/test_change.py",
       "tests/test_claim_granularity.py",
       "tests/test_cli.py",
+      "tests/test_config.py",
       "tests/test_deps.py",
       "tests/test_derive.py",
       "tests/test_evidence.py",
@@ -107,7 +108,7 @@
       "tools/pressure_test.py"
     ]
   },
-  "generated_from_commit": "82cb23a45cec141d415af3857b8005324a751dcc",
+  "generated_from_commit": "e5c71dae526550ba7391f6c4c2ed74359925f79a",
   "generator": "forge sync derived",
   "tool": "forge"
 }

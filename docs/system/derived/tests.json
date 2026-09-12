@@ -920,6 +920,57 @@
         ],
         "untagged": 29
       },
+      "tests/test_config.py": {
+        "language": "python",
+        "tests": [
+          {
+            "covers": [],
+            "line": 21,
+            "name": "test_load_config_defaults"
+          },
+          {
+            "covers": [],
+            "line": 28,
+            "name": "test_load_config_kernel_version"
+          },
+          {
+            "covers": [],
+            "line": 36,
+            "name": "test_load_config_kernel_version_nested"
+          },
+          {
+            "covers": [],
+            "line": 44,
+            "name": "test_detect_kernel_skew_exact"
+          },
+          {
+            "covers": [],
+            "line": 52,
+            "name": "test_detect_kernel_skew_minimum"
+          },
+          {
+            "covers": [],
+            "line": 59,
+            "name": "test_detect_kernel_skew_compatible"
+          },
+          {
+            "covers": [],
+            "line": 65,
+            "name": "test_check_store_reports_kernel_skew"
+          },
+          {
+            "covers": [],
+            "line": 75,
+            "name": "test_check_store_passes_when_kernel_version_matches"
+          },
+          {
+            "covers": [],
+            "line": 83,
+            "name": "test_doctor_reports_kernel_version_and_skew"
+          }
+        ],
+        "untagged": 9
+      },
       "tests/test_deps.py": {
         "language": "python",
         "tests": [
@@ -3753,9 +3804,9 @@
       }
     },
     "tagged_tests": 0,
-    "total_tests": 716
+    "total_tests": 725
   },
-  "generated_from_commit": "ab47aa62ded5d612510c684d9e8dd8aa63603d6c",
+  "generated_from_commit": "e5c71dae526550ba7391f6c4c2ed74359925f79a",
   "generator": "forge sync derived",
   "tool": "forge"
 }
