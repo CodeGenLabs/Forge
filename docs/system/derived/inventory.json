@@ -8,7 +8,7 @@
       },
       "markdown": {
         "files": 74,
-        "lines": 13521
+        "lines": 13711
       },
       "other": {
         "files": 2,
@@ -16,7 +16,7 @@
       },
       "python": {
         "files": 55,
-        "lines": 21803
+        "lines": 21876
       },
       "toml": {
         "files": 1,
@@ -106,7 +106,7 @@
       "tools/pressure_test.py"
     ]
   },
-  "generated_from_commit": "37a6c39f621b2d6c83b5702988d2be6c370c004f",
+  "generated_from_commit": "03465d7f8e9143a20100ddeccaacbcc145f3846c",
   "generator": "forge sync derived",
   "tool": "forge"
 }
