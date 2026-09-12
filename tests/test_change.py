@@ -299,3 +299,34 @@ def test_init_writes_the_workflow_so_it_can_be_edited(project):
     target = project.root / ".forge/schema/feature.yaml"
     assert target.is_file()
     assert schema.load_schema(project.root, "feature").source == ".forge/schema/feature.yaml"
+    bugfix_target = project.root / ".forge/schema/bugfix.yaml"
+    assert bugfix_target.is_file()
+    assert schema.load_schema(project.root, "bugfix").source == ".forge/schema/bugfix.yaml"
+
+
+def test_bugfix_workflow_change_lifecycle(project, capsys):
+    main(["change", "new", "fix timeout", "--workflow", "bugfix", "--track", "B",
+          "--repo", str(project.root)])
+    item = change.find_change(project.root, "1")
+    assert item.workflow == "bugfix"
+    loaded = schema.load_schema(project.root, "bugfix")
+    st = {s.id: s.state for s in item.state(loaded)}
+    assert st["reproduce"] == change.MISSING
+    assert st["proposal"] == change.BLOCKED
+
+    main(["instructions", "reproduce", "--change", "1", "--write",
+          "--repo", str(project.root)])
+    reproduce_file = item.root / "reproduce.md"
+    assert reproduce_file.is_file()
+    assert change.TEMPLATE_MARKER in reproduce_file.read_text(encoding="utf-8")
+
+    st = {s.id: s.state for s in item.state(loaded)}
+    assert st["reproduce"] == change.MISSING
+
+    reproduce_file.write_text(
+        reproduce_file.read_text(encoding="utf-8").replace(change.TEMPLATE_MARKER + "\n", ""),
+        encoding="utf-8",
+    )
+    st = {s.id: s.state for s in item.state(loaded)}
+    assert st["reproduce"] == change.COMPLETE
+    assert st["proposal"] == change.MISSING

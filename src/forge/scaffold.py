@@ -266,6 +266,7 @@ def init_files(today: _dt.date | None = None) -> dict[str, str]:
         # workflow you cannot edit, and editing it is the whole point of
         # workflows being data.
         f"{schema.SCHEMA_DIR}/feature.yaml": schema.builtin_schema_text("feature"),
+        f"{schema.SCHEMA_DIR}/bugfix.yaml": schema.builtin_schema_text("bugfix"),
         f"{store.STORE_DIR}/OVERVIEW.md": _OVERVIEW,
         f"{store.DECISIONS_DIR}/ADR-0001-adopt-forge.md":
             _ADOPTION_ADR.format(date=today.isoformat()),
@@ -316,6 +317,31 @@ def scaffold(repo: Path, *, today: _dt.date | None = None) -> tuple[list[str], l
 #
 # Each template opens with `TEMPLATE_MARKER`. Deleting that line is what turns
 # the file from a scaffold into an artifact - see `Change.state`.
+
+_T_REPRODUCE = """\
+{marker}
+# Reproduction - {title}
+
+## Failing test
+
+The test that proves the bug exists before any fix is attempted.
+
+- Test: `tests/...`
+- Command: `pytest -q ...`
+
+```
+(paste failing assertion or stack trace here)
+```
+
+## Expected vs Actual
+
+- Expected:
+- Actual:
+
+## Associated Claim
+
+- Claim: `PIT-...` (or `INV-...`)
+"""
 
 _T_PROPOSAL = """\
 {marker}
@@ -434,6 +460,7 @@ a chore. Work naming no requirement is work nobody agreed to.
 """
 
 CHANGE_TEMPLATES = {
+    "reproduce": _T_REPRODUCE,
     "proposal": _T_PROPOSAL,
     "spec": _T_SPEC,
     "impact": _T_IMPACT,

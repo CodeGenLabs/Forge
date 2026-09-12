@@ -46,6 +46,20 @@ def test_the_builtin_feature_workflow_is_valid():
     assert loaded.ids == ["proposal", "spec", "impact", "design", "tasks", "verification"]
 
 
+def test_the_builtin_bugfix_workflow_is_valid():
+    """`bugfix.yaml` (Roadmap Section 7) adds mandatory reproduce artifact."""
+    loaded = parse(schema.builtin_schema_text("bugfix"))
+    assert loaded.name == "bugfix"
+    assert loaded.ids == ["reproduce", "proposal", "spec", "impact", "design", "tasks", "verification"]
+    on_b = [a.id for a in loaded.for_track("B")]
+    assert on_b == ["reproduce", "proposal", "spec", "tasks", "verification"]
+    on_c = [a.id for a in loaded.for_track("C")]
+    assert on_c == ["reproduce", "proposal", "spec", "impact", "design", "tasks", "verification"]
+    reproduce = next(a for a in loaded.artifacts if a.id == "reproduce")
+    assert reproduce.requirement_for("B") == schema.REQUIRED
+    assert reproduce.requirement_for("C") == schema.REQUIRED
+
+
 def test_the_builtin_workflow_is_valid_yaml_with_a_conditional_track():
     """A bare `?` opens a YAML complex key, so `[B?, C]` - the spelling in
     ARCHITECTURE.md section 4.1 - does not parse. The token is right, it just
@@ -90,8 +104,8 @@ def test_a_project_copy_wins(repo):
 
 
 def test_an_unknown_workflow_names_what_exists(repo):
-    with pytest.raises(schema.SchemaError, match="ships only feature"):
-        schema.load_schema(repo.root, "bugfix")
+    with pytest.raises(schema.SchemaError, match="ships only bugfix, feature"):
+        schema.load_schema(repo.root, "nonesuch")
 
 
 # ---------------------------------------------------------------------------
