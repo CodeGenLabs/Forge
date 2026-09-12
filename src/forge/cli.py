@@ -1291,7 +1291,23 @@ def _cmd_bootstrap_derive(args: argparse.Namespace) -> int:
     print(f"tests          {summary.tests_declared} declared in "
           f"{summary.test_files} files")
     for name, data in sorted(summary.stack.items()):
-        print(f"stack          {name}: {data}")
+        # Not `{data}`. A dict's repr is a debug aid, and this line is the
+        # second thing a new user reads: on a monorepo it printed twenty-five
+        # packages, single-quoted and `None`-strewn, on one unwrapped line.
+        manifest = data.get("manifest") or "?"
+        lock = data.get("lockfile") or "no lockfile"
+        packages = data.get("packages") or {}
+        print(f"stack          {name}  {manifest}, {lock}, {len(packages)} declared")
+        pinned = sum(1 for v in packages.values()
+                     if isinstance(v, dict) and v.get("resolved"))
+        if packages:
+            shown = sorted(packages)[:6]
+            print(f"{'':15}{', '.join(shown)}"
+                  + (f" ... +{len(packages) - len(shown)} more" if len(packages) > 6 else ""))
+            print(f"{'':15}{pinned} of {len(packages)} resolved to a version "
+                  f"in the lockfile")
+        if data.get("requires_python"):
+            print(f"{'':15}requires python {data['requires_python']}")
     if summary.commands:
         print("commands       " + ", ".join(f"{k}: {v}"
                                             for k, v in summary.commands.items()))

@@ -119,7 +119,11 @@ def test_derive_reports_facts_and_nothing_else(project):
     assert summary.tests_declared == 1
     # `src/pay.py` is a file. A src layout's module is the package inside it,
     # and with only two path parts there is no package.
-    assert summary.modules == ["docs", "src", "tests"]
+    #
+    # `docs` used to be here and is not a module: it holds markdown. A monorepo
+    # reported `docs`, `docker` and `specs` beside `apps` and `packages`, which
+    # is the repository's furniture listed as its architecture.
+    assert summary.modules == ["src", "tests"]
 
 
 def test_derive_names_what_it_could_not_learn(project, capsys):
@@ -585,3 +589,57 @@ def test_the_measurement_is_recorded():
     # The fourth number is not measured, and the document has to say so
     # rather than estimate it.
     assert "unmeasured rather than estimated" in text
+
+
+# ---------------------------------------------------------------------------
+# What counts as a module
+# ---------------------------------------------------------------------------
+
+def test_a_prose_directory_is_not_a_module():
+    """A monorepo reported `docs`, `docker`, `specs`, `scripts` and `tools`
+    beside `apps` and `packages` - the repository's furniture listed as its
+    architecture."""
+    roots = bootstrap._module_roots([
+        "src/app/main.py", "docs/guide.md", "specs/api.md",
+        "config/settings.yaml", "LICENSE",
+    ])
+    assert roots == ["src/app"]
+
+
+def test_a_container_directory_expands_one_level():
+    """`packages/` holds no code of its own; its modules are one level down.
+    This was hardcoded for `src`, `lib`, `pkg` and `internal`, and is now
+    structural - the same answer for those four, the right one for a monorepo."""
+    roots = bootstrap._module_roots([
+        "packages/client/src/a.ts", "packages/contract/src/b.ts",
+        "apps/web/main.tsx",
+    ])
+    assert roots == ["apps/web", "packages/client", "packages/contract"]
+
+
+def test_a_directory_with_code_of_its_own_stays_whole():
+    """`tools/` with both `tools/run.ts` and `tools/__tests__/x.ts` is one
+    module, not two: it has code at its own level."""
+    roots = bootstrap._module_roots(["tools/run.ts", "tools/__tests__/x.test.ts"])
+    assert roots == ["tools"]
+
+
+def test_a_src_layout_still_names_the_package():
+    """The case the hardcoded list existed for, unchanged."""
+    assert bootstrap._module_roots(
+        ["src/forge/cli.py", "src/forge/derive.py", "tests/test_cli.py"]
+    ) == ["src/forge", "tests"]
+
+
+def test_a_flat_file_is_not_a_module():
+    """`src/pay.py` is a file. With only two parts the second is not a package."""
+    assert bootstrap._module_roots(["setup.py", "README.md"]) == []
+
+
+def test_a_dot_directory_is_never_a_module():
+    """`.forge` and `.github` are configuration, and listing them would put the
+    harness's own directory in a summary of the system it describes."""
+    assert bootstrap._module_roots(
+        [".forge/skills/forge/SKILL.md", ".github/workflows/ci.yml",
+         "src/app/main.py"]
+    ) == ["src/app"]

@@ -144,6 +144,16 @@ NOT_DERIVABLE = [
 ]
 
 
+#: Labels that do not make a directory a module. Prose and configuration are
+#: part of a repository and are not part of its architecture: a monorepo was
+#: reporting `docs`, `docker`, `specs`, `scripts` and `tools` alongside `apps`
+#: and `packages`, which is the repository's furniture listed as its shape.
+_NOT_CODE_LABELS = frozenset({
+    "markdown", "text", "other", "json", "yaml", "toml", "config",
+    "lockfile", "sql", "css", "html",
+})
+
+
 def _module_roots(paths: list[str]) -> list[str]:
     """Top-level source directories, which is as far as a scan can honestly
     go towards "what are the modules".
@@ -151,18 +161,35 @@ def _module_roots(paths: list[str]) -> list[str]:
     Dot-directories are excluded: `.forge`, `.github` and their kin are
     configuration, and listing them as modules would put the harness's own
     directory in a summary of the system it describes.
+
+    A directory that holds only other directories is a *container*, and its
+    modules are one level down. That was hardcoded as `src`, `lib`, `pkg` and
+    `internal`; it is now structural, which is the same answer for those four
+    and the right answer for a monorepo's `packages/` and `apps/`.
     """
-    roots: set[str] = set()
-    for path in paths:
+    code = [p for p in paths
+            if not p.split("/")[0].startswith(".")
+            and derive.label_for_path(p) not in _NOT_CODE_LABELS]
+
+    direct: set[str] = set()      # roots holding code files of their own
+    nested: dict[str, set[str]] = {}
+    for path in code:
         parts = path.split("/")
-        if len(parts) < 2 or parts[0].startswith("."):
+        if len(parts) < 2:
             continue
-        if parts[0] in ("src", "lib", "pkg", "internal") and len(parts) >= 3:
-            # A src layout's module is the package inside it. With only two
-            # parts the second is a file, and `src/pay.py` is not a module.
-            roots.add("/".join(parts[:2]))
+        if len(parts) == 2:
+            direct.add(parts[0])
         else:
-            roots.add(parts[0])
+            nested.setdefault(parts[0], set()).add("/".join(parts[:2]))
+
+    roots: set[str] = set()
+    for root, children in nested.items():
+        if root in direct:
+            # It has code of its own, so the directory itself is the module.
+            roots.add(root)
+        else:
+            roots.update(children)
+    roots.update(direct - set(nested))
     return sorted(roots)
 
 

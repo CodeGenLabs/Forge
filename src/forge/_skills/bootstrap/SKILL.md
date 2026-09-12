@@ -47,25 +47,39 @@ derivable, both are cheap for a human to confirm, and both make the first
 `investigate` noticeably better. Eight concepts and six pitfalls beat forty
 inferred component descriptions on day one.
 
-Sources worth reading for those two, in order: test names and assertion
-messages; validation and guard clauses; commit messages containing "fix" with
-an explanation; comments that say why rather than what; issue or PR text if
-the repository carries it.
+Sources worth reading for those two, in order: **any rules the project already
+wrote down** - `AGENTS.md`, `CONTRIBUTING.md`, a `docs/` tree, an architecture
+note; then test names and assertion messages; then validation and guard
+clauses; then commit messages containing "fix" with an explanation; comments
+that say why rather than what; issue or PR text if the repository carries it.
+
+The first entry was missing from this list until a monorepo that states its own
+three most important rules in `AGENTS.md` was bootstrapped without them being
+read. A rule somebody wrote down is a pitfall that has already cost them
+something, stated in their own words, and it is the cheapest evidence there is.
+A conformance test that exists to stop one mistake - `no-mock-in-bundle.test.ts`
+- is the same thing with the evidence attached.
 
 Each topic file ends with a `## Uncertain` section naming what the agent could
 not determine. That section is the most valuable output of the pass - it is
 where the scan says where to look, instead of quietly filling the gap.
 
-Four rules, checked by `forge check --scope candidates`:
+Five rules, checked by `forge check --scope candidates`:
 
 - **Anchors required**, every kind, including `concept`. A ratified concept
   may be unanchored once a human agrees it is real; a guessed one with
   nothing to point at cannot be confirmed or ever re-checked.
 - **`confidence` required.** High means the code says so plainly; medium
   means inferred from behaviour; low means a pattern seen twice.
-- **No invented rationale.** A "because" needs an `evidence-from:` line, or
-  write `rationale: unknown` and let it become an interview question. A
-  guessed reason reads exactly like a remembered one six months later.
+- **No invented rationale.** A "because" needs an `evidence-from:` line **in
+  the prose, after the fence** - not inside the ```claim block, where the
+  check does not look. Or write `rationale: unknown` and let it become an
+  interview question. A guessed reason reads exactly like a remembered one
+  six months later.
+- **Keep the fence valid YAML.** A bare `:` inside an unquoted value - an
+  `evidence-from` quoting `if not stream: r.content`, say - fails the parse,
+  and the claim then reports as having no anchor and no confidence rather
+  than as unparseable. Quote it, or use a `>` block.
 - **An invariant names what enforces or proves it**, or it is not an
   invariant yet - it is a question. Whether a property is *required* or
   merely currently true is not in the code.
