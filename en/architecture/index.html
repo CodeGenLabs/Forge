@@ -1823,11 +1823,11 @@
 <h2 id="ast-parsing-language-grammars">AST Parsing &amp; Language Grammars</h2>
 <p>Forge uses <strong>Tree-sitter</strong> to extract semantic AST nodes across multiple programming languages:</p>
 <pre class="mermaid"><code>flowchart LR
-    Source[Source Code File] --&gt; TS[Tree-sitter Engine]
-    TS --&gt;|Grammar| AST[Concrete Syntax Tree]
-    AST --&gt; Filter[Semantic Node Filter]
-    Filter --&gt; Symbol[Function / Class / Struct / Interface]
-    Symbol --&gt; FP[Normalized Fingerprint Hash]</code></pre>
+    Source["Source Code File"] --&gt; TS["Tree-sitter Engine"]
+    TS --&gt;|Grammar| AST["Concrete Syntax Tree"]
+    AST --&gt; Filter["Semantic Node Filter"]
+    Filter --&gt; Symbol["Function / Class / Struct / Interface"]
+    Symbol --&gt; FP["Normalized Fingerprint Hash"]</code></pre>
 <h3 id="supported-languages">Supported Languages</h3>
 <ul>
 <li><strong>Python</strong>: <code>def</code>, <code>async def</code>, <code>class</code>, module variables.</li>

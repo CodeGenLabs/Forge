@@ -2165,17 +2165,17 @@
 <hr />
 <h2 id="2-vong-oi-thay-oi-hoan-chinh-lifecycle-dag">2. Vòng đời Thay đổi Hoàn chỉnh (Lifecycle DAG)</h2>
 <pre class="mermaid"><code>flowchart TD
-    Req(["Yêu cầu từ người dùng"]) --&gt; U[1. understand&lt;br&gt;&lt;i&gt;G1: Người duyệt Track&lt;/i&gt;]
-    U --&gt; Inv[2. investigate&lt;br&gt;&lt;i&gt;Khảo sát code hiện hữu&lt;/i&gt;]
-    Inv --&gt; Sp[3. spec&lt;br&gt;&lt;i&gt;G2: Người duyệt Spec (Track C)&lt;/i&gt;]
-    Sp --&gt; Imp[4. impact&lt;br&gt;&lt;i&gt;Phân tích Claim-Touch&lt;/i&gt;]
-    Imp --&gt; Des[5. design &amp; ADR&lt;br&gt;&lt;i&gt;G3: Người duyệt Kiến trúc (Track C)&lt;/i&gt;]
-    Des --&gt; An[6. analyze&lt;br&gt;&lt;i&gt;Kiểm tra tính nhất quán&lt;/i&gt;]
-    An --&gt; Tk[7. tasks&lt;br&gt;&lt;i&gt;Lập danh sách Task TDD&lt;/i&gt;]
-    Tk --&gt; Impl[8. implement&lt;br&gt;&lt;i&gt;TDD Red-Green-Refactor theo task&lt;/i&gt;]
-    Impl --&gt; Ver[9. verify&lt;br&gt;&lt;i&gt;Kiểm chứng cơ học 8 điều kiện&lt;/i&gt;]
-    Ver --&gt; Sy[10. sync&lt;br&gt;&lt;i&gt;G5: Người duyệt cập nhật Tri thức&lt;/i&gt;]
-    Sy --&gt; Conv[11. converge&lt;br&gt;&lt;i&gt;Lưu trữ vào archive/&lt;/i&gt;]</code></pre>
+    Req(["Yêu cầu từ người dùng"]) --&gt; U["1. understand&lt;br&gt;&lt;i&gt;G1: Người duyệt Track&lt;/i&gt;"]
+    U --&gt; Inv["2. investigate&lt;br&gt;&lt;i&gt;Khảo sát code hiện hữu&lt;/i&gt;"]
+    Inv --&gt; Sp["3. spec&lt;br&gt;&lt;i&gt;G2: Người duyệt Spec (Track C)&lt;/i&gt;"]
+    Sp --&gt; Imp["4. impact&lt;br&gt;&lt;i&gt;Phân tích Claim-Touch&lt;/i&gt;"]
+    Imp --&gt; Des["5. design &amp; ADR&lt;br&gt;&lt;i&gt;G3: Người duyệt Kiến trúc (Track C)&lt;/i&gt;"]
+    Des --&gt; An["6. analyze&lt;br&gt;&lt;i&gt;Kiểm tra tính nhất quán&lt;/i&gt;"]
+    An --&gt; Tk["7. tasks&lt;br&gt;&lt;i&gt;Lập danh sách Task TDD&lt;/i&gt;"]
+    Tk --&gt; Impl["8. implement&lt;br&gt;&lt;i&gt;TDD Red-Green-Refactor theo task&lt;/i&gt;"]
+    Impl --&gt; Ver["9. verify&lt;br&gt;&lt;i&gt;Kiểm chứng cơ học 8 điều kiện&lt;/i&gt;"]
+    Ver --&gt; Sy["10. sync&lt;br&gt;&lt;i&gt;G5: Người duyệt cập nhật Tri thức&lt;/i&gt;"]
+    Sy --&gt; Conv["11. converge&lt;br&gt;&lt;i&gt;Lưu trữ vào archive/&lt;/i&gt;"]</code></pre>
 <h3 id="hai-quyet-inh-thiet-ke-tinh-gon">Hai quyết định thiết kế tinh gọn:</h3>
 <ul>
 <li><strong>Không có file <code>tests.md</code> riêng biệt:</strong> Kế hoạch kiểm thử được tích hợp trực tiếp vào kịch bản của spec và chu trình TDD (Red ➔ Green) của từng task trong <code>implement</code>. Viết riêng một file mô tả các test chưa tồn tại chỉ là sự lãng phí tài nguyên.</li>
