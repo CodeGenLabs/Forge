@@ -2,10 +2,6 @@
   "$schema": "forge/derived/v1",
   "data": {
     "by_language": {
-      "json": {
-        "files": 6,
-        "lines": 468
-      },
       "markdown": {
         "files": 73,
         "lines": 7295
@@ -38,8 +34,8 @@
     "entry_points": [
       "src/forge/cli.py"
     ],
-    "files_considered": 144,
-    "files_tracked": 144,
+    "files_considered": 138,
+    "files_tracked": 138,
     "stack": {
       "python": {
         "lockfile": null,
@@ -116,7 +112,7 @@
       "tools/pressure_test.py"
     ]
   },
-  "generated_from_commit": "2470ce70eb9feedc96ca20f43f39e9ce2fca93df",
+  "generated_from_commit": "b5897069d1896f688472ca4364740b4d3e4d030e",
   "generator": "forge sync derived",
   "tool": "forge"
 }
