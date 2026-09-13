@@ -20,7 +20,7 @@ from __future__ import annotations
 import datetime as _dt
 from pathlib import Path
 
-from . import change, schema, skills, store
+from . import __version__, change, schema, skills, store
 from .config import CONFIG_PATH
 
 __all__ = ["claim_template", "adr_template", "init_files", "scaffold", "KIND_FILE"]
@@ -193,12 +193,12 @@ _STORE_FILES = {
     ),
 }
 
-_CONFIG = """\
+_CONFIG = f"""\
 # forge configuration. Every key has a default; delete the file to use them all.
 version: 1
 
 # Pinned kernel version so this repository can detect version skew (Q11).
-kernel_version: "0.0.1"
+kernel_version: "{__version__}"
 
 derive:
   # Paths the derived tier does not describe, on top of the built-in vendor and
