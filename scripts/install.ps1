@@ -1,4 +1,4 @@
-﻿# install.ps1 — 1-Click Installer for Forge Harness on Windows
+# install.ps1 — 1-Click Installer for Forge Harness on Windows
 # Installs Forge into an isolated user environment and configures global PATH.
 
 [CmdletBinding()]
@@ -94,7 +94,7 @@ Write-Host "`n[*] Verifying installation..." -ForegroundColor Cyan
 & $venvForge doctor
 
 Write-Host "`n========================================================" -ForegroundColor Green
-Write-Host " [SUCCESS] Forge Harness đã được cài đặt thành công!" -ForegroundColor Green
-Write-Host " Bạn có thể mở bất kỳ terminal nào và gõ lệnh: forge" -ForegroundColor Green
-Write-Host " Ví dụ: forge --help  hoặc  forge doctor" -ForegroundColor Green
+Write-Host " [SUCCESS] Forge Harness installed successfully!" -ForegroundColor Green
+Write-Host " You can open any terminal and run: forge" -ForegroundColor Green
+Write-Host " Example: forge --help  or  forge doctor" -ForegroundColor Green
 Write-Host "========================================================`n" -ForegroundColor Green
