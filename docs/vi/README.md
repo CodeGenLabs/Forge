@@ -84,7 +84,7 @@ Forge được thiết kế với sự phân định rạch ròi về mặt trá
 
 ```mermaid
 graph TD
-    User([Lập trình viên / Product Owner]) <--> HostAgent
+    User(["Lập trình viên / Product Owner"]) <--> HostAgent
 
     subgraph Host["TẦNG THỰC THI (HOST AGENT)"]
         HostAgent["AI Coding Agent<br><i>(Claude Code / Cursor / Copilot / Antigravity)</i><br>Nắm giữ vòng lặp thực thi, công cụ shell & subagents"]
@@ -169,7 +169,7 @@ Không phải công việc nào cũng cần thủ tục nặng nề như nhau. F
 
 ```mermaid
 graph TD
-    Start([Yêu cầu từ người dùng]) --> Route{Định tuyến Track}
+    Start(["Yêu cầu từ người dùng"]) --> Route{"Định tuyến Track"}
     Route -->|Câu hỏi, spike, thử nghiệm| TrackA["Track A: Probe<br>• Không cần spec<br>• Code không lưu lại"]
     Route -->|Sửa đổi nhỏ trong flow có sẵn| TrackB["Track B: Bounded<br>• Proposal rút gọn<br>• Spec nếu đổi logic<br>• Tasks & TDD"]
     Route -->|Đổi kiến trúc, thêm module, đổi data model| TrackC["Track C: Structural<br>• Đầy đủ Proposal, Spec, Impact, ADR<br>• Kiểm duyệt nghiêm ngặt qua toàn bộ Gates"]
@@ -241,7 +241,7 @@ Nếu bạn đã clone mã nguồn về máy và muốn một giải pháp "ch�
   ```
 
 **Cơ chế hoạt động của script:**
-1. Tự động kiểm tra phiên bản Python $\ge$ 3.11.
+1. Tự động kiểm tra phiên bản Python >= 3.11.
 2. Thiết lập một môi trường ảo dùng riêng biệt tại `%USERPROFILE%\.forge-harness\venv` (không bao giờ bị mất khi bạn đổi folder).
 3. Tạo file thực thi shim (`forge.cmd`, `forge.ps1` hoặc `forge`) đặt vào thư mục `~/.local/bin`.
 4. Tự động ghi nhận `~/.local/bin` vào biến môi trường **User PATH** vĩnh viễn nếu chưa có.

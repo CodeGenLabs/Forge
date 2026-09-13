@@ -2,7 +2,7 @@
 
 Tài liệu thiết kế chi tiết về **Tầng Tri thức Hệ thống (System Knowledge)** của Forge.
 
-Đây là tài liệu trụ cột của toàn bộ hệ thống; vòng đời thay đổi trong [WORKFLOW.md](WORKFLOW.md) và các thành phần kỹ thuật trong [ARCHITECTURE.md](ARCHITECTURE.md) tồn tại là để phục vụ tầng tri thức này.
+Đây là tài liệu trụ cột của toàn bộ hệ thống; vòng đời thay đổi trong [workflow.md](workflow.md) và các thành phần kỹ thuật trong [architecture.md](architecture.md) tồn tại là để phục vụ tầng tri thức này.
 
 ---
 
@@ -36,7 +36,7 @@ Forge giải quyết cả hai bài toán bằng một phát minh kỹ thuật du
 ### 1.1 Cấu trúc của một Claim
 Một Claim bao gồm: một tiêu đề Markdown mang ID ổn định duy nhất, tiếp theo là khối rào `claim` chứa metadata, và kết thúc bằng phần văn xuôi giải thích nghiệp vụ:
 
-```markdown
+````markdown
 ### INV-7 — Khoản hoàn tiền không bao giờ vượt quá số tiền đã thu
 
 ```claim
@@ -58,7 +58,7 @@ Khoản hoàn tiền một phần có tính tích lũy: tổng của tất cả 
 Một yêu cầu hoàn tiền vượt quá số dư còn lại sẽ bị từ chối tại ranh giới domain, chứ không
 bị kẹp gọt (clamped) — việc âm thầm kẹp gọt sẽ khiến khách hàng bị hoàn thiếu tiền, điều này
 còn tồi tệ hơn là gặp lỗi.
-```
+````
 
 - **Khối metadata:** Được Kernel phân tích bằng Tree-Sitter và Git để kiểm tra tính hợp lệ cơ học.
 - **Phần văn xuôi:** Dành cho AI và kỹ sư hiểu được *lý do tại sao* (trong ví dụ trên: tại sao từ chối lại tốt hơn kẹp gọt số tiền).
@@ -135,21 +135,26 @@ Mỗi claim bắt buộc phải khai báo một `truth-source` duy nhất để 
 
 ```mermaid
 flowchart TD
-    Anchor["Anchor: src/payments/refund.py#compute_refundable@a1b2c3d"]
+    Anchor["Anchor: src/payments/refund.py - compute_refundable"]
     
     subgraph Engine["AST Fingerprint Engine (Tree-Sitter)"]
-        Fetch["Đọc mã nguồn tại commit @a1b2c3d và tại HEAD"]
-        Parse["Phân tích cú pháp AST của symbol compute_refundable"]
+        Fetch["Đọc mã nguồn tại baseline SHA và HEAD"]
+        Parse["Phân tích cú pháp AST của symbol"]
         Normalize["Chuẩn hóa: loại bỏ khoảng trắng thừa và comment"]
         Hash["Tính toán mã băm SHA-256 của cây AST"]
     end
 
-    Anchor --> Fetch --> Parse --> Normalize --> Hash
+    Anchor --> Fetch
+    Fetch --> Parse
+    Parse --> Normalize
+    Normalize --> Hash
     
-    Hash --> Compare{So khớp Hash giữa Baseline và HEAD}
-    Compare -->|Hash trùng khớp tuyệt đối| Fresh["FRESH (Tươi mới, logic không đổi)"]
-    Compare -->|Hash khác nhau| Stale["STALE (Lỗi thời, code đã bị sửa!)"]
-    Compare -->|Không tìm thấy symbol trong file| Missing["MISSING (Hàm đã bị xóa hoặc đổi tên)"]
+    Compare{"So khớp Hash giữa Baseline và HEAD"}
+    Hash --> Compare
+    
+    Compare -->|Khớp tuyệt đối| Fresh["FRESH: Tươi mới, logic không đổi"]
+    Compare -->|Khác nhau| Stale["STALE: Lỗi thời, code đã bị sửa"]
+    Compare -->|Không tìm thấy| Missing["MISSING: Hàm đã bị xóa hoặc đổi tên"]
 ```
 
 ### Ưu điểm vượt trội:

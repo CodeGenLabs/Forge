@@ -44,7 +44,7 @@ Lệnh `forge track check` sẽ tự động nâng cấp B ➔ C khi phát hiệ
 
 ```mermaid
 flowchart TD
-    Req([Yêu cầu từ người dùng]) --> U[1. understand<br><i>G1: Người duyệt Track</i>]
+    Req(["Yêu cầu từ người dùng"]) --> U[1. understand<br><i>G1: Người duyệt Track</i>]
     U --> Inv[2. investigate<br><i>Khảo sát code hiện hữu</i>]
     Inv --> Sp[3. spec<br><i>G2: Người duyệt Spec (Track C)</i>]
     Sp --> Imp[4. impact<br><i>Phân tích Claim-Touch</i>]

@@ -8,7 +8,7 @@ This guide walks you through installing Forge Harness, verifying your environmen
 ---
 
 ## Prerequisites
-* **Python**: Version $\ge$ 3.11
+* **Python**: Version >= 3.11
 * **Git**: Installed and available on your system `PATH`
 * **OS**: Linux, macOS, or Windows 10/11 (PowerShell & Git Bash supported)
 

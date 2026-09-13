@@ -8,7 +8,7 @@ Tài liệu này hướng dẫn chi tiết cách cài đặt Forge Harness, ki�
 ---
 
 ## Yêu cầu môi trường
-* **Python**: Phiên bản $\ge$ 3.11
+* **Python**: Phiên bản >= 3.11 (hoặc cao hơn)
 * **Git**: Đã cài đặt và có trong biến môi trường `PATH`
 * **Hệ điều hành**: Windows 10/11, macOS, hoặc Linux
 
