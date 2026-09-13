@@ -23,20 +23,84 @@
 
 ---
 
+## ⚡ Bắt đầu nhanh trong 2 phút (Quick Start: From Zero to First Prompt)
+
+> **Bỏ qua lý thuyết dông dài — làm theo 5 bước thực chiến dưới đây để tải về, khởi tạo dự án và ra lệnh cho AI Agent của bạn ngay lập tức:**
+
+### Bước 1: Cài đặt Forge CLI
+Cài đặt `forge` vào máy tính (khuyến nghị dùng `pip` hoặc `uv` / `pipx`):
+```bash
+pip install git+https://github.com/CodeGenLabs/forge-harness.git
+
+# Hoặc dùng uv (cực nhanh):
+uv tool install git+https://github.com/CodeGenLabs/forge-harness.git
+```
+Kiểm tra cài đặt:
+```bash
+forge doctor
+```
+
+### Bước 2: Khởi tạo Forge trong dự án của bạn
+Chuyển vào thư mục dự án của bạn (dự án mới hoặc đã có code) và khởi tạo:
+```bash
+cd /path/to/my-project
+forge init
+```
+
+### Bước 3: Kích hoạt Skills cho AI Coding Agent bạn dùng
+Chạy 1 lệnh tương ứng với AI Coding Agent mà bạn sử dụng:
+```bash
+forge install --host claude       # Dành cho Claude Code (.claude/skills/)
+forge install --host antigravity  # Dành cho Google Antigravity (.agent/skills/)
+forge install --host codex        # Dành cho OpenAI Codex / Cursor / ChatGPT (AGENTS.md)
+```
+*(Khuyến nghị)*: Thêm các quy tắc điều hành vào file `CLAUDE.md` (nếu dùng Claude) hoặc `AGENTS.md` (nếu dùng Antigravity / Codex / Cursor):
+```markdown
+# Forge Operating Rules
+- All code modifications MUST proceed through Forge Harness.
+- Begin any task by running `forge status` to inspect active changes and claims.
+- Before making changes, open a change via `forge change new "<title>" --track <A|B|C>`.
+- Strictly follow TDD: Test first, code second.
+- Changes are only complete when `forge verify --change <N>` exits 0.
+```
+
+### Bước 4: Đồng bộ dữ liệu & Kiểm tra dự án
+```bash
+# Khai báo lệnh build/test trong .forge/config.yaml nếu có (ví dụ: npm test, pytest, dotnet test)
+forge sync derived
+forge check   # Màn hình hiện "ok - no issues" là sẵn sàng 100%!
+```
+*(Nếu là dự án đã có sẵn code — Brownfield)*: Chạy thêm lệnh sau để Forge tự động quét và lập bản đồ các module, ngôn ngữ, packages:
+```bash
+forge bootstrap derive
+```
+
+### Bước 5: Ra lệnh đầu tiên cho AI Agent của bạn!
+Mở AI Agent (Claude Code, Antigravity, Cursor...) trong thư mục dự án và gửi câu prompt đầu tiên:
+
+* **Kịch bản A: Nếu muốn AI khảo sát và lập hồ sơ toàn bộ dự án hiện có**
+  > *"Dự án này sử dụng Forge harness. Hãy đọc skill `bootstrap` và thực hiện Pass 2: Khảo sát codebase để đề xuất các candidate claims (kiến trúc, components, nghiệp vụ, cạm bẫy pitfalls) vào `docs/system/`."*
+
+* **Kịch bản B: Nếu muốn bắt tay vào code tính năng mới hoặc sửa lỗi ngay**
+  > *"Dự án này sử dụng Forge harness. Hãy dùng skill `forge`, chạy `forge status`, và mở một change mới bằng lệnh `forge change new \"<tên-tính-năng>\" --track B` để triển khai theo chuẩn TDD."*
+
+---
+
 ## Mục lục
 
-1. [Tổng quan về Forge](#-tổng-quan-về-forge)
-2. [Vấn đề cốt lõi mà Forge giải quyết](#-vấn-đề-cốt-lõi-mà-forge-giải-quyết)
-3. [Kiến trúc 3 tầng độc lập](#-kiến-trúc-3-tầng-độc-lập)
-4. [Các cơ chế kỹ thuật đột phá](#-các-cơ-chế-kỹ-thuật-đột-phá)
-5. [Cài đặt & Bắt đầu nhanh](#-cài-đặt--bắt-đầu-nhanh)
-6. [Cẩm nang sử dụng theo kịch bản](#-cẩm-nang-sử-dụng-theo-kịch-bản)
+1. [Bắt đầu nhanh trong 2 phút](#-bắt-đầu-nhanh-trong-2-phút-quick-start-from-zero-to-first-prompt)
+2. [Tổng quan về Forge](#-tổng-quan-về-forge)
+3. [Vấn đề cốt lõi mà Forge giải quyết](#-vấn-đề-cốt-lõi-mà-forge-giải-quyết)
+4. [Kiến trúc 3 tầng độc lập](#-kiến-trúc-3-tầng-độc-lập)
+5. [Các cơ chế kỹ thuật đột phá](#-các-cơ-chế-kỹ-thuật-đột-phá)
+6. [Các phương thức cài đặt chuyên sâu](#-các-phương-thức-cài-đặt-chuyên-sâu)
+7. [Cẩm nang sử dụng theo kịch bản](#-cẩm-nang-sử-dụng-theo-kịch-bản)
    - [Kịch bản 1: Tiếp quản một dự án có sẵn (Bootstrap)](#kịch-bản-1-tiếp-quản-một-dự-án-có-sẵn-bootstrap)
    - [Kịch bản 2: Vòng đời phát triển tính năng (Change Lifecycle)](#kịch-bản-2-vòng-đời-phát-triển-tính-năng-change-lifecycle)
    - [Kịch bản 3: Giám sát & Quản lý độ lệch tri thức (Drift Management)](#kịch-bản-3-giám-sát--quản-lý-độ-lệch-tri-thức-drift-management)
    - [Kịch bản 4: Tích hợp với AI Coding Agent](#kịch-bản-4-tích-hợp-với-ai-coding-agent)
-7. [Bảng tra cứu lệnh CLI (Cheatsheet)](#-bảng-tra-cứu-lệnh-cli-cheatsheet)
-8. [Cổng tài liệu chuyên sâu](#-cổng-tài-liệu-chuyên-sâu)
+8. [Bảng tra cứu lệnh CLI (Cheatsheet)](#-bảng-tra-cứu-lệnh-cli-cheatsheet)
+9. [Cổng tài liệu chuyên sâu](#-cổng-tài-liệu-chuyên-sâu)
 
 ---
 
@@ -180,7 +244,7 @@ graph TD
 
 ---
 
-## 🚀 Cài đặt & Sử dụng Toàn cục (Global Installation & Usage)
+## 📦 Các phương thức cài đặt chuyên sâu (Advanced Installation Options)
 
 ### Yêu cầu tiên quyết
 - **Python >= 3.11** (Kiểm tra bằng: `python --version`)

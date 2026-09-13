@@ -23,20 +23,84 @@
 
 ---
 
+## ⚡ 2-Minute Quick Start: From Zero to First Agent Prompt
+
+> **Skip the theory and start using Forge in your project right away with these 5 steps:**
+
+### Step 1: Install Forge CLI
+Install `forge` onto your machine globally (via `pip` or `uv` / `pipx`):
+```bash
+pip install git+https://github.com/CodeGenLabs/forge-harness.git
+
+# Or with uv (recommended):
+uv tool install git+https://github.com/CodeGenLabs/forge-harness.git
+```
+Verify installation:
+```bash
+forge doctor
+```
+
+### Step 2: Initialize Forge in Your Project
+Navigate to your project repository (new or existing codebase) and run:
+```bash
+cd /path/to/my-project
+forge init
+```
+
+### Step 3: Activate Skills for Your AI Coding Agent
+Run the single command matching your agent host:
+```bash
+forge install --host claude       # For Claude Code (.claude/skills/)
+forge install --host antigravity  # For Google Antigravity (.agent/skills/)
+forge install --host codex        # For OpenAI Codex / Cursor / ChatGPT (AGENTS.md)
+```
+*(Recommended)*: Add project operating rules to `CLAUDE.md` (for Claude) or `AGENTS.md` (for Antigravity / Cursor):
+```markdown
+# Forge Operating Rules
+- All code modifications MUST proceed through Forge Harness.
+- Begin any task by running `forge status` to inspect active changes and claims.
+- Before making changes, open a change via `forge change new "<title>" --track <A|B|C>`.
+- Strictly follow TDD: Test first, code second.
+- Changes are only complete when `forge verify --change <N>` exits 0.
+```
+
+### Step 4: Synchronize & Verify Project Health
+```bash
+# Declare build/test commands in .forge/config.yaml if applicable (e.g. npm test, pytest, dotnet test)
+forge sync derived
+forge check   # When it prints "ok - no issues", you are 100% ready!
+```
+*(For existing codebases — Brownfield)*: Run this additional command so Forge automatically maps your modules, languages, and dependencies:
+```bash
+forge bootstrap derive
+```
+
+### Step 5: Send Your First Prompt to the AI Agent!
+Open your AI Agent (Claude Code, Antigravity, Cursor...) in your project repository and send the first prompt:
+
+* **Scenario A: Have AI survey and catalog your existing codebase**
+  > *"This repository uses Forge harness. Read the `bootstrap` skill and execute Pass 2: survey the codebase and propose candidate claims (architecture, components, invariants, pitfalls) into `docs/system/`."*
+
+* **Scenario B: Start developing a feature or bugfix right away**
+  > *"This repository uses Forge harness. Read the `forge` skill, check `forge status`, and open a change via `forge change new \"<feature-name>\" --track B` to implement it with disciplined TDD."*
+
+---
+
 ## Table of Contents
 
-1. [Overview](#-overview)
-2. [The Core Problems Forge Solves](#-the-core-problems-forge-solves)
-3. [3-Tier Independent Architecture](#-3-tier-independent-architecture)
-4. [Breakthrough Technical Mechanisms](#-breakthrough-technical-mechanisms)
-5. [Global Installation & Quick Start](#-global-installation--quick-start)
-6. [Scenario Guides](#-scenario-guides)
+1. [2-Minute Quick Start](#-2-minute-quick-start-from-zero-to-first-agent-prompt)
+2. [Overview](#-overview)
+3. [The Core Problems Forge Solves](#-the-core-problems-forge-solves)
+4. [3-Tier Independent Architecture](#-3-tier-independent-architecture)
+5. [Breakthrough Technical Mechanisms](#-breakthrough-technical-mechanisms)
+6. [Advanced Installation Options](#-advanced-installation-options)
+7. [Scenario Guides](#-scenario-guides)
    - [Scenario 1: Adopting an Existing Codebase (Bootstrap)](#scenario-1-adopting-an-existing-codebase-bootstrap)
    - [Scenario 2: Feature Development Lifecycle](#scenario-2-feature-development-lifecycle)
    - [Scenario 3: Monitoring & Managing Drift](#scenario-3-monitoring--managing-drift)
    - [Scenario 4: Integrating with Host AI Agents](#scenario-4-integrating-with-host-ai-agents)
-7. [CLI Cheatsheet](#-cli-cheatsheet)
-8. [Deep Dive Documentation](#-deep-dive-documentation)
+8. [CLI Cheatsheet](#-cli-cheatsheet)
+9. [Deep Dive Documentation](#-deep-dive-documentation)
 
 ---
 
@@ -162,7 +226,7 @@ If non-empty, `forge gate impact:post` strictly blocks until `impact.md` explici
 
 ---
 
-## 🚀 Global Installation & Quick Start
+## 📦 Advanced Installation Options
 
 ### Prerequisites
 - **Python >= 3.11** (`python --version`)
