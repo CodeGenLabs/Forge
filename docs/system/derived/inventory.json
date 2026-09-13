@@ -3,8 +3,8 @@
   "data": {
     "by_language": {
       "markdown": {
-        "files": 83,
-        "lines": 5655
+        "files": 84,
+        "lines": 5740
       },
       "other": {
         "files": 2,
@@ -15,8 +15,12 @@
         "lines": 100
       },
       "python": {
-        "files": 57,
-        "lines": 22961
+        "files": 59,
+        "lines": 23286
+      },
+      "script": {
+        "files": 1,
+        "lines": 21
       },
       "shell": {
         "files": 1,
@@ -24,18 +28,18 @@
       },
       "toml": {
         "files": 1,
-        "lines": 49
+        "lines": 50
       },
       "yaml": {
-        "files": 5,
-        "lines": 226
+        "files": 9,
+        "lines": 356
       }
     },
     "entry_points": [
       "src/forge/cli.py"
     ],
-    "files_considered": 150,
-    "files_tracked": 150,
+    "files_considered": 158,
+    "files_tracked": 158,
     "stack": {
       "python": {
         "lockfile": null,
@@ -103,6 +107,7 @@
       "tests/test_lifecycle_repairs.py",
       "tests/test_perturbations.py",
       "tests/test_reconcile.py",
+      "tests/test_report.py",
       "tests/test_scaffold.py",
       "tests/test_schema.py",
       "tests/test_skills.py",
@@ -112,7 +117,7 @@
       "tools/pressure_test.py"
     ]
   },
-  "generated_from_commit": "e7777562ed0734dbf59a13e1b2c01e138852d225",
+  "generated_from_commit": "5aa7fffb403dc66b7f414216c3be1c1e76c524b3",
   "generator": "forge sync derived",
   "tool": "forge"
 }
