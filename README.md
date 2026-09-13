@@ -181,16 +181,17 @@ If non-empty, `forge gate impact:post` strictly blocks until `impact.md` explici
 #### 1A. Direct from GitHub *(No local clone required)*
 ```bash
 # Using pipx:
-pipx install git+https://github.com/<your-username>/2609-forge-harness.git
+pipx install git+https://github.com/CodeGenLabs/forge-harness.git
 pipx ensurepath
 
 # Or using uv (fastest):
-uv tool install git+https://github.com/<your-username>/2609-forge-harness.git
+uv tool install git+https://github.com/CodeGenLabs/forge-harness.git
 ```
 
 #### 1B. From cloned repository
 ```bash
-cd /path/to/2609-forge-harness
+git clone https://github.com/CodeGenLabs/forge-harness.git
+cd forge-harness
 pipx install .
 # or
 uv tool install .
@@ -202,12 +203,14 @@ uv tool install .
 
 * **Windows (PowerShell):**
   ```powershell
-  cd 2609-forge-harness
+  git clone https://github.com/CodeGenLabs/forge-harness.git
+  cd forge-harness
   powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1
   ```
 * **Linux / macOS (Bash):**
   ```bash
-  cd 2609-forge-harness
+  git clone https://github.com/CodeGenLabs/forge-harness.git
+  cd forge-harness
   bash ./scripts/install.sh
   ```
 
@@ -217,7 +220,8 @@ Automatically creates an isolated user venv at `~/.forge-harness/venv`, installs
 
 ### Option 3: Developer Local Mode (Editable)
 ```bash
-cd 2609-forge-harness
+git clone https://github.com/CodeGenLabs/forge-harness.git
+cd forge-harness
 python -m venv .venv
 .venv\Scripts\activate      # Windows
 # source .venv/bin/activate # Linux / macOS

@@ -201,16 +201,17 @@ graph TD
 #### Lựa chọn 1A: Cài trực tiếp từ GitHub *(Không cần clone mã nguồn)*
 ```bash
 # Sử dụng pipx:
-pipx install git+https://github.com/<your-username>/2609-forge-harness.git
+pipx install git+https://github.com/CodeGenLabs/forge-harness.git
 pipx ensurepath
 
 # Hoặc sử dụng uv (cực nhanh, khuyến nghị):
-uv tool install git+https://github.com/<your-username>/2609-forge-harness.git
+uv tool install git+https://github.com/CodeGenLabs/forge-harness.git
 ```
 
 #### Lựa chọn 1B: Cài đặt sau khi đã clone mã nguồn về máy
 ```bash
-cd /path/to/2609-forge-harness
+git clone https://github.com/CodeGenLabs/forge-harness.git
+cd forge-harness
 
 # Dùng pipx:
 pipx install .
@@ -228,12 +229,14 @@ Nếu bạn đã clone mã nguồn về máy và muốn một giải pháp "ch�
 
 * **Trên Windows (PowerShell):**
   ```powershell
-  cd 2609-forge-harness
+  git clone https://github.com/CodeGenLabs/forge-harness.git
+  cd forge-harness
   powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1
   ```
 * **Trên Linux / macOS (Bash):**
   ```bash
-  cd 2609-forge-harness
+  git clone https://github.com/CodeGenLabs/forge-harness.git
+  cd forge-harness
   bash ./scripts/install.sh
   ```
 
@@ -251,7 +254,8 @@ Nếu bạn đã clone mã nguồn về máy và muốn một giải pháp "ch�
 Dành cho những người muốn trực tiếp chỉnh sửa mã nguồn của chính Forge Harness:
 
 ```bash
-cd 2609-forge-harness
+git clone https://github.com/CodeGenLabs/forge-harness.git
+cd forge-harness
 
 # Tạo và kích hoạt môi trường ảo nội bộ
 python -m venv .venv

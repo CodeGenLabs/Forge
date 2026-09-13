@@ -110,11 +110,11 @@ graph TD
 
 ```bash
 # pipxを使用する場合 (リポジトリのクローン不要):
-pipx install git+https://github.com/<your-username>/2609-forge-harness.git
+pipx install git+https://github.com/CodeGenLabs/forge-harness.git
 pipx ensurepath
 
 # または uv を使用する場合 (超高速):
-uv tool install git+https://github.com/<your-username>/2609-forge-harness.git
+uv tool install git+https://github.com/CodeGenLabs/forge-harness.git
 ```
 
 ---
@@ -123,12 +123,14 @@ uv tool install git+https://github.com/<your-username>/2609-forge-harness.git
 
 * **Windows (PowerShell):**
   ```powershell
-  cd 2609-forge-harness
+  git clone https://github.com/CodeGenLabs/forge-harness.git
+  cd forge-harness
   powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1
   ```
 * **Linux / macOS (Bash):**
   ```bash
-  cd 2609-forge-harness
+  git clone https://github.com/CodeGenLabs/forge-harness.git
+  cd forge-harness
   bash ./scripts/install.sh
   ```
 
