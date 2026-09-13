@@ -833,8 +833,8 @@ def _cmd_change_new(args: argparse.Namespace) -> int:
     print(f"created    {created.relative}/")
     print(f"track      {created.track}")
     wanted = [a.id for a in loaded.for_track(created.track)]
-    print(f"artifacts  {', '.join(wanted) if wanted else 'none - track A is a question, '
-                                                        'not a deliverable'}")
+    art_desc = ', '.join(wanted) if wanted else 'none - track A is a question, not a deliverable'
+    print(f"artifacts  {art_desc}")
     return _EXIT_OK
 
 
