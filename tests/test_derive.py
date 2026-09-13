@@ -178,6 +178,39 @@ def test_same_line_tag_is_picked_up(project):
     assert data["files"]["tests/test_inline.py"]["tests"][0]["covers"] == ["INV-2"]
 
 
+def test_csharp_tests_and_covers_tags_are_extracted(project):
+    project.write("src/CodeGen.Tests/PaymentTests.cs", """\\
+using Xunit;
+
+namespace CodeGen.Tests;
+
+public class PaymentTests
+{
+    // @covers REQ-pay-1 INV-commerce-9
+    [Fact]
+    public void ProcessPayment_WithValidCard_ShouldSucceed()
+    {
+        Assert.True(true);
+    }
+
+    [Fact]
+    public async Task RefundPayment_Async_ShouldReturnOk()
+    {
+        await Task.CompletedTask;
+    }
+}
+""")
+    project.commit("add csharp test")
+    data = derive.build_tests(project.root)
+    assert "src/CodeGen.Tests/PaymentTests.cs" in data["files"]
+    entry = data["files"]["src/CodeGen.Tests/PaymentTests.cs"]
+    names = {t["name"]: t["covers"] for t in entry["tests"]}
+    assert names["ProcessPayment_WithValidCard_ShouldSucceed"] == ["INV-commerce-9", "REQ-pay-1"]
+    assert names["RefundPayment_Async_ShouldReturnOk"] == []
+    assert entry["untagged"] == 1
+    assert data["covers_index"]["REQ-pay-1"] == ["src/CodeGen.Tests/PaymentTests.cs::ProcessPayment_WithValidCard_ShouldSucceed"]
+
+
 # --------------------------------------------------------------------------
 # backrefs.json
 # --------------------------------------------------------------------------

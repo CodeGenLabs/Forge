@@ -83,12 +83,14 @@ def test_several_wrapped_tasks_stay_separate(opened):
 # ---------------------------------------------------------------------------
 
 def test_every_templated_artifact_has_a_template():
-    """The schema declared `template:` for five artifacts and nothing read it."""
+    """The schemas declare `template:` for artifacts and scaffold must have them."""
     from forge import schema as schema_mod
 
-    loaded = schema_mod.parse_schema(schema_mod.builtin_schema_text("feature"),
-                                     source="feature.yaml")
-    declared = {a.id for a in loaded.artifacts if a.template}
+    declared = set()
+    for name in ("feature", "bugfix"):
+        loaded = schema_mod.parse_schema(schema_mod.builtin_schema_text(name),
+                                         source=f"{name}.yaml")
+        declared.update(a.id for a in loaded.artifacts if a.template)
     assert declared == set(scaffold.CHANGE_TEMPLATES)
 
 

@@ -62,10 +62,11 @@ _IGNORED_SEGMENTS = frozenset({
 _IGNORED_SUFFIXES = (".egg-info", ".dist-info")
 
 _TEST_PATTERNS = (
-    re.compile(r"(^|/)tests?/"),
+    re.compile(r"(^|/)tests?/", re.IGNORECASE),
     re.compile(r"(^|/)test_[^/]+\.py$"),
     re.compile(r"[^/]+_test\.(py|go)$"),
     re.compile(r"[^/]+\.(test|spec)\.[jt]sx?$"),
+    re.compile(r"[^/]+Tests?\.(cs)$", re.IGNORECASE),
 )
 
 # `@covers ID [ID ...]` in a test name or an adjacent comment. The single
@@ -93,6 +94,9 @@ _TEST_DECL_RES = {
             r"""^\s*(?:it|test)\s*(?:\.\w+)*\s*(?:\([^()]*(?:\([^()]*\)[^()]*)*\)\s*)?"""
             r"""\(\s*['"`](.+?)['"`]""",
             re.M),
+    ],
+    "csharp": [
+        re.compile(r"^\s*(?:\[[^\]]+\]\s*)*(?:public|private|protected|internal)?\s*(?:async\s+)?(?:Task|void)\s+([A-Za-z0-9_]+)\s*\(", re.M),
     ],
 }
 _TEST_DECL_RES["tsx"] = _TEST_DECL_RES["typescript"]

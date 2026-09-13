@@ -260,6 +260,7 @@ def test_coarse_does_not_absorb_a_reflow():
         ("a.ts", "typescript"), ("a.cts", "typescript"), ("a.js", "typescript"),
         ("a.tsx", "tsx"), ("a.jsx", "tsx"),
         ("m.go", "go"),
+        ("s.cs", "csharp"),
         ("m.rs", None), ("README.md", None), ("a.sql", None),
     ],
 )

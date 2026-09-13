@@ -67,6 +67,7 @@ _EXT_LANG = {
     ".cjs": "typescript",
     ".jsx": "tsx",
     ".go": "go",
+    ".cs": "csharp",
 }
 
 
