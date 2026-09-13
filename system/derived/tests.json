@@ -2761,6 +2761,57 @@
         ],
         "untagged": 14
       },
+      "tests/test_report.py": {
+        "language": "python",
+        "tests": [
+          {
+            "covers": [],
+            "line": 11,
+            "name": "test_sanitize_text_home_directory"
+          },
+          {
+            "covers": [],
+            "line": 19,
+            "name": "test_sanitize_text_tokens_and_credentials"
+          },
+          {
+            "covers": [],
+            "line": 26,
+            "name": "test_get_environment_info"
+          },
+          {
+            "covers": [],
+            "line": 33,
+            "name": "test_build_issue_url"
+          },
+          {
+            "covers": [],
+            "line": 44,
+            "name": "test_build_issue_url_truncation"
+          },
+          {
+            "covers": [],
+            "line": 52,
+            "name": "test_handle_crash_debug_mode"
+          },
+          {
+            "covers": [],
+            "line": 58,
+            "name": "test_handle_crash_no_report_mode"
+          },
+          {
+            "covers": [],
+            "line": 67,
+            "name": "test_handle_crash_non_interactive"
+          },
+          {
+            "covers": [],
+            "line": 80,
+            "name": "test_cmd_report_no_browser"
+          }
+        ],
+        "untagged": 9
+      },
       "tests/test_scaffold.py": {
         "language": "python",
         "tests": [
@@ -3819,9 +3870,9 @@
       }
     },
     "tagged_tests": 0,
-    "total_tests": 728
+    "total_tests": 737
   },
-  "generated_from_commit": "6ef6ec34a7769b99f2b48ad889a32bf738b736c8",
+  "generated_from_commit": "5aa7fffb403dc66b7f414216c3be1c1e76c524b3",
   "generator": "forge sync derived",
   "tool": "forge"
 }

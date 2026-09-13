@@ -1334,6 +1334,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="CLI リファレンス">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🔒 プライバシーとテレメトリ方針
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -1592,6 +1609,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="CLI リファレンス">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🔒 プライバシーとテレメトリ方針
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -1730,8 +1764,18 @@
 <td style="text-align: left;"><code>forge host</code></td>
 <td style="text-align: left;">MCPサーバーまたはエージェントアダプターの起動</td>
 </tr>
+<tr>
+<td style="text-align: left;"><code>forge report</code></td>
+<td style="text-align: left;">不具合報告や機能提案（個人情報匿名化済み）</td>
+</tr>
 </tbody>
 </table>
+<hr />
+<h2 id="_1">🔒 プライバシーとテレメトリ方針</h2>
+<p>Forgeは<strong>バックグラウンドテレメトリ（隠しデータ送信）ゼロ</strong>を徹底しています:
+* すべての処理はローカル環境で100%完結します。
+* <code>forge report</code> や予期しないクラッシュ時の報告では、ローカルのユーザー名や絶対パス（<code>/home/&lt;user&gt;</code> や <code>C:\Users\&lt;user&gt;</code>）はすべて <code>~</code> に自動匿名化されます。
+* 詳細は <a href="https://github.com/CodeGenLabs/forge-harness/blob/main/PRIVACY.md">PRIVACY.md</a> をご確認ください。</p>
 
 
 

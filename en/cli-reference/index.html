@@ -714,8 +714,30 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#forge-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        forge report
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#privacy-telemetry-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🔒 Privacy &amp; Telemetry Policy
+      
+    </span>
+  </a>
   
 </li>
         
@@ -1828,8 +1850,30 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#forge-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        forge report
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#privacy-telemetry-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🔒 Privacy &amp; Telemetry Policy
+      
+    </span>
+  </a>
   
 </li>
         
@@ -1988,6 +2032,11 @@
 <td style="text-align: left;">Run MCP server or agent host adapters</td>
 <td style="text-align: left;"><code>--port &lt;port&gt;</code></td>
 </tr>
+<tr>
+<td style="text-align: left;"><code>forge report</code></td>
+<td style="text-align: left;">Report a bug, crash, or feature request (sanitized)</td>
+<td style="text-align: left;"><code>--feature</code>, <code>--no-browser</code></td>
+</tr>
 </tbody>
 </table>
 <hr />
@@ -2046,6 +2095,16 @@ Always commit your source code changes <em>first</em>, then run <code>forge sync
 <p>Inspects all drift events in <code>docs/system/DRIFT.md</code> and attributes blame/resolution:
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>forge<span class="w"> </span>reconcile<span class="w"> </span><span class="o">[</span>--repo<span class="w"> </span>&lt;path&gt;<span class="o">]</span>
 </span></code></pre></div></p>
+<h3 id="forge-report"><code>forge report</code></h3>
+<p>Opens a pre-filled, sanitized issue template in your browser to report a bug or request a feature:
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>forge<span class="w"> </span>report<span class="w"> </span><span class="o">[</span>--feature<span class="o">]</span><span class="w"> </span><span class="o">[</span>--no-browser<span class="o">]</span>
+</span></code></pre></div></p>
+<hr />
+<h2 id="privacy-telemetry-policy">🔒 Privacy &amp; Telemetry Policy</h2>
+<p>Forge is committed to <strong>Zero Secret Telemetry</strong>:
+* 100% of core calculations run offline and locally.
+* When reporting issues via <code>forge report</code> or during an unexpected crash, all local usernames and paths are scrubbed (<code>/home/&lt;user&gt;</code> or <code>C:\Users\&lt;user&gt;</code> becomes <code>~</code>).
+* Nothing is ever submitted silently; you always review and submit issues yourself. For full details, see <a href="https://github.com/CodeGenLabs/forge-harness/blob/main/PRIVACY.md">PRIVACY.md</a>.</p>
 
 
 
