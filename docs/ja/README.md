@@ -205,7 +205,15 @@ forge check
 
 ## 📚 詳細ドキュメント
 
-- 🏛️ **[ARCHITECTURE.md](ARCHITECTURE.md)** — コアサブシステム、コマンド体系、設計予算。
-- 🧠 **[SYSTEM_KNOWLEDGE.md](SYSTEM_KNOWLEDGE.md)** — アンカー付きクレーム、ASTフィンガープリント、ドリフト検出。
-- 🔄 **[WORKFLOW.md](WORKFLOW.md)** — 3トラックルーター、ライフサイクルDAG、ゲート機構。
-- 📜 **[CONSTITUTION.md](CONSTITUTION.md)** — 16の変更不可エンジニアリング原則。
+各分野の詳細な仕様とガイドライン：
+
+| セクション | 概要 | リンク |
+| :--- | :--- | :---: |
+| **クイックスタート** | インストール、環境確認、初期設定 | [読む](getting-started.md) |
+| **コアコンセプト** | 3層モデル、クレームストア、ASTアンカー | [読む](concepts.md) |
+| **CLIリファレンス** | 全11コマンドの詳細仕様 | [読む](cli-reference.md) |
+| **ガイドとCI/CD** | AIエージェント連携、GitHub Actions、モノレポ | [読む](guides.md) |
+| **アーキテクチャ** | カーネル、Tree-sitter AST、ハッシュ検証 | [読む](architecture.md) |
+| **設定リファレンス** | `.forge/config.yaml` の完全なスキーマ | [読む](configuration.md) |
+| **トラブルシューティング**| PATH設定、Windowsコンソール、ゲートエラー | [読む](troubleshooting.md) |
+| **設計憲法** | 16の変更不可エンジニアリング原則 | [読む](constitution.md) |

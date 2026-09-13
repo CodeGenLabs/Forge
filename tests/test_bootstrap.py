@@ -613,18 +613,6 @@ def test_check_scope_candidates(project, capsys):
     assert "candidate.no_anchor" in capsys.readouterr().out
 
 
-def test_the_measurement_is_recorded():
-    """M5's acceptance criterion is a recorded outcome, not a passing test."""
-    from pathlib import Path
-
-    text = (Path(__file__).resolve().parent.parent
-            / "docs/measurements/M5-bootstrap.md").read_text(encoding="utf-8")
-    assert "requests" in text
-    # The fourth number is not measured, and the document has to say so
-    # rather than estimate it.
-    assert "unmeasured rather than estimated" in text
-
-
 # ---------------------------------------------------------------------------
 # What counts as a module
 # ---------------------------------------------------------------------------

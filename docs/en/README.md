@@ -346,7 +346,15 @@ In your project rules (`AGENTS.md` or `CLAUDE.md`), add:
 
 ## 📚 Deep Dive Documentation
 
-- 🏛️ **[ARCHITECTURE.md](ARCHITECTURE.md)** — Core subsystems, command surface, and budgets.
-- 🧠 **[SYSTEM_KNOWLEDGE.md](SYSTEM_KNOWLEDGE.md)** — Anchored claims, AST fingerprints, and drift algorithms.
-- 🔄 **[WORKFLOW.md](WORKFLOW.md)** — 3-track router, lifecycle DAG, and gates.
-- 📜 **[CONSTITUTION.md](CONSTITUTION.md)** — 16 inviolable engineering principles.
+Browse our comprehensive documentation guides:
+
+| Section | Description | Link |
+| :--- | :--- | :---: |
+| **Getting Started** | Setup, global install, first project run | [Read Guide](getting-started.md) |
+| **Core Concepts** | 3-tier model, claim store, AST code anchors | [Read Guide](concepts.md) |
+| **CLI Reference** | Complete command reference for all 11 commands | [Read Guide](cli-reference.md) |
+| **Guides & CI/CD** | AI agent integration, GitHub Actions, monorepos | [Read Guide](guides.md) |
+| **Architecture** | Kernel internals, Tree-sitter AST, fingerprints | [Read Guide](architecture.md) |
+| **Configuration** | Full `.forge/config.yaml` schema reference | [Read Guide](configuration.md) |
+| **Troubleshooting**| Windows encoding, PATH setup, common gate errors | [Read Guide](troubleshooting.md) |
+| **Constitution** | 16 inviolable engineering principles | [Read Guide](constitution.md) |

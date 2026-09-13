@@ -1,0 +1,99 @@
+site_name: Forge Harness
+site_description: Personal software engineering harness with anchored system knowledge and deterministic staleness detection.
+site_url: https://codegenlabs.github.io/forge-harness/
+repo_name: CodeGenLabs/forge-harness
+repo_url: https://github.com/CodeGenLabs/forge-harness
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  language: en
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.path
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+    - content.action.edit
+    - content.action.view
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - attr_list
+  - md_in_html
+  - def_list
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+nav:
+  - Home: index.md
+  - English:
+      - Overview: en/index.md
+      - Getting Started: en/getting-started.md
+      - Core Concepts: en/concepts.md
+      - CLI Reference: en/cli-reference.md
+      - Guides & CI/CD: en/guides.md
+      - Architecture: en/architecture.md
+      - Configuration: en/configuration.md
+      - Troubleshooting: en/troubleshooting.md
+      - Constitution: en/constitution.md
+      - Workflow & Gates: en/workflow.md
+      - System Knowledge: en/system-knowledge.md
+  - Tiếng Việt:
+      - Giới thiệu: vi/index.md
+      - Bắt đầu nhanh: vi/getting-started.md
+      - Khái niệm cốt lõi: vi/concepts.md
+      - Tra cứu CLI: vi/cli-reference.md
+      - Hướng dẫn & CI/CD: vi/guides.md
+      - Kiến trúc hệ thống: vi/architecture.md
+      - Cấu hình: vi/configuration.md
+      - Xử lý sự cố: vi/troubleshooting.md
+      - Hiến pháp kỹ nghệ: vi/constitution.md
+      - Vòng đời phát triển: vi/workflow.md
+      - Tri thức hệ thống: vi/system-knowledge.md
+  - 日本語:
+      - 概要: ja/index.md
+      - クイックスタート: ja/getting-started.md
+      - コアコンセプト: ja/concepts.md
+      - CLIリファレンス: ja/cli-reference.md
+      - ガイドとCI/CD: ja/guides.md
+      - アーキテクチャ: ja/architecture.md
+      - 設定リファレンス: ja/configuration.md
+      - トラブルシューティング: ja/troubleshooting.md
+      - 設計憲法: ja/constitution.md
+      - 開発ワークフロー: ja/workflow.md
+      - システム知識: ja/system-knowledge.md

@@ -464,13 +464,15 @@ forge archive --change 2
 
 ## 📚 Cổng tài liệu chuyên sâu
 
-Hệ thống tài liệu thiết kế và đặc tả chi tiết của Forge được tổ chức ngay trong thư mục này:
+Tra cứu hệ thống tài liệu hướng dẫn và đặc tả chi tiết:
 
-- 🏛️ **[ARCHITECTURE.md](ARCHITECTURE.md) — Kiến trúc hệ thống Forge**  
-  *Phân tích chi tiết thiết kế 3 tầng, cấu trúc thư mục, command surface, ngân sách tăng trưởng và mô hình trạng thái.*
-- 🧠 **[SYSTEM_KNOWLEDGE.md](SYSTEM_KNOWLEDGE.md) — Tài liệu trụ cột về Tri thức hệ thống**  
-  *Mô hình Anchored Claims, lược đồ schema, nguồn chân lý (truth sources), thuật toán phát hiện lỗi thời bằng AST và chính sách chống nhiễu.*
-- 🔄 **[WORKFLOW.md](WORKFLOW.md) — Toàn bộ Vòng đời phát triển & Hệ thống Gates**  
-  *Định nghĩa chi tiết 3 Track, từng giai đoạn trong vòng đời thay đổi, các cổng kiểm soát con người và cơ học.*
-- 📜 **[CONSTITUTION.md](CONSTITUTION.md) — Bản hiến pháp kỹ nghệ Forge**  
-  *16 nguyên tắc kỹ nghệ bất biến, cơ chế phát hiện vi phạm và chính sách miễn trừ.*
+| Chuyên mục | Mô tả nội dung | Liên kết |
+| :--- | :--- | :---: |
+| **Bắt đầu nhanh** | Cài đặt toàn cục, chuẩn bị môi trường, chạy thử | [Xem hướng dẫn](getting-started.md) |
+| **Khái niệm cốt lõi** | Mô hình 3 tầng, Claim Store, Neo cú pháp AST | [Xem hướng dẫn](concepts.md) |
+| **Tra cứu CLI** | Cẩm nang tra cứu chi tiết 11 câu lệnh Forge | [Xem hướng dẫn](cli-reference.md) |
+| **Hướng dẫn & CI/CD** | Tích hợp AI Agent, GitHub Actions, Monorepo | [Xem hướng dẫn](guides.md) |
+| **Kiến trúc hệ thống** | Chi tiết nhân Kernel, Tree-sitter AST, dấu vân tay | [Xem hướng dẫn](architecture.md) |
+| **Cấu hình hệ thống** | Đặc tả lược đồ file `.forge/config.yaml` | [Xem hướng dẫn](configuration.md) |
+| **Xử lý sự cố** | Khắc phục sự cố PATH, font console Windows, lỗi gate | [Xem hướng dẫn](troubleshooting.md) |
+| **Hiến pháp kỹ nghệ** | 16 nguyên tắc kỹ nghệ bất biến | [Xem hướng dẫn](constitution.md) |

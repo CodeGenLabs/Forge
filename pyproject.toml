@@ -27,6 +27,10 @@ grammars = [
     "tree-sitter-go>=0.23",
 ]
 dev = ["pytest>=8"]
+docs = [
+    "mkdocs-material>=9.5",
+    "pymdown-extensions>=10.0",
+]
 
 [project.scripts]
 forge = "forge.cli:main"

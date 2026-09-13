@@ -346,7 +346,15 @@ In your project rules (`AGENTS.md` or `CLAUDE.md`), add:
 
 ## 📚 Deep Dive Documentation
 
-- 🏛️ **[ARCHITECTURE.md](docs/en/ARCHITECTURE.md)** — Core subsystems, command surface, and budgets.
-- 🧠 **[SYSTEM_KNOWLEDGE.md](docs/en/SYSTEM_KNOWLEDGE.md)** — Anchored claims, AST fingerprints, and drift algorithms.
-- 🔄 **[WORKFLOW.md](docs/en/WORKFLOW.md)** — 3-track router, lifecycle DAG, and gates.
-- 📜 **[CONSTITUTION.md](docs/en/CONSTITUTION.md)** — 16 inviolable engineering principles.
+Visit our full documentation online at **[https://codegenlabs.github.io/forge-harness/](https://codegenlabs.github.io/forge-harness/)** or browse locally:
+
+| Section | Description | English | Tiếng Việt | 日本語 |
+| :--- | :--- | :---: | :---: | :---: |
+| **Getting Started** | Setup, global install, first run | [Read](docs/en/getting-started.md) | [Đọc](docs/vi/getting-started.md) | [読む](docs/ja/getting-started.md) |
+| **Core Concepts** | 3-tier model, claim store, AST anchors | [Read](docs/en/concepts.md) | [Đọc](docs/vi/concepts.md) | [読む](docs/ja/concepts.md) |
+| **CLI Reference** | Complete guide for all 11 commands | [Read](docs/en/cli-reference.md) | [Đọc](docs/vi/cli-reference.md) | [読む](docs/ja/cli-reference.md) |
+| **Guides & CI/CD** | AI agents, GitHub Actions, monorepos | [Read](docs/en/guides.md) | [Đọc](docs/vi/guides.md) | [読む](docs/ja/guides.md) |
+| **Architecture** | Kernel, Tree-sitter AST, hashes | [Read](docs/en/architecture.md) | [Đọc](docs/vi/architecture.md) | [読む](docs/ja/architecture.md) |
+| **Configuration** | Full `.forge/config.yaml` schema | [Read](docs/en/configuration.md) | [Đọc](docs/vi/configuration.md) | [読む](docs/ja/configuration.md) |
+| **Troubleshooting**| PATH setup, Windows console, gates | [Read](docs/en/troubleshooting.md) | [Đọc](docs/vi/troubleshooting.md) | [読む](docs/ja/troubleshooting.md) |
+| **Constitution** | Inviolable engineering principles | [Read](docs/en/CONSTITUTION.md) | [Đọc](docs/vi/CONSTITUTION.md) | [読む](docs/ja/CONSTITUTION.md) |
