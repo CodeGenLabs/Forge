@@ -1,8 +1,8 @@
 <p align="right">
   <strong>Language:</strong>
-  <a href="./README.md"><strong>English</strong></a> |
-  <a href="./docs/vi/README.md">Tiếng Việt</a> |
-  <a href="./docs/ja/README.md">日本語</a>
+  <a href="../../README.md"><strong>English</strong></a> |
+  <a href="../vi/README.md">Tiếng Việt</a> |
+  <a href="../ja/README.md">日本語</a>
 </p>
 
 # Forge — Software Engineering Harness for AI Coding Agents
@@ -342,7 +342,7 @@ In your project rules (`AGENTS.md` or `CLAUDE.md`), add:
 
 ## 📚 Deep Dive Documentation
 
-- 🏛️ **[ARCHITECTURE.md](docs/en/ARCHITECTURE.md)** — Core subsystems, command surface, and budgets.
-- 🧠 **[SYSTEM_KNOWLEDGE.md](docs/en/SYSTEM_KNOWLEDGE.md)** — Anchored claims, AST fingerprints, and drift algorithms.
-- 🔄 **[WORKFLOW.md](docs/en/WORKFLOW.md)** — 3-track router, lifecycle DAG, and gates.
-- 📜 **[CONSTITUTION.md](docs/en/CONSTITUTION.md)** — 16 inviolable engineering principles.
+- 🏛️ **[ARCHITECTURE.md](ARCHITECTURE.md)** — Core subsystems, command surface, and budgets.
+- 🧠 **[SYSTEM_KNOWLEDGE.md](SYSTEM_KNOWLEDGE.md)** — Anchored claims, AST fingerprints, and drift algorithms.
+- 🔄 **[WORKFLOW.md](WORKFLOW.md)** — 3-track router, lifecycle DAG, and gates.
+- 📜 **[CONSTITUTION.md](CONSTITUTION.md)** — 16 inviolable engineering principles.

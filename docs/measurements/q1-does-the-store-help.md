@@ -113,7 +113,7 @@ declared above, and it is the finding.**
 | B3 | code | avoided | 11 | coding-rules §3.8/7.2/7.4/7.5/9.10 |
 
 All six proposed the same core change: drop the blanket catch, rethrow through the
-driver's own `toCorvusError` mapper, and keep one narrow commented exception for the
+driver's own `toStudioError` mapper, and keep one narrow commented exception for the
 non-CDB case. None proposed a fallback, a default, or logging-and-continuing.
 
 ## Why the store did not help here, stated precisely
@@ -185,7 +185,7 @@ this as a verdict on the whole design:
 
 - Knowledge with **no** written home: a trap somebody learned and never documented,
   which is what `PIT-` is defined as and what this repository happened not to need.
-- A repository **without** a `docs/05-rules/` tree. Corvus is unusually well documented;
+- A repository **without** a `docs/05-rules/` tree. Studio is unusually well documented;
   the store was competing with a good rules document rather than with nothing.
 - **Anchors and staleness**, which this task did not exercise at all. A rules document
   does not know when the code under it moved; that is the one thing the store does that
@@ -196,4 +196,4 @@ this as a verdict on the whole design:
 The honest next experiment is the inverse: a trap whose record exists **only** in the
 store - a `PIT-` earned from a failure nobody wrote a rule about - on a repository with
 no equivalent rules document. If the store loses there too, that is a real answer about
-the design rather than about corvus.
+the design rather than about monorepo.

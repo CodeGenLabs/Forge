@@ -315,7 +315,7 @@ repository survives contact) → R8 (the other agents) → everything else, meas
 
 ## Run 3, and the first complete lifecycle (2026-09-12)
 
-`corvus-db-studio` - 620 files, 19 TypeScript packages, 90 real commits - recorded in
+`studio-monorepo` - 620 files, 19 TypeScript packages, 90 real commits - recorded in
 [docs/measurements/run3-monorepo-lifecycle.md](measurements/run3-monorepo-lifecycle.md).
 
 **`forge init` -> bootstrap -> a real track C change -> `verdict: pass` -> `forge
@@ -571,7 +571,7 @@ One question per claim: name an edit that makes this false **without touching an
 
 Six of the seven are caught anyway - four by a conformance test, one by `forge check`
 itself, one by a foreign key at runtime. **One is caught only instance by instance.**
-`PIT-apply-takes-only-the-token` in corvus says `apply*` must accept nothing but the
+`PIT-apply-takes-only-the-token` in monorepo says `apply*` must accept nothing but the
 preview token, the rule that keeps the SQL shown from differing from the SQL run. Every
 `apply*` that exists is enforced by its own Zod params schema - the measurement's first
 draft said "no test, no lint rule, no type" and was wrong about the type, corrected in
@@ -587,7 +587,7 @@ something wrong with itself, and it came out of a question about forge.
 enforces it** - the test, the lint rule, the guard, the constraint - not at an example of
 it, and to say so in the prose when nothing does. `forge check --scope store` ends with one
 line counting the claims that name no enforcer; a claim anchored *at* its conformance test
-counts as enforced, which is the pattern corvus arrived at without writing it down.
+counts as enforced, which is the pattern monorepo arrived at without writing it down.
 
 **A check that was attempted and abandoned, recorded so nobody builds it again.** The
 obvious detector is lexical - flag a pitfall whose title says *every*, *never*, *only*. Run
@@ -603,7 +603,7 @@ changes what anybody does. Nothing measured here touches that.
 
 The agent that wrote R1-R11 ran out of budget here. [HANDOVER.md](HANDOVER.md) carries the
 remaining work - W1 whether a stale report changes anything, W2 the inverse agent
-experiment with its trap already chosen by the Q1b census, W3 the corvus patch - plus the
+experiment with its trap already chosen by the Q1b census, W3 the monorepo patch - plus the
 ground rules and the specific ways this project has already gone wrong. It requires one
 output, `docs/measurements/handover-report.md`, whose first section is fixed so the review
 is cheap.

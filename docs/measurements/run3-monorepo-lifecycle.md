@@ -1,6 +1,6 @@
 # Run 3 — a TypeScript monorepo, and the first unforced lifecycle
 
-> `corvus-db-studio`: 620 files, 19 packages, 90 real commits, 342 `.ts` + 99 `.tsx`.
+> `studio-monorepo`: 620 files, 19 packages, 90 real commits, 342 `.ts` + 99 `.tsx`.
 > Cloned into a scratchpad; the original was never touched. Run on 2026-09-12.
 >
 > Chosen because it is shaped nothing like the flat Python library the first two runs
@@ -55,7 +55,7 @@ hook is impossible at 93 seconds.
 
 ### H3 — the import graph was wrong on every monorepo
 
-`packages/client/src/createClient.ts` imports `@corvus/contract`, a package inside this
+`packages/client/src/createClient.ts` imports `@acme/contract`, a package inside this
 same repository, and had **zero** recorded edges. The resolver skipped every specifier
 not starting with a dot, reasoning that the graph is about this repository's coupling
 and `react` is a lockfile fact. Right about `react`; it confused *not relative* with
@@ -155,7 +155,8 @@ path is fixed; following it across a rename is exactly wrong.
 
 While diagnosing H13 I rewrote `pitfalls.md` from a script without pinning the newline,
 and Python on Windows turned every `
-` into `
+` into `
+
 `. Git then reported one hunk
 covering the whole file, and *every* claim in it as having had its definition edited.
 

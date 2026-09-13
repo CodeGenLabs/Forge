@@ -735,14 +735,14 @@ def _python_edges(text: str, source: str, index: set[str]) -> set[str]:
 def _workspace_packages(index: set[str], blobs: dict[str, bytes | None]) -> dict[str, str]:
     """Package name -> directory, for every `package.json` in the repository.
 
-    A monorepo's own packages are imported by name (`@corvus/contract`), not by
+    A monorepo's own packages are imported by name (`@acme/contract`), not by
     relative path, and the old rule skipped every specifier that did not start
     with a dot. That confuses "not relative" with "not in this repository":
-    `react` is a lockfile fact, `@corvus/contract` is this repository's coupling
+    `react` is a lockfile fact, `@acme/contract` is this repository's coupling
     and is exactly what the graph is for.
 
     Measured on a 19-package TypeScript monorepo: the file that imports
-    `@corvus/contract` had **zero** recorded edges, and the whole repository
+    `@acme/contract` had **zero** recorded edges, and the whole repository
     reported `671 edges, 0 cycles`. The zero was not a finding about a
     well-layered design; it was the cross-package edges being dropped, which
     are the only ones that could have formed a cycle.

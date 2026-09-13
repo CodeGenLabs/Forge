@@ -180,7 +180,7 @@ def test_check_counts_the_claims_nothing_will_catch(stored, capsys):
 
 
 def test_a_claim_anchored_at_its_test_counts_as_enforced(stored, capsys):
-    """The pattern that worked in corvus, arrived at without being written
+    """The pattern that worked in a monorepo, arrived at without being written
     down: a repository-wide rule anchored at the conformance test that proves
     it, rather than at one example of it."""
     stored.write("docs/system/domain.md",

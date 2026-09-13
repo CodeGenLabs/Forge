@@ -1,3 +1,10 @@
+<p align="right">
+  <strong>Language:</strong>
+  <a href="../../README.md">English</a> |
+  <a href="./README.md"><strong>Tiếng Việt</strong></a> |
+  <a href="../ja/README.md">日本語</a>
+</p>
+
 # Forge — Software Engineering Harness cho AI Coding Agent
 
 <p align="center">
@@ -182,7 +189,7 @@ graph TD
 > [!IMPORTANT]
 > **Vấn đề kinh điển: Tại sao lệnh `forge` thường bị báo lỗi `command not found` / `not recognized`?**
 > * Khi bạn chỉ tạo môi trường ảo `.venv` bên trong repository này, lệnh `forge` chỉ tồn tại khi terminal đang kích hoạt môi trường ảo đó.
-> * Khi bạn chuyển sang repository khác (ví dụ: `D:\git\my-app` hay `D:\git\tienganhlily`), terminal ở đó **không hề biết** đến `.venv` của Forge nếu chưa được cài vào biến môi trường `PATH` toàn cục.
+> * Khi bạn chuyển sang repository khác (ví dụ: `D:\git\my-app` hay `D:\git\sample-ecommerce`), terminal ở đó **không hề biết** đến `.venv` của Forge nếu chưa được cài vào biến môi trường `PATH` toàn cục.
 > * Để sử dụng `forge` ở **bất kỳ đâu trên máy tính**, hãy chọn một trong các cách cài đặt toàn cục dưới đây.
 
 ---

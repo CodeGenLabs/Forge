@@ -68,7 +68,7 @@ either. No test iterates the contract's methods to assert the shape; the integra
 exercise the flows one at a time, the same way the schemas do.
 
 This is the same shape as every other uncovered row - the rule breaks by code appearing
-somewhere it was not - and the fix is the one corvus already uses twice: a conformance test
+somewhere it was not - and the fix is the one monorepo already uses twice: a conformance test
 over every contract method whose name matches `apply`, asserting its params are exactly the
 token. `no-mock-in-bundle.test.ts` and `no-dev-credential-in-image.test.ts` are that
 pattern. This rule never got one.
@@ -78,14 +78,14 @@ claim and the test directory; the schema was two files away and said otherwise. 
 measurement that names a gap in somebody else's repository has to be read twice, and the
 first draft of this one was not.
 
-That is a real finding about corvus, produced by a question about forge, and it is the
+That is a real finding about monorepo, produced by a question about forge, and it is the
 first time in this project that the harness found something wrong in a repository rather
 than something wrong with itself.
 
 ## What follows, and what deliberately does not
 
 **`evidence` is where the enforcer belongs, and fifteen of eighteen claims leave it empty.**
-The two corvus claims that got this right are anchored *at their conformance test* rather
+The two monorepo claims that got this right are anchored *at their conformance test* rather
 than at an example of the rule - which is the pattern that works, arrived at without being
 written down. It is now written down in `curate-knowledge`:
 
@@ -113,7 +113,7 @@ Names no enforcer: 4 of 5 pitfall/invariant claims cite neither a test nor a gua
 
 A count, not an issue per claim. Fifteen of eighteen would have fired here, and a wall of
 warnings on every run is how a warning stops being read. A claim anchored **at** its
-conformance test counts as enforced, because that is the pattern corvus arrived at without
+conformance test counts as enforced, because that is the pattern monorepo arrived at without
 writing it down.
 
 ## The first thing it reported was this repository

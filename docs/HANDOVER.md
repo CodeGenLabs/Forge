@@ -29,7 +29,7 @@ is recorded somewhere in `docs/measurements/`.
 5. **Correct your own overclaims in place, struck through, not rewritten.** There are three
    examples already: G16 in run 2, the `redact.ts` normalisation test, and the correction
    at the end of `q1c`. A quiet rewrite loses the thing worth reading.
-6. **Do not modify `D:/git/corvus-db-studio`.** It is the user's real project. Work on a
+6. **Do not modify `D:/git/studio-monorepo`.** It is the user's real project. Work on a
    clone; deliver a patch and let them apply it.
 7. **Spawning subagents costs the user money.** W2 below needs six runs. Ask first.
 
@@ -61,7 +61,7 @@ is recorded somewhere in `docs/measurements/`.
   generated from HEAD; syncing with tracked content still uncommitted produces a tier that
   is stale the moment it is written. The CLI now warns about this (`fix(sync)`, commit
   `826bdbe`) - believe the warning.
-- **Clone with `--no-hardlinks`.** A local `git clone` of the user's corvus repo shared
+- **Clone with `--no-hardlinks`.** A local `git clone` of the user's monorepo repo shared
   objects by hardlink and the clone's object store corrupted mid-session. The original was
   verified healthy afterwards, but do not repeat it.
 - **Do not trust an error message over the code.** The G16 finding in run 2 was diagnosed
@@ -103,7 +103,7 @@ argue for it in the plan:
   the part that makes it actionable.
 
 **Data available.** This repository's own `docs/system/DRIFT.md` has exactly **one** entry
-(D-001), so n is tiny here - say so. The requests and corvus runs produced their own
+(D-001), so n is tiny here - say so. The requests and monorepo runs produced their own
 ledgers in clones that no longer exist; `docs/measurements/run2-requests-lifecycle.md` and
 `run3-monorepo-lifecycle.md` record what happened in prose and are the honest secondary
 source. The M1 replay corpora (`m1-*.json`) are in `docs/measurements/`.
@@ -149,10 +149,10 @@ says how the original was set up.
 the store lost on a trap chosen to favour it, and that is a much stronger negative result
 than Q1's. Say so before you know.
 
-### W3 - The corvus patch **(deliverable to the user, not to this repo)**
+### W3 - The monorepo patch **(deliverable to the user, not to this repo)**
 
 Three things were found in the user's repository while measuring forge. None has been
-delivered. Produce **one patch file** against `D:/git/corvus-db-studio`, on a clone, and
+delivered. Produce **one patch file** against `D:/git/studio-monorepo`, on a clone, and
 hand it over - do not apply it.
 
 1. **A conformance test for the `apply*` rule.** `PIT-apply-takes-only-the-token` says
@@ -162,7 +162,7 @@ hand it over - do not apply it.
    `docs/measurements/q1c-what-an-anchor-does-not-cover.md` before repeating it.** What is
    unenforced is the rule across methods: a new `ddl.applyIndex` declared with
    `{ previewToken, sql }` passes every check in that repository. The fix is the pattern
-   corvus already uses twice - `tools/__tests__/no-mock-in-bundle.test.ts` and
+   monorepo already uses twice - `tools/__tests__/no-mock-in-bundle.test.ts` and
    `no-dev-credential-in-image.test.ts`: iterate every contract method whose name matches
    `apply` and assert its params are exactly the token.
 2. **The driver-registry conformance test** from run 3 (`PIT-seeded-driver-must-be-registered`):

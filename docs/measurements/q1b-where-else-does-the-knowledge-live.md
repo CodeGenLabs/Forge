@@ -16,7 +16,7 @@ settles it.
 
 ## The census
 
-**corvus-db-studio** (TypeScript monorepo, `docs/05-rules/` tree, 7 pitfalls)
+**studio-monorepo** (TypeScript monorepo, `docs/05-rules/` tree, 7 pitfalls)
 
 | claim | strongest other home | where |
 |---|---|---|

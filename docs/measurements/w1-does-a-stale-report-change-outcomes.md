@@ -54,7 +54,7 @@ honest dimensions:
 We inspect every real drift event recorded across the three lifecycles:
 - **Event 1 (forge-harness)**: `docs/system/DRIFT.md` entry `D-001` (`PIT-regex-across-newlines`).
 - **Event 2 (requests)**: Run 2 drift on `PIT-regex-across-newlines` (`docs/measurements/run2-requests-lifecycle.md`).
-- **Event 3 (corvus-db-studio)**: Run 3 simulated drift on `PIT-dev-credentials-must-not-reach-the-image` (`docs/measurements/run3-monorepo-lifecycle.md` and ROADMAP R5).
+- **Event 3 (studio-monorepo)**: Run 3 simulated drift on `PIT-dev-credentials-must-not-reach-the-image` (`docs/measurements/run3-monorepo-lifecycle.md` and ROADMAP R5).
 
 For each event, we evaluate:
 - **Signal**: What did the tool report (drift/reconcile)?
@@ -63,7 +63,7 @@ For each event, we evaluate:
 - **Outcome change**: Did the report prevent a defect or reverse a decision, or did it only impose a restamping step?
 
 ### 2. Triage Sufficiency Analysis Across All 18 Ratified Claims
-For every ratified claim in the three stores (5 forge, 6 requests, 7 corvus):
+For every ratified claim in the three stores (5 forge, 6 requests, 7 monorepo):
 If the anchor goes stale:
 - Does `forge reconcile` attribution (commit + author + subject) reveal whether the claim's invariant is threatened?
 - Classification categories:
@@ -90,7 +90,7 @@ Every recorded drift event in this project's history was examined:
 |---|---|---|---|---|---|
 | **D-001** | `forge-harness` | `PIT-regex-across-newlines` | G14 edit in `impact.py` touched file | Restamped via `confirm` | **No** (0 lines) |
 | **Run 2** | `requests` | `PIT-regex-across-newlines` | Lifecycle change touched anchor file | Restamped via `confirm` | **No** (0 lines) |
-| **Run 3** | `corvus-db-studio` | `PIT-dev-credentials-must-not-reach-the-image` | Synthetic simulated commit (Bob) | Recorded & confirmed | **No** (0 lines) |
+| **Run 3** | `studio-monorepo` | `PIT-dev-credentials-must-not-reach-the-image` | Synthetic simulated commit (Bob) | Recorded & confirmed | **No** (0 lines) |
 
 **Tally:**
 - Substantive repairs triggered (V1 code bug fix, V2-V4 claim revision): **0 of 3 (0%)**
@@ -107,7 +107,7 @@ For each of the 18 claims across the three repositories, we evaluated whether `f
 |---|---|---|---|---|
 | `forge-harness` | 5 | 0 | 5 | 0 |
 | `requests` | 6 | 0 | 6 | 0 |
-| `corvus-db-studio` | 7 | 0 | 5 | 2 |
+| `studio-monorepo` | 7 | 0 | 5 | 2 |
 | **Total** | **18** | **0 (0%)** | **16 (88.9%)** | **2 (11.1%)** |
 
 **Findings:**
