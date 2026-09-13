@@ -2533,117 +2533,117 @@
           },
           {
             "covers": [],
-            "line": 174,
+            "line": 175,
             "name": "test_an_unrunnable_command_is_unavailable_not_failed"
           },
           {
             "covers": [],
-            "line": 188,
+            "line": 189,
             "name": "test_the_timeout_comes_from_config"
           },
           {
             "covers": [],
-            "line": 222,
+            "line": 223,
             "name": "test_an_open_delta_defines_its_requirements"
           },
           {
             "covers": [],
-            "line": 236,
+            "line": 237,
             "name": "test_an_archived_delta_does_not_define_anything"
           },
           {
             "covers": [],
-            "line": 250,
+            "line": 251,
             "name": "test_doctor_reports_an_unresolvable_command"
           },
           {
             "covers": [],
-            "line": 260,
+            "line": 261,
             "name": "test_doctor_is_clean_when_every_command_resolves"
           },
           {
             "covers": [],
-            "line": 266,
+            "line": 267,
             "name": "test_doctor_does_not_try_to_run_the_timeout"
           },
           {
             "covers": [],
-            "line": 276,
+            "line": 277,
             "name": "test_doctor_says_so_when_nothing_is_declared"
           },
           {
             "covers": [],
-            "line": 288,
+            "line": 289,
             "name": "test_the_spec_scaffold_writes_the_layout_the_fold_reads"
           },
           {
             "covers": [],
-            "line": 301,
+            "line": 302,
             "name": "test_the_fold_refuses_a_delta_it_cannot_place"
           },
           {
             "covers": [],
-            "line": 318,
+            "line": 319,
             "name": "test_a_step_declared_none_is_skipped_not_unproven"
           },
           {
             "covers": [],
-            "line": 330,
+            "line": 331,
             "name": "test_silence_is_still_unproven"
           },
           {
             "covers": [],
-            "line": 339,
+            "line": 340,
             "name": "test_the_unavailable_message_offers_the_none_spelling"
           },
           {
             "covers": [],
-            "line": 346,
+            "line": 347,
             "name": "test_doctor_does_not_try_to_resolve_none"
           },
           {
             "covers": [],
-            "line": 359,
+            "line": 360,
             "name": "test_verification_json_is_not_described_by_the_derived_tier"
           },
           {
             "covers": [],
-            "line": 370,
+            "line": 371,
             "name": "test_a_verification_report_does_not_dirty_the_derived_tier"
           },
           {
             "covers": [],
-            "line": 397,
+            "line": 398,
             "name": "test_an_unimplemented_check_says_what_it_waits_on_not_who_owes_it"
           },
           {
             "covers": [],
-            "line": 408,
+            "line": 409,
             "name": "test_the_unavailable_message_names_the_check_and_the_gap"
           },
           {
             "covers": [],
-            "line": 419,
+            "line": 420,
             "name": "test_a_change_can_be_named_either_way"
           },
           {
             "covers": [],
-            "line": 429,
+            "line": 430,
             "name": "test_naming_no_change_is_a_usage_error"
           },
           {
             "covers": [],
-            "line": 434,
+            "line": 435,
             "name": "test_track_takes_the_flag_too"
           },
           {
             "covers": [],
-            "line": 444,
+            "line": 445,
             "name": "test_doctor_reports_commands_the_manifests_declare"
           },
           {
             "covers": [],
-            "line": 461,
+            "line": 462,
             "name": "test_doctor_says_nothing_extra_when_there_is_nothing_to_say"
           }
         ],
@@ -3821,7 +3821,7 @@
     "tagged_tests": 0,
     "total_tests": 728
   },
-  "generated_from_commit": "ef2b051ed77d1cd593e88d08ac751bd78f2ccb71",
+  "generated_from_commit": "6ef6ec34a7769b99f2b48ad889a32bf738b736c8",
   "generator": "forge sync derived",
   "tool": "forge"
 }
