@@ -4,7 +4,7 @@
 # keys the current milestones read are listed.
 
 # Pinned kernel version so this repository can detect version skew (Q11).
-kernel_version: "0.0.1"
+kernel_version: "0.1.0"
 
 derive:
   # Files whose ID-looking strings are *data*, not declarations. They still

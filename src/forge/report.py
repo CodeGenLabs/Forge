@@ -22,7 +22,7 @@ def get_forge_version() -> str:
         from importlib.metadata import version
         return version("forge-harness")
     except Exception:
-        return "0.0.1"
+        return "0.1.0"
 
 
 def sanitize_text(text: str) -> str:
