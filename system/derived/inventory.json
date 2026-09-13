@@ -1,0 +1,118 @@
+{
+  "$schema": "forge/derived/v1",
+  "data": {
+    "by_language": {
+      "markdown": {
+        "files": 83,
+        "lines": 5650
+      },
+      "other": {
+        "files": 2,
+        "lines": 37
+      },
+      "powershell": {
+        "files": 1,
+        "lines": 100
+      },
+      "python": {
+        "files": 56,
+        "lines": 22345
+      },
+      "shell": {
+        "files": 1,
+        "lines": 85
+      },
+      "toml": {
+        "files": 1,
+        "lines": 49
+      },
+      "yaml": {
+        "files": 5,
+        "lines": 226
+      }
+    },
+    "entry_points": [
+      "src/forge/cli.py"
+    ],
+    "files_considered": 149,
+    "files_tracked": 149,
+    "stack": {
+      "python": {
+        "lockfile": null,
+        "manifest": "pyproject.toml",
+        "packages": {
+          "pyyaml": {
+            "declared": "pyyaml>=6",
+            "resolved": null
+          },
+          "tree-sitter": {
+            "declared": "tree-sitter>=0.23",
+            "resolved": null
+          }
+        },
+        "requires_python": ">=3.11"
+      }
+    },
+    "test_files": [
+      "tests/conftest.py",
+      "tests/skills/PRESSURE.md",
+      "tests/skills/bootstrap/confident-architecture-claims.md",
+      "tests/skills/bootstrap/invented-rationale.md",
+      "tests/skills/bootstrap/review-argues-for-candidates.md",
+      "tests/skills/bootstrap/unprovable-invariant.md",
+      "tests/skills/curate-knowledge/confident-drift-verdict.md",
+      "tests/skills/curate-knowledge/edited-claim-filed-unaffected.md",
+      "tests/skills/curate-knowledge/retires-for-brevity.md",
+      "tests/skills/curate-knowledge/unaffected-without-a-reason.md",
+      "tests/skills/forge/downgrade-after-discovery.md",
+      "tests/skills/forge/hidden-migration.md",
+      "tests/skills/forge/too-simple-for-a-spec.md",
+      "tests/skills/implement/green-test-that-never-failed.md",
+      "tests/skills/implement/loops-on-a-failing-approach.md",
+      "tests/skills/implement/scope-creep.md",
+      "tests/skills/implement/untagged-test.md",
+      "tests/skills/investigate/guessed-rationale.md",
+      "tests/skills/investigate/re-derives-an-existing-claim.md",
+      "tests/skills/investigate/unanchored-candidate.md",
+      "tests/skills/plan-tasks/migration-ordered-late.md",
+      "tests/skills/plan-tasks/placeholder-task.md",
+      "tests/skills/plan-tasks/task-with-no-requirement.md",
+      "tests/skills/specify/boundary-left-unsaid.md",
+      "tests/skills/specify/implementation-as-requirement.md",
+      "tests/skills/specify/modified-as-a-fragment.md",
+      "tests/test_anchor_classify.py",
+      "tests/test_anchor_parse.py",
+      "tests/test_anchor_store.py",
+      "tests/test_bootstrap.py",
+      "tests/test_change.py",
+      "tests/test_claim_granularity.py",
+      "tests/test_cli.py",
+      "tests/test_config.py",
+      "tests/test_deps.py",
+      "tests/test_derive.py",
+      "tests/test_evidence.py",
+      "tests/test_fingerprint.py",
+      "tests/test_gitio.py",
+      "tests/test_hooks.py",
+      "tests/test_hosts.py",
+      "tests/test_impact.py",
+      "tests/test_impact_scope.py",
+      "tests/test_instructions.py",
+      "tests/test_ledger.py",
+      "tests/test_lifecycle.py",
+      "tests/test_lifecycle_repairs.py",
+      "tests/test_perturbations.py",
+      "tests/test_reconcile.py",
+      "tests/test_scaffold.py",
+      "tests/test_schema.py",
+      "tests/test_skills.py",
+      "tests/test_spec.py",
+      "tests/test_trace.py",
+      "tests/test_validate.py",
+      "tools/pressure_test.py"
+    ]
+  },
+  "generated_from_commit": "ef2b051ed77d1cd593e88d08ac751bd78f2ccb71",
+  "generator": "forge sync derived",
+  "tool": "forge"
+}
