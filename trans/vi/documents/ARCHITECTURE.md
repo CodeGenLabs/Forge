@@ -69,16 +69,24 @@ Tài liệu này xác định ranh giới kỹ thuật: đây là loại hệ th
 Toàn bộ bề mặt lệnh được thiết kế nhỏ gọn (~20 lệnh), hỗ trợ `--json` và trả về mã thoát chuẩn xác (0: thành công, 1: có phát hiện/lệch, 2: lỗi cú pháp):
 
 ```bash
-# Quản trị & Trạng thái
+# Quản trị, Phân phối & Trạng thái
 forge init                              # Khởi tạo khung cấu trúc .forge/ và docs/system/
 forge doctor                            # Kiểm tra môi trường công cụ (python, git, grammars, test)
 forge status                            # Báo cáo tổng quan 1 màn hình: track, phase, claims, drift, tests
 forge check [--scope store|change|all]  # Chạy toàn bộ các bài kiểm định xác định
+forge install --host <name>             # Cài đặt skills vào host (claude, antigravity, codex, agents-md)
+forge hooks [install|uninstall|status]  # Quản lý pre-commit hook chặn drift tự động
 
-# Cổng kiểm soát & Đồng bộ
+# Cổng kiểm soát, Đồng bộ & Đối soát
 forge gate <point> [--change N]         # Chạy các cổng kiểm soát tại điểm vòng đời
 forge sync derived                      # Tái tạo lại tầng phái sinh
 forge verify --change <N>               # Chạy kiểm chứng toàn diện, sinh verification.json
+forge reconcile --since <ref>           # Đối soát các commit ngoài luồng và mở ledger
+
+# Khởi tạo Baseline (Bootstrap 3-Pass)
+forge bootstrap derive                  # Pass 1: Quét cơ học codebase
+forge bootstrap review                  # Pass 3: Mở bảng duyệt candidate claims
+forge bootstrap seal                    # Niêm phong kho tri thức & tạo Baseline ADR
 
 # Quản lý Trôi dạt Tri thức (Drift)
 forge drift [--store|--changed] [--json]# Kiểm tra độ lỗi thời của anchor theo AST
@@ -110,7 +118,6 @@ Hệ thống gồm 7 skill cốt lõi, mỗi skill là một file `SKILL.md` tu�
 | `forge` (router) | understand | Phân loại track (A/B/C), phát biểu lại ý định của người dùng, mở change |
 | `investigate` | investigate | Đọc code hiện hữu trước khi sửa; đề xuất candidate claim kèm độ tin cậy |
 | `specify` | spec | Chuyển ý định thành các yêu cầu delta và các kịch bản kiểm thử |
-| `assess-impact` | impact | Rà soát bán kính ảnh hưởng cơ học và các vùng ảnh hưởng tĩnh |
 | `plan-tasks` | tasks | Phân rã spec thành các task kiểm thử độc lập, mỗi task gắn mã `REQ-` |
 | `implement` | implement | Thực thi từng task theo chu trình TDD (Red ➔ Green ➔ Refactor) |
 | `curate-knowledge` | sync | Cập nhật tri thức đã học được vào kho lưu trữ, xử lý sổ cái drift |

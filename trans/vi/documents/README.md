@@ -173,35 +173,136 @@ graph TD
 
 ---
 
-## 🚀 Cài đặt & Bắt đầu nhanh
+## 🚀 Cài đặt & Sử dụng Toàn cục (Global Installation & Usage)
 
 ### Yêu cầu tiên quyết
-- **Python >= 3.11**
-- **Git**
+- **Python >= 3.11** (Kiểm tra bằng: `python --version`)
+- **Git** (Kiểm tra bằng: `git --version`)
 
-### 1. Cài đặt môi trường
-Tại thư mục chứa dự án:
+> [!IMPORTANT]
+> **Vấn đề kinh điển: Tại sao lệnh `forge` thường bị báo lỗi `command not found` / `not recognized`?**
+> * Khi bạn chỉ tạo môi trường ảo `.venv` bên trong repository này, lệnh `forge` chỉ tồn tại khi terminal đang kích hoạt môi trường ảo đó.
+> * Khi bạn chuyển sang repository khác (ví dụ: `D:\git\my-app` hay `D:\git\tienganhlily`), terminal ở đó **không hề biết** đến `.venv` của Forge nếu chưa được cài vào biến môi trường `PATH` toàn cục.
+> * Để sử dụng `forge` ở **bất kỳ đâu trên máy tính**, hãy chọn một trong các cách cài đặt toàn cục dưới đây.
+
+---
+
+### Cách 1: Cài đặt toàn cục qua `pipx` hoặc `uv tool` *(Khuyên dùng hàng đầu)*
+
+`pipx` và `uv tool` là công cụ chuẩn mực của hệ sinh thái Python hiện đại, giúp cài đặt CLI tools vào môi trường cô lập và tự động tạo shim vào thư mục `PATH` của hệ điều hành.
+
+#### Lựa chọn 1A: Cài trực tiếp từ GitHub *(Không cần clone mã nguồn)*
+```bash
+# Sử dụng pipx:
+pipx install git+https://github.com/<your-username>/2609-forge-harness.git
+pipx ensurepath
+
+# Hoặc sử dụng uv (cực nhanh, khuyến nghị):
+uv tool install git+https://github.com/<your-username>/2609-forge-harness.git
+```
+
+#### Lựa chọn 1B: Cài đặt sau khi đã clone mã nguồn về máy
+```bash
+cd /path/to/2609-forge-harness
+
+# Dùng pipx:
+pipx install .
+
+# Hoặc dùng uv:
+uv tool install .
+```
+*(Sau khi cài xong, bạn có thể mở bất kỳ terminal nào và gõ lệnh `forge` ngay lập tức).*
+
+---
+
+### Cách 2: Sử dụng Script cài đặt tự động 1-Click (`install.ps1` / `install.sh`)
+
+Nếu bạn đã clone mã nguồn về máy và muốn một giải pháp "chạy là xong" mà không cần cài thêm `pipx`:
+
+* **Trên Windows (PowerShell):**
+  ```powershell
+  cd 2609-forge-harness
+  powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1
+  ```
+* **Trên Linux / macOS (Bash):**
+  ```bash
+  cd 2609-forge-harness
+  bash ./scripts/install.sh
+  ```
+
+**Cơ chế hoạt động của script:**
+1. Tự động kiểm tra phiên bản Python $\ge$ 3.11.
+2. Thiết lập một môi trường ảo dùng riêng biệt tại `%USERPROFILE%\.forge-harness\venv` (không bao giờ bị mất khi bạn đổi folder).
+3. Tạo file thực thi shim (`forge.cmd`, `forge.ps1` hoặc `forge`) đặt vào thư mục `~/.local/bin`.
+4. Tự động ghi nhận `~/.local/bin` vào biến môi trường **User PATH** vĩnh viễn nếu chưa có.
+5. Chạy kiểm chứng `forge doctor` xác nhận thành công ngay tại chỗ.
+
+---
+
+### Cách 3: Cài đặt cho Nhà phát triển Forge (Local Editable Mode)
+
+Dành cho những người muốn trực tiếp chỉnh sửa mã nguồn của chính Forge Harness:
 
 ```bash
-# Tạo và kích hoạt môi trường ảo
+cd 2609-forge-harness
+
+# Tạo và kích hoạt môi trường ảo nội bộ
 python -m venv .venv
 .venv\Scripts\activate      # Trên Windows
 # source .venv/bin/activate # Trên Linux / macOS
 
-# Cài đặt Forge ở chế độ editable kèm bộ ngữ pháp AST
+# Cài đặt dạng editable kèm bộ ngữ pháp AST và công cụ test
 pip install -e ".[grammars,dev]"
 ```
 
-### 2. Kiểm tra sức khỏe hệ thống
-```bash
-forge doctor
-```
-*Khi toàn bộ công cụ (Python, Git, Tree-Sitter grammars, Test runner) đều hợp lệ, lệnh sẽ in ra thông số và trả về mã thoát `0`.*
+---
 
-### 3. Kiểm tra trạng thái hiện tại
+### 💡 Lệnh dự phòng (Fallback Command — Chạy mọi nơi không lo lỗi PATH)
+
+Nếu trên máy tính của bạn hoặc đồng nghiệp có cấu hình hạn chế quyền thêm PATH, bạn luôn có thể gọi trực tiếp module Python ở bất kỳ đâu:
+
 ```bash
-forge status
+# Thay vì gõ "forge doctor", bạn chạy:
+python -m forge.cli doctor
+
+# Thực thi lệnh trên một repo khác qua cờ --repo:
+python -m forge.cli init --repo D:\git\my-project
+python -m forge.cli doctor --repo D:\git\my-project
+python -m forge.cli check --repo D:\git\my-project
 ```
+
+---
+
+### 🎯 Hướng dẫn: Áp dụng Forge vào một Repository bất kỳ (`my-project`)
+
+Sau khi đã cài đặt `forge` toàn cục, để áp dụng quy trình kiểm soát của Forge vào một dự án mới:
+
+```bash
+# 1. Chuyển vào thư mục dự án của bạn
+cd /path/to/my-project
+
+# 2. Khởi tạo cấu trúc Forge (.forge/ và docs/system/)
+forge init
+
+# 3. Cài đặt kỹ năng điều hướng cho Host AI Agent mà bạn sử dụng:
+forge install --host claude       # Nếu dùng Claude Code (chép vào .claude/skills/)
+forge install --host antigravity  # Nếu dùng Antigravity (chép vào .agents/skills/)
+forge install --host codex        # Nếu dùng Cursor / Codex (chèn marker vào AGENTS.md)
+
+# 4. Khai báo lệnh build và test trong .forge/config.yaml:
+# commands:
+#   build: dotnet build src/Solution.slnx   (hoặc npm run build, cargo build,...)
+#   test:  dotnet test                      (hoặc npm test, pytest, go test,...)
+
+# 5. Đồng bộ tầng phái sinh và quét hiện trạng codebase:
+forge sync derived
+forge bootstrap derive
+
+# 6. Kiểm tra toàn diện sức khỏe dự án:
+forge doctor
+forge check
+```
+
 
 ---
 
@@ -328,11 +429,19 @@ forge archive --change 2
 | `forge status` | Báo cáo tổng quan trạng thái hệ thống, claims, tests, change hiện tại | 0 |
 | `forge check` | Chạy 18 bài kiểm tra toàn vẹn tri thức (S1–S18) và tính tươi mới | 0 / 1 |
 | `forge init` | Khởi tạo cấu trúc `.forge/` và `docs/system/` trong repo | 0 |
-| `forge change new "<tên>" --track <A\|B\|C>` | Tạo nhánh thay đổi mới theo track chỉ định | 0 / 2 |
+| `forge install --host <host>` | Cài đặt skills vào host agent (`claude`, `antigravity`, `codex`, `agents-md`) | 0 |
+| `forge hooks install` | Cài đặt Git pre-commit hook tự động chặn vi phạm drift | 0 |
+| `forge hooks uninstall` | Gỡ bỏ Git pre-commit hook | 0 |
+| `forge reconcile --since <ref>` | Đối soát commit ngoài luồng, mở mục ledger cho các claim bị chạm | 0 / 1 |
+| `forge bootstrap derive` | Pass 1: Quét cơ học codebase, lập danh mục test, modules, ngôn ngữ | 0 |
+| `forge bootstrap review` | Pass 3: Mở bảng phê chuẩn candidate claims (mặc định reject) | 0 |
+| `forge bootstrap seal` | Niêm phong kho tri thức sau khi phê chuẩn & tạo Baseline ADR | 0 |
+| `forge sync derived` | Tái tạo lại toàn bộ tầng phái sinh (`inventory`, `deps`, `tests`, `trace`) | 0 |
+| `forge change new "<tên>" --track <A\|B\|C>` | Tạo nhánh thay đổi mới theo track chỉ định (mặc định Track C) | 0 / 2 |
 | `forge change show <N>` | Hiển thị tiến độ và các artifact còn thiếu của change | 0 |
 | `forge gate <point> --change <N>` | Chạy cổng kiểm soát tại điểm chuyển giao (`spec:post`, `impact:post`,...) | 0 / 1 |
 | `forge impact --change <N>` | Tính toán bán kính ảnh hưởng và tập claim bị chạm | 0 |
-| `forge verify --change <N>` | Kiểm chứng 8 điều kiện thực tế (chạy test, tính hợp lệ) | 0 / 1 |
+| `forge verify --change <N>` | Kiểm chứng 11 điều kiện thực tế (chạy test, tính hợp lệ, DAG) | 0 / 1 |
 | `forge archive --change <N>` | Gập delta spec vào hệ thống chính và lưu trữ change | 0 / 1 |
 | `forge drift --store` | Quét toàn bộ kho tri thức tìm các anchor bị lỗi thời (stale) | 0 / 1 |
 | `forge drift --changed` | Quét độ lệch cho các file đang nằm trong git diff hiện tại | 0 / 1 |
