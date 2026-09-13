@@ -13,20 +13,20 @@ Forge strictly partitions repository knowledge into three distinct tiers:
 
 ```mermaid
 flowchart TD
-    subgraph T1 [Tier 1: Human Intent]
+    subgraph T1 ["Tier 1: Human Intent"]
         D1["docs/system/domain.md"]
         D2["docs/system/pitfalls.md"]
         D3["docs/system/decisions/*.md"]
     end
     
-    subgraph T2 [Tier 2: Agent Work]
+    subgraph T2 ["Tier 2: Agent Work"]
         C1["changes/XXXX-name/proposal.md"]
         C2["changes/XXXX-name/design.md"]
         C3["changes/XXXX-name/impact.md"]
         C4["changes/XXXX-name/tasks.md"]
     end
 
-    subgraph T3 [Tier 3: Machine Truth]
+    subgraph T3 ["Tier 3: Machine Truth"]
         M1["docs/system/derived/inventory.json"]
         M2["docs/system/derived/deps.json"]
         M3["docs/system/derived/tests.json"]
@@ -89,9 +89,9 @@ Every meaningful change follows a 4-stage lifecycle:
 
 ```mermaid
 sequenceDiagram
-    participant Dev as Developer / Agent
-    participant Forge as Forge Gatekeeper
-    participant Git as Git HEAD
+    participant Dev as "Developer / Agent"
+    participant Forge as "Forge Gatekeeper"
+    participant Git as "Git HEAD"
 
     Dev->>Forge: forge change new "jwt-auth"
     Note over Dev,Forge: Stage 1: Proposal (Why)

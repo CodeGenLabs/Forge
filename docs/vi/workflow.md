@@ -44,17 +44,17 @@ Lệnh `forge track check` sẽ tự động nâng cấp B ➔ C khi phát hiệ
 
 ```mermaid
 flowchart TD
-    Req(["Yêu cầu từ người dùng"]) --> U[1. understand<br><i>G1: Người duyệt Track</i>]
-    U --> Inv[2. investigate<br><i>Khảo sát code hiện hữu</i>]
-    Inv --> Sp[3. spec<br><i>G2: Người duyệt Spec (Track C)</i>]
-    Sp --> Imp[4. impact<br><i>Phân tích Claim-Touch</i>]
-    Imp --> Des[5. design & ADR<br><i>G3: Người duyệt Kiến trúc (Track C)</i>]
-    Des --> An[6. analyze<br><i>Kiểm tra tính nhất quán</i>]
-    An --> Tk[7. tasks<br><i>Lập danh sách Task TDD</i>]
-    Tk --> Impl[8. implement<br><i>TDD Red-Green-Refactor theo task</i>]
-    Impl --> Ver[9. verify<br><i>Kiểm chứng cơ học 8 điều kiện</i>]
-    Ver --> Sy[10. sync<br><i>G5: Người duyệt cập nhật Tri thức</i>]
-    Sy --> Conv[11. converge<br><i>Lưu trữ vào archive/</i>]
+    Req(["Yêu cầu từ người dùng"]) --> U["1. understand<br><i>G1: Người duyệt Track</i>"]
+    U --> Inv["2. investigate<br><i>Khảo sát code hiện hữu</i>"]
+    Inv --> Sp["3. spec<br><i>G2: Người duyệt Spec (Track C)</i>"]
+    Sp --> Imp["4. impact<br><i>Phân tích Claim-Touch</i>"]
+    Imp --> Des["5. design & ADR<br><i>G3: Người duyệt Kiến trúc (Track C)</i>"]
+    Des --> An["6. analyze<br><i>Kiểm tra tính nhất quán</i>"]
+    An --> Tk["7. tasks<br><i>Lập danh sách Task TDD</i>"]
+    Tk --> Impl["8. implement<br><i>TDD Red-Green-Refactor theo task</i>"]
+    Impl --> Ver["9. verify<br><i>Kiểm chứng cơ học 8 điều kiện</i>"]
+    Ver --> Sy["10. sync<br><i>G5: Người duyệt cập nhật Tri thức</i>"]
+    Sy --> Conv["11. converge<br><i>Lưu trữ vào archive/</i>"]
 ```
 
 ### Hai quyết định thiết kế tinh gọn:

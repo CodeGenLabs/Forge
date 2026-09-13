@@ -84,7 +84,7 @@ Forge strictly separates responsibilities based on a core truth: **Computers exc
 
 ```mermaid
 graph TD
-    User([Developer / Product Owner]) <--> HostAgent
+    User(["Developer / Product Owner"]) <--> HostAgent
 
     subgraph Host["EXECUTION TIER (HOST AGENT)"]
         HostAgent["AI Coding Agent<br><i>(Claude Code / Cursor / Copilot / Antigravity)</i><br>Controls agent loop, shell tools & subagents"]

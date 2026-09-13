@@ -63,7 +63,7 @@ mindmap
     Phá vỡ kiến trúc ngầm
       Sửa hàm này làm hỏng module khác
       Bỏ qua các Invariant quan trọng
-    Trôi dạt tri thức (System Drift)
+    Trôi dạt tri thức: System Drift
       Code sửa liên tục nhưng tài liệu đứng yên
       Sau vài tuần, tài liệu trở thành rác
 ```
@@ -325,10 +325,10 @@ Khi bạn muốn đưa một codebase đang có vào sự kiểm soát của For
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Dev as Lập trình viên
-    participant CLI as Forge Kernel
-    participant Agent as AI Agent
-    participant Store as Docs Store
+    actor Dev as "Lập trình viên"
+    participant CLI as "Forge Kernel"
+    participant Agent as "AI Agent"
+    participant Store as "Docs Store"
 
     Dev->>CLI: forge init
     Note over CLI: Khởi tạo .forge/ và docs/system/

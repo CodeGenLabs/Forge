@@ -62,7 +62,7 @@ Forgeは「計算機は決定的な計算と検証に特化し、AIは推論と�
 
 ```mermaid
 graph TD
-    User([開発者 / プロダクトオーナー]) <--> HostAgent
+    User(["開発者 / プロダクトオーナー"]) <--> HostAgent
 
     subgraph Host["実行層 (HOST AGENT)"]
         HostAgent["AIコーディングエージェント<br><i>(Claude Code / Cursor / Copilot / Antigravity)</i>"]

@@ -21,11 +21,11 @@ Forge uses **Tree-sitter** to extract semantic AST nodes across multiple program
 
 ```mermaid
 flowchart LR
-    Source[Source Code File] --> TS[Tree-sitter Engine]
-    TS -->|Grammar| AST[Concrete Syntax Tree]
-    AST --> Filter[Semantic Node Filter]
-    Filter --> Symbol[Function / Class / Struct / Interface]
-    Symbol --> FP[Normalized Fingerprint Hash]
+    Source["Source Code File"] --> TS["Tree-sitter Engine"]
+    TS -->|Grammar| AST["Concrete Syntax Tree"]
+    AST --> Filter["Semantic Node Filter"]
+    Filter --> Symbol["Function / Class / Struct / Interface"]
+    Symbol --> FP["Normalized Fingerprint Hash"]
 ```
 
 ### Supported Languages
