@@ -106,7 +106,7 @@ argue for it in the plan:
 (D-001), so n is tiny here - say so. The requests and monorepo runs produced their own
 ledgers in clones that no longer exist; `docs/measurements/run2-requests-lifecycle.md` and
 `run3-monorepo-lifecycle.md` record what happened in prose and are the honest secondary
-source. The M1 replay corpora (`m1-*.json`) are in `docs/measurements/`.
+source. The M1 replay findings are summarized in `docs/measurements/M1-anchor-stability.md`.
 
 **State the limits.** n is small, the author designs the task, and behaviour cannot be
 observed without users. If the honest answer is "this cannot be measured yet", **say that
