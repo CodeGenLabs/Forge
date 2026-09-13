@@ -486,41 +486,36 @@
           },
           {
             "covers": [],
-            "line": 614,
-            "name": "test_the_measurement_is_recorded"
-          },
-          {
-            "covers": [],
-            "line": 631,
+            "line": 619,
             "name": "test_a_prose_directory_is_not_a_module"
           },
           {
             "covers": [],
-            "line": 641,
+            "line": 629,
             "name": "test_a_container_directory_expands_one_level"
           },
           {
             "covers": [],
-            "line": 652,
+            "line": 640,
             "name": "test_a_directory_with_code_of_its_own_stays_whole"
           },
           {
             "covers": [],
-            "line": 659,
+            "line": 647,
             "name": "test_a_src_layout_still_names_the_package"
           },
           {
             "covers": [],
-            "line": 666,
+            "line": 654,
             "name": "test_a_flat_file_is_not_a_module"
           },
           {
             "covers": [],
-            "line": 671,
+            "line": 659,
             "name": "test_a_dot_directory_is_never_a_module"
           }
         ],
-        "untagged": 54
+        "untagged": 53
       },
       "tests/test_change.py": {
         "language": "python",
@@ -3824,9 +3819,9 @@
       }
     },
     "tagged_tests": 0,
-    "total_tests": 729
+    "total_tests": 728
   },
-  "generated_from_commit": "cfdd19d5521e98e9bbe23e55daf3129e5872e967",
+  "generated_from_commit": "ef2b051ed77d1cd593e88d08ac751bd78f2ccb71",
   "generator": "forge sync derived",
   "tool": "forge"
 }
