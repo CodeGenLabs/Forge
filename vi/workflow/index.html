@@ -2165,7 +2165,7 @@
 <hr />
 <h2 id="2-vong-oi-thay-oi-hoan-chinh-lifecycle-dag">2. Vòng đời Thay đổi Hoàn chỉnh (Lifecycle DAG)</h2>
 <pre class="mermaid"><code>flowchart TD
-    Req([Yêu cầu từ người dùng]) --&gt; U[1. understand&lt;br&gt;&lt;i&gt;G1: Người duyệt Track&lt;/i&gt;]
+    Req(["Yêu cầu từ người dùng"]) --&gt; U[1. understand&lt;br&gt;&lt;i&gt;G1: Người duyệt Track&lt;/i&gt;]
     U --&gt; Inv[2. investigate&lt;br&gt;&lt;i&gt;Khảo sát code hiện hữu&lt;/i&gt;]
     Inv --&gt; Sp[3. spec&lt;br&gt;&lt;i&gt;G2: Người duyệt Spec (Track C)&lt;/i&gt;]
     Sp --&gt; Imp[4. impact&lt;br&gt;&lt;i&gt;Phân tích Claim-Touch&lt;/i&gt;]
