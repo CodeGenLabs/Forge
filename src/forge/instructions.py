@@ -47,8 +47,12 @@ def _substitute(text: str, item: change.Change) -> str:
 
 def _expand(repo: Path, pattern: str) -> list[str]:
     if any(ch in pattern for ch in "*?["):
+        matched = set(repo.glob(pattern))
+        if pattern.endswith("/**"):
+            matched.update(repo.glob(pattern[:-3] + "/**/*"))
+            matched.update(repo.glob(pattern[:-3] + "/*"))
         return sorted(p.relative_to(repo).as_posix()
-                      for p in repo.glob(pattern) if p.is_file())
+                      for p in matched if p.is_file())
     return [pattern] if (repo / pattern).is_file() else []
 
 

@@ -166,7 +166,8 @@ def test_a_path_or_shell_construct_is_left_to_the_shell(tmp_path):
     assert verify.resolve_command(tmp_path, "FOO=1 x && y") is None
 
 
-def test_a_project_virtualenv_is_named_in_the_message(tmp_path):
+def test_a_project_virtualenv_is_named_in_the_message(tmp_path, monkeypatch):
+    monkeypatch.setattr(verify._shutil, "which", lambda cmd: None)
     (tmp_path / ".venv/bin").mkdir(parents=True)
     (tmp_path / ".venv/bin/pytest").write_text("#!/bin/sh\n", encoding="utf-8")
     message = verify.resolve_command(tmp_path, "pytest -q")
