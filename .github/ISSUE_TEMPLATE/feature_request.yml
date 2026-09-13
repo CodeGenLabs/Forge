@@ -1,0 +1,29 @@
+﻿name: "💡 Feature Request / Improvement"
+description: Suggest an enhancement, new language grammar, or workflow improvement for Forge.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        We welcome community suggestions to make Forge more powerful and versatile!
+  - type: textarea
+    id: problem-statement
+    attributes:
+      label: Problem Statement
+      description: Is your feature request related to a specific limitation or pain point?
+      placeholder: "I find it difficult to..."
+    validations:
+      required: true
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed Solution / Design
+      description: Describe the feature, CLI flags, or changes you would like to see.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Any other workflows or tools you considered?

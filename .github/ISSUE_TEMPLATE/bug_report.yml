@@ -1,0 +1,42 @@
+﻿name: "🐛 Bug Report"
+description: Report a bug, incorrect gate behavior, or unexpected CLI output.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please provide as much context as possible to help reproduce and fix this issue.
+        Review our [Privacy Policy](https://github.com/CodeGenLabs/forge-harness/blob/main/PRIVACY.md) before submitting.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Describe what you were trying to do and what actually happened.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect Forge to do instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Provide clear, minimal steps or commands to reproduce the issue.
+      placeholder: |
+        1. Run `forge init`
+        2. Create a claim with...
+        3. Run `forge check`
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment Info
+      description: Output of `python --version`, `git --version`, and OS.
+    validations:
+      required: false

@@ -7,6 +7,7 @@ name = "forge-harness"
 version = "0.0.1"
 description = "A personal software engineering harness: anchored system knowledge with deterministic staleness detection"
 readme = "README.md"
+license = { text = "MIT" }
 requires-python = ">=3.11"
 
 # Dependency budget: two, per ARCHITECTURE.md section 6. tree-sitter powers the

@@ -22,3 +22,14 @@ Danh mục hướng dẫn đầy đủ cho toàn bộ 11 câu lệnh của Forge
 | `forge verify` | Chạy bộ test và kiểm tra chạm claim | `--change <id>`, `--fast` |
 | `forge reconcile`| Định vị tác giả gây trôi lệch và gợi ý sửa | `--repo <path>`, `--auto-retire` |
 | `forge host` | Khởi chạy máy chủ giao tiếp MCP hoặc Agent | `--port <port>` |
+| `forge report` | Báo cáo lỗi hoặc đề xuất tính năng lên GitHub (ẩn danh dữ liệu) | `--feature`, `--no-browser` |
+
+---
+
+## 🔒 Quyền riêng tư & Báo cáo Lỗi
+
+Forge cam kết **hoàn toàn không thu thập dữ liệu ngầm (Zero Telemetry)**:
+* Toàn bộ thao tác chạy 100% offline trên máy của bạn.
+* Khi gặp lỗi không lường trước hoặc khi chạy `forge report`, Forge tự động ẩn danh hóa toàn bộ đường dẫn cá nhân (thay thế `C:\Users\<tên>` hoặc `/home/<tên>` thành `~`).
+* Người dùng luôn có toàn quyền kiểm tra nội dung trước khi gửi lên GitHub. Chi tiết xem tại [Chính sách Quyền riêng tư (PRIVACY.md)](https://github.com/CodeGenLabs/forge-harness/blob/main/PRIVACY.md).
+

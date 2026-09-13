@@ -22,6 +22,7 @@ Comprehensive documentation for all 11 subcommands available in the `forge` comm
 | `forge verify` | Execute tests and claim-touch accounting | `--change <id>`, `--fast` |
 | `forge reconcile`| Attribute drift and suggest repairs | `--repo <path>`, `--auto-retire` |
 | `forge host` | Run MCP server or agent host adapters | `--port <port>` |
+| `forge report` | Report a bug, crash, or feature request (sanitized) | `--feature`, `--no-browser` |
 
 ---
 
@@ -94,3 +95,19 @@ Inspects all drift events in `docs/system/DRIFT.md` and attributes blame/resolut
 ```bash
 forge reconcile [--repo <path>]
 ```
+
+### `forge report`
+Opens a pre-filled, sanitized issue template in your browser to report a bug or request a feature:
+```bash
+forge report [--feature] [--no-browser]
+```
+
+---
+
+## 🔒 Privacy & Telemetry Policy
+
+Forge is committed to **Zero Secret Telemetry**:
+* 100% of core calculations run offline and locally.
+* When reporting issues via `forge report` or during an unexpected crash, all local usernames and paths are scrubbed (`/home/<user>` or `C:\Users\<user>` becomes `~`).
+* Nothing is ever submitted silently; you always review and submit issues yourself. For full details, see [PRIVACY.md](https://github.com/CodeGenLabs/forge-harness/blob/main/PRIVACY.md).
+

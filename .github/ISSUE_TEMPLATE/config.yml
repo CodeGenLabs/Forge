@@ -1,0 +1,8 @@
+﻿blank_issues_enabled: false
+contact_links:
+  - name: Privacy Policy
+    url: https://github.com/CodeGenLabs/forge-harness/blob/main/PRIVACY.md
+    about: Read Forge's privacy policy and telemetry guidelines.
+  - name: Documentation
+    url: https://codegenlabs.github.io/forge-harness/
+    about: Explore the complete documentation and user guides.

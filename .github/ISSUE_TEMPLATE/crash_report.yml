@@ -1,0 +1,51 @@
+﻿name: "💥 CLI Crash Report"
+description: Report an unexpected crash or unhandled exception in Forge CLI.
+title: "[Crash Report]: "
+labels: ["bug", "crash-report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping improve Forge!
+        Please review the details below. Ensure no sensitive proprietary code or passwords are included.
+        See our [Privacy Policy](https://github.com/CodeGenLabs/forge-harness/blob/main/PRIVACY.md).
+  - type: input
+    id: command
+    attributes:
+      label: Command Executed
+      description: The exact command that caused the crash.
+      placeholder: "e.g. forge check, forge verify --change 0001"
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment Details
+      description: OS, Python version, and Forge version.
+      render: shell
+      placeholder: |
+        Forge Version: 0.0.1
+        Python Version: 3.11.9
+        OS: Windows 11 / Ubuntu 24.04
+    validations:
+      required: true
+  - type: textarea
+    id: traceback
+    attributes:
+      label: Scrubbed Error Traceback
+      description: The sanitized error output printed by Forge CLI.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context / Steps to Reproduce
+      description: What were you trying to do when this occurred?
+  - type: checkboxes
+    id: privacy-confirm
+    attributes:
+      label: Privacy Check
+      options:
+        - label: I confirm that this report does not contain confidential code or credentials.
+          required: true

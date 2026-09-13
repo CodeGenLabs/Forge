@@ -26,7 +26,7 @@ import sys
 from pathlib import Path
 
 from . import (bootstrap, change, config, derive, gates, gitio, hooks, hosts, impact,
-               instructions, ledger, reconcile as reconcile_mod, scaffold,
+               instructions, ledger, reconcile as reconcile_mod, report, scaffold,
                schema, skills, spec, store, trace, validate, verify)
 from .anchor import (AnchorError, Status, classify, classify_store,
                      parse_anchor)
@@ -2151,6 +2151,16 @@ def build_parser() -> argparse.ArgumentParser:
     doctor.add_argument("--repo", type=Path, default=Path.cwd())
     doctor.set_defaults(func=_cmd_doctor)
 
+    rep = sub.add_parser(
+        "report",
+        help="report a bug, crash, or feature request to the Forge project",
+        description="Opens a pre-filled GitHub issue tracker in your browser. "
+                    "All user paths and credentials are sanitized before creation.",
+    )
+    rep.add_argument("--feature", action="store_true", help="report a feature request / improvement")
+    rep.add_argument("--no-browser", action="store_true", help="print the issue URL instead of opening browser")
+    rep.set_defaults(func=report.cmd_report)
+
     return parser
 
 
@@ -2178,8 +2188,12 @@ def _survive_the_console() -> None:
 
 def main(argv: list[str] | None = None) -> int:
     _survive_the_console()
-    args = build_parser().parse_args(argv)
-    return args.func(args)
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    try:
+        return args.func(args)
+    except Exception as exc:
+        return report.handle_crash(exc, argv=argv if argv is not None else sys.argv[1:])
 
 
 if __name__ == "__main__":

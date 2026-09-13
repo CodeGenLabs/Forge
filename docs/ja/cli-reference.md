@@ -18,3 +18,14 @@ Forge が提供する全11のサブコマンドのリファレンスです。
 | `forge verify` | テスト実行とクレーム影響範囲の照合 |
 | `forge reconcile`| ドリフトの発生原因を特定して修正支援 |
 | `forge host` | MCPサーバーまたはエージェントアダプターの起動 |
+| `forge report` | 不具合報告や機能提案（個人情報匿名化済み） |
+
+---
+
+## 🔒 プライバシーとテレメトリ方針
+
+Forgeは**バックグラウンドテレメトリ（隠しデータ送信）ゼロ**を徹底しています:
+* すべての処理はローカル環境で100%完結します。
+* `forge report` や予期しないクラッシュ時の報告では、ローカルのユーザー名や絶対パス（`/home/<user>` や `C:\Users\<user>`）はすべて `~` に自動匿名化されます。
+* 詳細は [PRIVACY.md](https://github.com/CodeGenLabs/forge-harness/blob/main/PRIVACY.md) をご確認ください。
+
